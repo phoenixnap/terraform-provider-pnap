@@ -98,11 +98,8 @@ func resourceServer() *schema.Resource {
 
 func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
-	//client, confErr := client.Create()
 	client := m.(client.PNAPClient)
-	/* if confErr != nil {
-		return confErr
-	} */
+
 	request := &dto.ProvisionedServer{}
 	request.Name = d.Get("hostname").(string)
 	request.Description = d.Get("description").(string)
@@ -117,9 +114,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	}
 	request.SSHKeys = keys
 
-	requestCommand := &command.CreateServerCommand{}
-	requestCommand.SetRequester(client)
-	requestCommand.SetServer(*request)
+	requestCommand := command.NewCreateServerCommand(client, *request)
 
 	resp, err := requestCommand.Execute()
 	if err != nil {
@@ -145,11 +140,8 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
 func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(client.PNAPClient)
-
-	requestCommand := &command.GetServerCommand{}
-	requestCommand.SetRequester(client)
 	serverID := d.Id()
-	requestCommand.SetServerID(serverID)
+	requestCommand := command.NewGetServerCommand(client, serverID)
 	resp, err := requestCommand.Execute()
 	if err != nil {
 		return err
