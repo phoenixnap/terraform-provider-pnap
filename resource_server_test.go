@@ -8,12 +8,21 @@ import (
 	"github.com/PNAP/bmc-api-sdk/client"
 	"github.com/PNAP/bmc-api-sdk/command"
 	"github.com/PNAP/bmc-api-sdk/dto"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestAccPnapServer_basic(t *testing.T) {
+
 	var server dto.LongServer
+	// generate a random name for each widget test run, to avoid
+	// collisions from multiple concurrent tests.
+	// the acctest package includes many helpers such as RandStringFromCharSet
+	// See https://godoc.org/github.com/hashicorp/terraform-plugin-sdk/helper/acctest
+	rNameSuffix := acctest.RandStringFromCharSet(7, acctest.CharSetAlphaNum)
+	rName := "acctest-" + rNameSuffix
+	rLine := "pnap_server." + rName
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -21,66 +30,66 @@ func TestAccPnapServer_basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// use configuration for server creation
-				Config: testAccCreateServerResource(),
+				Config: testAccCreateServerResource(rName),
 				// compose a basic test, checking both remote and local values
 				Check: resource.ComposeTestCheckFunc(
 					// query the API to retrieve the server object
-					testAccCheckServerExists("pnap_server.acctest-server-1", &server),
+					testAccCheckServerExists(rLine, &server),
 					// verify remote values
-					testAccCheckServerAttributes(&server),
+					testAccCheckServerAttributes(rName, &server),
 					// verify local values
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "hostname", "acctest-server-1"),
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "public", "true"),
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "os", "ubuntu/bionic"),
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "type", "d0.t1.tiny"),
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "location", "PHX"),
-					resource.TestCheckResourceAttrSet("pnap_server.acctest-server-1", "location"),
-					resource.TestCheckResourceAttrSet("pnap_server.acctest-server-1", "status"),
-					resource.TestCheckResourceAttrSet("pnap_server.acctest-server-1", "ssh_keys.#"),
-					resource.TestCheckResourceAttrSet("pnap_server.acctest-server-1", "private_ip_addresses.#"),
-					resource.TestCheckResourceAttrSet("pnap_server.acctest-server-1", "public_ip_addresses.#"),
-					resource.TestCheckResourceAttrSet("pnap_server.acctest-server-1", "ram"),
+					resource.TestCheckResourceAttr(rLine, "hostname", rName),
+					resource.TestCheckResourceAttr(rLine, "public", "true"),
+					resource.TestCheckResourceAttr(rLine, "os", "ubuntu/bionic"),
+					resource.TestCheckResourceAttr(rLine, "type", "d0.t1.tiny"),
+					resource.TestCheckResourceAttr(rLine, "location", "PHX"),
+					resource.TestCheckResourceAttrSet(rLine, "location"),
+					resource.TestCheckResourceAttrSet(rLine, "status"),
+					resource.TestCheckResourceAttrSet(rLine, "ssh_keys.#"),
+					resource.TestCheckResourceAttrSet(rLine, "private_ip_addresses.#"),
+					resource.TestCheckResourceAttrSet(rLine, "public_ip_addresses.#"),
+					resource.TestCheckResourceAttrSet(rLine, "ram"),
 				),
 			},
 			{
 				// use same configuration with power off action
-				Config: testAccPowerOffServerResource(),
+				Config: testAccPowerOffServerResource(rName),
 				// compose a basic test, checking both remote and local values
 				Check: resource.ComposeTestCheckFunc(
 					// query the API to retrieve the server object
-					testAccCheckServerExists("pnap_server.acctest-server-1", &server),
+					testAccCheckServerExists(rLine, &server),
 					// verify remote values
-					testAccCheckServerStatusAttribute(&server),
+					testAccCheckServerStatusAttribute(rName, &server),
 					// verify local values
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "status", "powered-off"),
+					resource.TestCheckResourceAttr(rLine, "status", "powered-off"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
 			{
 				// use same configuration from above with power on action
-				Config: testAccPowerOnServerResource(),
+				Config: testAccPowerOnServerResource(rName),
 				// compose a basic test, checking both remote and local values
 				Check: resource.ComposeTestCheckFunc(
 					// query the API to retrieve the server object
-					testAccCheckServerExists("pnap_server.acctest-server-1", &server),
+					testAccCheckServerExists(rLine, &server),
 					// verify remote values
-					testAccCheckServerAttributes(&server),
+					testAccCheckServerAttributes(rName, &server),
 					// verify local values
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "status", "powered-on"),
+					resource.TestCheckResourceAttr(rLine, "status", "powered-on"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
 			{
 				// use same configuration from above with reboot action
-				Config: testAccRebootServerResource(),
+				Config: testAccRebootServerResource(rName),
 				// compose a basic test, checking both remote and local values
 				Check: resource.ComposeTestCheckFunc(
 					// query the API to retrieve the server object
-					testAccCheckServerExists("pnap_server.acctest-server-1", &server),
+					testAccCheckServerExists(rLine, &server),
 					// verify remote values
-					testAccCheckServerAttributes(&server),
+					testAccCheckServerAttributes(rName, &server),
 					// verify local values
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "status", "powered-on"),
+					resource.TestCheckResourceAttr(rLine, "status", "powered-on"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -89,6 +98,9 @@ func TestAccPnapServer_basic(t *testing.T) {
 }
 
 func TestAccPnapServer_shutdowntest(t *testing.T) {
+	rNameSuffix := acctest.RandStringFromCharSet(7, acctest.CharSetAlphaNum)
+	rName := "acctest-" + rNameSuffix
+	rLine := "pnap_server." + rName
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -96,35 +108,35 @@ func TestAccPnapServer_shutdowntest(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// use configuration for server creation
-				Config: testAccCreateServerResource(),
+				Config: testAccCreateServerResource(rName),
 				// compose a basic test, checking both remote and local values
 				Check: resource.ComposeTestCheckFunc(
 
 					// verify local values
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "hostname", "acctest-server-1"),
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "public", "true"),
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "os", "ubuntu/bionic"),
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "type", "d0.t1.tiny"),
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "location", "PHX"),
-					resource.TestCheckResourceAttrSet("pnap_server.acctest-server-1", "location"),
-					resource.TestCheckResourceAttrSet("pnap_server.acctest-server-1", "status"),
-					resource.TestCheckResourceAttrSet("pnap_server.acctest-server-1", "ssh_keys.#"),
-					resource.TestCheckResourceAttrSet("pnap_server.acctest-server-1", "private_ip_addresses.#"),
-					resource.TestCheckResourceAttrSet("pnap_server.acctest-server-1", "public_ip_addresses.#"),
-					resource.TestCheckResourceAttrSet("pnap_server.acctest-server-1", "ram"),
+					resource.TestCheckResourceAttr(rLine, "hostname", rName),
+					resource.TestCheckResourceAttr(rLine, "public", "true"),
+					resource.TestCheckResourceAttr(rLine, "os", "ubuntu/bionic"),
+					resource.TestCheckResourceAttr(rLine, "type", "d0.t1.tiny"),
+					resource.TestCheckResourceAttr(rLine, "location", "PHX"),
+					resource.TestCheckResourceAttrSet(rLine, "location"),
+					resource.TestCheckResourceAttrSet(rLine, "status"),
+					resource.TestCheckResourceAttrSet(rLine, "ssh_keys.#"),
+					resource.TestCheckResourceAttrSet(rLine, "private_ip_addresses.#"),
+					resource.TestCheckResourceAttrSet(rLine, "public_ip_addresses.#"),
+					resource.TestCheckResourceAttrSet(rLine, "ram"),
 				),
 			},
 			{
 				// update previously used configuration with shutdown action
-				Config: testAccShutDownServerResource(),
+				Config: testAccShutDownServerResource(rName),
 				// compose a basic test, checking both remote and local values
 				Check: resource.ComposeTestCheckFunc(
 					// query the API to retrieve the server object
-					//testAccCheckServerExists("pnap_server.acctest-server-1", &server),
+					//testAccCheckServerExists(rName, &server),
 					// verify remote values
 					//testAccCheckServerStatusAttribute(&server),
 					// verify local values
-					resource.TestCheckResourceAttr("pnap_server.acctest-server-1", "status", "powered-off"),
+					resource.TestCheckResourceAttr(rLine, "status", "powered-off"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -173,10 +185,10 @@ func testAccCheckServerResourceDestroy(s *terraform.State) error {
 
 	return nil
 }
-func testAccCreateServerResource() string {
+func testAccCreateServerResource(rName string) string {
 	return fmt.Sprintf(`
-resource "pnap_server" "acctest-server-1" {
-	hostname = "acctest-server-1"
+resource "pnap_server" "%s" {
+	hostname = "%s"
     public = true
     os = "ubuntu/bionic"
     type = "d0.t1.tiny"
@@ -187,13 +199,13 @@ resource "pnap_server" "acctest-server-1" {
     ]
     #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
     #action = "powered-on"
-}`)
+}`, rName, rName)
 }
 
-func testAccRebootServerResource() string {
+func testAccRebootServerResource(rName string) string {
 	return fmt.Sprintf(`
-resource "pnap_server" "acctest-server-1" {
-	hostname = "acctest-server-1"
+resource "pnap_server" "%s" {
+	hostname = "%s"
     public = true
     os = "ubuntu/bionic"
     type = "d0.t1.tiny"
@@ -204,12 +216,12 @@ resource "pnap_server" "acctest-server-1" {
     ]
     #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
     action = "reboot"
-}`)
+}`, rName, rName)
 }
-func testAccResetServerResource() string {
+func testAccResetServerResource(rName string) string {
 	return fmt.Sprintf(`
-resource "pnap_server" "acctest-server-1" {
-	hostname = "acctest-server-1"
+resource "pnap_server" "%s" {
+	hostname = "%s"
     public = true
     os = "ubuntu/bionic"
     type = "d0.t1.tiny"
@@ -220,12 +232,12 @@ resource "pnap_server" "acctest-server-1" {
     ]
     #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
     action = "reset"
-}`)
+}`, rName, rName)
 }
-func testAccPowerOnServerResource() string {
+func testAccPowerOnServerResource(rName string) string {
 	return fmt.Sprintf(`
-resource "pnap_server" "acctest-server-1" {
-	hostname = "acctest-server-1"
+resource "pnap_server" "%s" {
+	hostname = "%s"
     public = true
     os = "ubuntu/bionic"
     type = "d0.t1.tiny"
@@ -236,12 +248,12 @@ resource "pnap_server" "acctest-server-1" {
     ]
     #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
     action = "powered-on"
-}`)
+}`, rName, rName)
 }
-func testAccPowerOffServerResource() string {
+func testAccPowerOffServerResource(rName string) string {
 	return fmt.Sprintf(`
-resource "pnap_server" "acctest-server-1" {
-	hostname = "acctest-server-1"
+resource "pnap_server" "%s" {
+	hostname = "%s"
     public = true
     os = "ubuntu/bionic"
     type = "d0.t1.tiny"
@@ -252,12 +264,12 @@ resource "pnap_server" "acctest-server-1" {
     ]
     #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
     action = "powered-off"
-}`)
+}`, rName, rName)
 }
-func testAccShutDownServerResource() string {
+func testAccShutDownServerResource(rName string) string {
 	return fmt.Sprintf(`
-resource "pnap_server" "acctest-server-1" {
-	hostname = "acctest-server-1"
+resource "pnap_server" "%s" {
+	hostname = "%s"
     public = true
     os = "ubuntu/bionic"
     type = "d0.t1.tiny"
@@ -268,7 +280,7 @@ resource "pnap_server" "acctest-server-1" {
     ]
     #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
     action = "shutdown"
-}`)
+}`, rName, rName)
 }
 
 // testAccCheckServerExists uses the SDK directly to retrieve
@@ -315,10 +327,10 @@ func testAccCheckServerExists(resourceName string, server *dto.LongServer) resou
 
 // testAccCheckServerAttributes verifies attributes are set correctly by
 // Terraform
-func testAccCheckServerAttributes(server *dto.LongServer) resource.TestCheckFunc {
+func testAccCheckServerAttributes(resourceName string, server *dto.LongServer) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		if server.Name != "acctest-server-1" {
-			return fmt.Errorf("hostname not set to acctest-server-1 name is %s", server.Name)
+		if server.Name != resourceName {
+			return fmt.Errorf("hostname not set to %s name is %s", resourceName, server.Name)
 		}
 
 		if server.Os != "ubuntu/bionic" {
@@ -346,10 +358,10 @@ func testAccCheckServerAttributes(server *dto.LongServer) resource.TestCheckFunc
 
 // testAccCheckServerStatusAttribute verifies status attribute is set correctly by
 // Terraform
-func testAccCheckServerStatusAttribute(server *dto.LongServer) resource.TestCheckFunc {
+func testAccCheckServerStatusAttribute(resourceName string, server *dto.LongServer) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		if server.Name != "acctest-server-1" {
-			return fmt.Errorf("hostname not set to acctest-server-1 name is %s", server.Name)
+		if server.Name != resourceName {
+			return fmt.Errorf("hostname not set to %s name is %s", resourceName, server.Name)
 		}
 		if server.Status != "powered-off" {
 			return fmt.Errorf("status is not set, should be powered-off")
