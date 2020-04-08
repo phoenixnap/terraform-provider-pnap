@@ -1,4 +1,4 @@
-resource "pnap_server" "Test-server-1" {
+resource "pnap_server" "Test-Server-1" {
     hostname = "Test-Server-1"
     public = true
     os = "ubuntu/bionic"
@@ -9,5 +9,5 @@ resource "pnap_server" "Test-server-1" {
     
     ]
     #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
-    action = "powered-on"
+    #action = "powered-on"
 }

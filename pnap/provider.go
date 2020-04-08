@@ -1,4 +1,4 @@
-package main
+package pnap
 
 import (
 	"github.com/PNAP/bmc-api-sdk/client"
