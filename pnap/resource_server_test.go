@@ -39,9 +39,8 @@ func TestAccPnapServer_basic(t *testing.T) {
 					testAccCheckServerAttributes(rName, &server),
 					// verify local values
 					resource.TestCheckResourceAttr(rLine, "hostname", rName),
-					resource.TestCheckResourceAttr(rLine, "public", "true"),
 					resource.TestCheckResourceAttr(rLine, "os", "ubuntu/bionic"),
-					resource.TestCheckResourceAttr(rLine, "type", "d0.t1.tiny"),
+					resource.TestCheckResourceAttr(rLine, "type", "s1.c1.medium"),
 					resource.TestCheckResourceAttr(rLine, "location", "PHX"),
 					resource.TestCheckResourceAttrSet(rLine, "location"),
 					resource.TestCheckResourceAttrSet(rLine, "status"),
@@ -114,9 +113,8 @@ func TestAccPnapServer_shutdowntest(t *testing.T) {
 
 					// verify local values
 					resource.TestCheckResourceAttr(rLine, "hostname", rName),
-					resource.TestCheckResourceAttr(rLine, "public", "true"),
 					resource.TestCheckResourceAttr(rLine, "os", "ubuntu/bionic"),
-					resource.TestCheckResourceAttr(rLine, "type", "d0.t1.tiny"),
+					resource.TestCheckResourceAttr(rLine, "type", "s1.c1.medium"),
 					resource.TestCheckResourceAttr(rLine, "location", "PHX"),
 					resource.TestCheckResourceAttrSet(rLine, "location"),
 					resource.TestCheckResourceAttrSet(rLine, "status"),
@@ -189,9 +187,8 @@ func testAccCreateServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-    public = true
     os = "ubuntu/bionic"
-    type = "d0.t1.tiny"
+    type = "s1.c1.medium"
     location = "PHX"
     ssh_keys = [
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
@@ -206,9 +203,8 @@ func testAccRebootServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-    public = true
     os = "ubuntu/bionic"
-    type = "d0.t1.tiny"
+    type = "s1.c1.medium"
     location = "PHX"
     ssh_keys = [
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
@@ -222,9 +218,8 @@ func testAccResetServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-    public = true
     os = "ubuntu/bionic"
-    type = "d0.t1.tiny"
+    type = "s1.c1.medium"
     location = "PHX"
     ssh_keys = [
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
@@ -238,9 +233,8 @@ func testAccPowerOnServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-    public = true
     os = "ubuntu/bionic"
-    type = "d0.t1.tiny"
+    type = "s1.c1.medium"
     location = "PHX"
     ssh_keys = [
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
@@ -254,9 +248,8 @@ func testAccPowerOffServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-    public = true
     os = "ubuntu/bionic"
-    type = "d0.t1.tiny"
+    type = "s1.c1.medium"
     location = "PHX"
     ssh_keys = [
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
@@ -270,9 +263,8 @@ func testAccShutDownServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-    public = true
     os = "ubuntu/bionic"
-    type = "d0.t1.tiny"
+    type = "s1.c1.medium"
     location = "PHX"
     ssh_keys = [
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
@@ -336,7 +328,7 @@ func testAccCheckServerAttributes(resourceName string, server *dto.LongServer) r
 		if server.Os != "ubuntu/bionic" {
 			return fmt.Errorf("OS is not set")
 		}
-		if server.Type != "d0.t1.tiny" {
+		if server.Type != "s1.c1.medium" {
 			return fmt.Errorf("type is not set")
 		}
 		if server.Location != "PHX" {

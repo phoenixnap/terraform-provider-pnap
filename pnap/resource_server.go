@@ -45,10 +45,6 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"public": &schema.Schema{
-				Type:     schema.TypeBool,
-				Required: true,
-			},
 			"private_ip_addresses": &schema.Schema{
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -106,7 +102,6 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	request.Os = d.Get("os").(string)
 	request.Type = d.Get("type").(string)
 	request.Location = d.Get("location").(string)
-	request.Public = d.Get("public").(bool)
 	temp := d.Get("ssh_keys").(*schema.Set).List()
 	keys := make([]string, len(temp))
 	for i, v := range temp {
