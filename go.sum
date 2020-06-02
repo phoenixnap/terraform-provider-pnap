@@ -15,6 +15,8 @@ github.com/PNAP/bmc-api-sdk v0.0.7-alpha h1:mCyxWtNqbfAcP2DiUYj+JvUWlU9gY7Q+ATAq
 github.com/PNAP/bmc-api-sdk v0.0.7-alpha/go.mod h1:YwAp7x12IAWmVZKqYUR/nnPEulek98WvPVe95Mi6QX0=
 github.com/PNAP/bmc-api-sdk v0.0.8 h1:msT9HzeH7weRUcj0MbdhheJeWeic3gPHOVRyASN8fi0=
 github.com/PNAP/bmc-api-sdk v0.0.8/go.mod h1:YwAp7x12IAWmVZKqYUR/nnPEulek98WvPVe95Mi6QX0=
+github.com/PNAP/bmc-api-sdk v0.0.9 h1:fg1VtEfdKjAyYLnfY8bBTMSvJSNoHNCn+7Qxqe7nOO8=
+github.com/PNAP/bmc-api-sdk v0.0.9/go.mod h1:YwAp7x12IAWmVZKqYUR/nnPEulek98WvPVe95Mi6QX0=
 github.com/agext/levenshtein v1.2.1/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
 github.com/agext/levenshtein v1.2.2 h1:0S/Yg6LYmFJ5stwQeRp6EeOcCbj7xiqQSdNelsXvaqE=
 github.com/agext/levenshtein v1.2.2/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
