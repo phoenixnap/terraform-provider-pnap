@@ -6,7 +6,7 @@ Terraform phoenixNAP provider
 Requirements
 ------------
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.12.2x
+-	[Terraform](https://www.terraform.io/downloads.html) 0.12.2+
 -	[Go](https://golang.org/doc/install) 1.13 (to build the provider plugin)
 
 Building the provider
