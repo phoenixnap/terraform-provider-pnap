@@ -15,7 +15,7 @@ Use the navigation to the left to read about the available resources.
 
 Be cautious when using the `pnap_server` resource. PhoenixNAP is invoicing hourly per server.
 
-# Configuration
+# Authentication
 
 Configuration file config.yaml is required for authentication. File should be located in user home directory. File path for Linux is /.pnap/config.yaml and file path for Windows is \AppData\Roaming\pnap\config.yaml
 
@@ -52,5 +52,10 @@ resource "pnap_server" "Test-Server-1" {
 
 The following arguments are supported:
 
-* `auth_token` - (Required) This is your Packet API Auth token. This can also be specified
-  with the `PACKET_AUTH_TOKEN` shell environment variable.
+* `hostname` - (Required) Hostname of server.
+* `description` - Description of server.
+* `os` - (Required) The server’s OS ID used when the server was created (e.g., ubuntu/bionic, centos/centos7). To find the list of available operating systems visit [API docs](https://developers.phoenixnap.com/docs/bmc/1).
+* `type` - (Required) Server type ID. Cannot be changed once a server is created (e.g., s1.c1.small, s1.c1.medium). 
+* `location` - (Required) Server Location ID. Cannot be changed once a server is created (e.g., PHX).
+* `ssh_keys` - (Required) A list of SSH Keys that will be installed on the Linux server. Must contain at least 1 item.
+* `action` - Action to perform on server. Allowed actions are: reboot, reset, powered-on, powered-off, shutdown.
