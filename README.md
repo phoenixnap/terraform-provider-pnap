@@ -59,6 +59,8 @@ $ make build
 
 The *pnap* provider will be installed on `terraform init` as a template of the `pnap_server` resource.
 
+[Terraform provider documentation](https://registry.terraform.io/providers/phoenixnap/pnap/latest/docs)
+
 ## Developing the provider
 
 If you want to work on developing the provider, you need to have [Go](http://www.golang.org) installed on your machine. Go version 1.13.7+ is *required*. You will also need to properly set up a [GOPATH](http://golang.org/doc/code.html#GOPATH) and add `$GOPATH/bin` to your `$PATH`.
@@ -111,7 +113,6 @@ Become part of the Bare Metal Cloud community to get updates on new features, he
 -	[Blog](https:/phoenixnap.com/blog)
 
 ### Documentation
--	[Terraform provider documentation](https://registry.terraform.io/providers/phoenixnap/pnap/latest/docs)
 -	[API documentation](https://developers.phoenixnap.com/docs/bmc/1/overview)
 
 ### Contact phoenixNAP
