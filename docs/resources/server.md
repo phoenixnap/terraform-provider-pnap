@@ -1,9 +1,9 @@
 ---
 layout: "pnap"
-page_title: "PhoenixNAP: pnap_server"
+page_title: "phoenixNAP: pnap_server"
 sidebar_current: "docs-pnap-resource-server"
 description: |-
-  Provides a PhoenixNAP server resource. This can be used to create, modify, and delete servers.
+  Provides a phoenixNAP server resource. This can be used to create, modify, and delete servers.
 ---
 
 # pnap_server Resource

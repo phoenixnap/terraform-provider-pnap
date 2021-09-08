@@ -1,9 +1,9 @@
 ---
 layout: "pnap"
-page_title: "Provider: PhoenixNAP"
+page_title: "Provider: phoenixNAP"
 sidebar_current: "docs-pnap-index"
 description: |-
-  The PhoenixNAP provider is used to interact with the resources supported by PNAP. The provider needs to be configured with the proper credentials before it can be used.
+  The phoenixNAP provider is used to interact with the resources supported by PNAP. The provider needs to be configured with the proper credentials before it can be used.
 ---
 
 # phoenixNAP Provider
