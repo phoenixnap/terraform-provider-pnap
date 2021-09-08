@@ -5,12 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PNAP/bmc-api-sdk/client"
-	"github.com/PNAP/bmc-api-sdk/command"
-	"github.com/PNAP/bmc-api-sdk/dto"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/phoenixnap/go-sdk-bmc/client"
+	"github.com/phoenixnap/go-sdk-bmc/command"
+	"github.com/phoenixnap/go-sdk-bmc/dto"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccPnapServer_basic(t *testing.T) {

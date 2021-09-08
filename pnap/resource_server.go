@@ -5,15 +5,17 @@ import (
 	"log"
 	"time"
 
-	"github.com/PNAP/bmc-api-sdk/client"
-	"github.com/PNAP/bmc-api-sdk/command"
-	"github.com/PNAP/bmc-api-sdk/dto"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	//"github.com/phoenixnap/go-sdk-bmc/client"
+	"github.com/phoenixnap/go-sdk-bmc/command"
+	"github.com/phoenixnap/go-sdk-bmc/dto"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	client "github.com/phoenixnap/go-sdk-bmc/client/pnapClient"
+
 )
 
 const (
-	pnapRetryTimeout       = 15 * time.Minute
+	pnapRetryTimeout       = 30 * time.Minute
 	pnapDeleteRetryTimeout = 15 * time.Minute
 	pnapRetryDelay         = 5 * time.Second
 	pnapRetryMinTimeout    = 3 * time.Second
@@ -65,7 +67,7 @@ func resourceServer() *schema.Resource {
 			},
 			"ssh_keys": &schema.Schema{
 				Type:     schema.TypeSet,
-				Required: true,
+				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"location": &schema.Schema{
@@ -74,6 +76,18 @@ func resourceServer() *schema.Resource {
 			},
 			"cpu": &schema.Schema{
 				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"cpu_count": &schema.Schema{
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"cores_per_cpu": &schema.Schema{
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"cpu_frequency_in_ghz": &schema.Schema{
+				Type:     schema.TypeInt,
 				Computed: true,
 			},
 			"ram": &schema.Schema{
@@ -87,6 +101,44 @@ func resourceServer() *schema.Resource {
 			"action": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+			},
+			"network_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"install_default_ssh_keys": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"ssh_key_ids": &schema.Schema{
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"reservation_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"pricing_model": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"rdp_allowed_ips": &schema.Schema{
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"password": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+				Sensitive: true,
+			},
+			"cluster_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		},
 	}
@@ -102,12 +154,39 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	request.Os = d.Get("os").(string)
 	request.Type = d.Get("type").(string)
 	request.Location = d.Get("location").(string)
+	request.NetworkType = d.Get("network_type").(string)
+
+	request.ReservationId = d.Get("reservation_id").(string)
+	request.PricingModel = d.Get("pricing_model").(string)
+
+	request.InstallDefaultSshKeys = d.Get("install_default_ssh_keys").(bool)
 	temp := d.Get("ssh_keys").(*schema.Set).List()
 	keys := make([]string, len(temp))
 	for i, v := range temp {
 		keys[i] = fmt.Sprint(v)
 	}
-	request.SSHKeys = keys
+	request.SshKeys = keys
+
+	temp1 := d.Get("ssh_key_ids").(*schema.Set).List()
+	keyIds := make([]string, len(temp1))
+	for i, v := range temp1 {
+		keyIds[i] = fmt.Sprint(v)
+	}
+	request.SshKeyIds = keyIds
+
+
+	dtoWindows := dto.Windows{}
+
+	temp2 := d.Get("rdp_allowed_ips").(*schema.Set).List()
+	allowedIps := make([]string, len(temp2))
+	for i, v := range temp2 {
+		allowedIps[i] = fmt.Sprint(v)
+	}
+
+	dtoWindows.RdpAllowedIps = allowedIps
+	dtoOsConfiguration := dto.OsConfiguration{}
+	dtoOsConfiguration.Windows = dtoWindows
+	request.OsConfiguration = dtoOsConfiguration
 
 	requestCommand := command.NewCreateServerCommand(client, *request)
 
@@ -120,6 +199,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		response := &dto.LongServer{}
 		response.FromBytes(resp)
 		d.SetId(response.ID)
+		d.Set("password", response.Password)
 		waitResultError := resourceWaitForCreate(response.ID, &client)
 		if waitResultError != nil {
 			return waitResultError
@@ -127,7 +207,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	} else {
 		response := &dto.ErrorMessage{}
 		response.FromBytes(resp)
-		return fmt.Errorf("API Returned Code %v Message: %s Validation Errors: %s", code, response.Message, response.ValidationErrors)
+		return fmt.Errorf("API create server Returned Code %v Message: %s Validation Errors: %s", code, response.Message, response.ValidationErrors)
 	}
 
 	return resourceServerRead(d, m)
@@ -157,7 +237,12 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("type", response.Type)
 	d.Set("location", response.Location)
 	d.Set("cpu", response.CPU)
+	d.Set("cpu_count", response.CPUCount)
+	d.Set("cores_per_cpu", response.CoresPerCpu)
+	d.Set("cpu_frequency_in_ghz", response.CPUFrequency)
 	d.Set("ram", response.RAM)
+	d.Set("storage", response.Storage)
+	d.Set("network_type", response.NetworkType)
 	d.Set("action", "")
 	var privateIPs []interface{}
 	for _, v := range response.PrivateIPAddresses {
@@ -169,6 +254,12 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 		publicIPs = append(publicIPs, k)
 	}
 	d.Set("public_ip_addresses", publicIPs)
+	d.Set("reservation_id", response.ReservationID)
+	d.Set("pricing_model", response.PricingModel)
+	
+	d.Set("cluster_id", response.ClusterID)
+
+	
 	return nil
 }
 
@@ -227,14 +318,38 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			for i, v := range temp {
 				keys[i] = fmt.Sprint(v)
 			}
-			request.SSHKeys = keys
+			request.SshKeys = keys
+			request.InstallDefaultSshKeys = d.Get("install_default_ssh_keys").(bool)
+
+
+			temp1 := d.Get("ssh_key_ids").(*schema.Set).List()
+			keyIds := make([]string, len(temp1))
+			for i, v := range temp1 {
+				keyIds[i] = fmt.Sprint(v)
+			}
+			request.SshKeyIds = keyIds
+
+			dtoWindows := dto.Windows{}
+
+			temp2 := d.Get("rdp_allowed_ips").(*schema.Set).List()
+			allowedIps := make([]string, len(temp2))
+			for i, v := range temp2 {
+				allowedIps[i] = fmt.Sprint(v)
+			}
+
+			dtoWindows.RdpAllowedIps = allowedIps
+			dtoOsConfiguration := dto.OsConfiguration{}
+			dtoOsConfiguration.Windows = dtoWindows
+			request.OsConfiguration = dtoOsConfiguration
+
 			request.ID = d.Id()
 
 			requestCommand = command.NewResetCommand(client, *request)
-			err := run(requestCommand)
+			err, resp := runResetCommand(requestCommand)
 			if err != nil {
 				return err
 			}
+			d.Set("password", resp.Password)
 			waitResultError := resourceWaitForCreate(d.Id(), &client)
 			if waitResultError != nil {
 				return waitResultError
@@ -258,6 +373,25 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			return fmt.Errorf("Unsuported action")
 		}
 
+	} else if d.HasChange("pricing_model"){
+		client := m.(client.PNAPClient)
+		var requestCommand command.Executor
+		//reserve action
+		request := &dto.ProvisionedServer{}
+		request.ID = d.Id()
+		request.PricingModel = d.Get("pricing_model").(string)
+
+		requestCommand = command.NewReserveCommand(client, *request)
+		resp, err := requestCommand.Execute()
+		if err != nil {
+			return err
+		}
+		code := resp.StatusCode
+		if code != 200 {
+			response := &dto.ErrorMessage{}
+			response.FromBytes(resp)
+			return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
+		}
 	} else {
 		return fmt.Errorf("Unsuported action")
 	}
@@ -359,7 +493,7 @@ func refreshForCreate(client *client.PNAPClient, id string) resource.StateRefres
 		if code != 200 {
 			response := &dto.ErrorMessage{}
 			response.FromBytes(resp)
-			return 0, "", fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
+			return 0, "", fmt.Errorf("API refressh for create Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
 		}
 		response := &dto.LongServer{}
 		response.FromBytes(resp)
@@ -379,4 +513,23 @@ func run(command command.Executor) error {
 		return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
 	}
 	return nil
+}
+
+func runResetCommand(command command.Executor) (error, dto.ServerActionResponse) {
+	resp, err := command.Execute()
+	if err != nil {
+		return err, dto.ServerActionResponse{}
+	}
+	code := resp.StatusCode
+	if code != 200 {
+		response := &dto.ErrorMessage{}
+		response.FromBytes(resp)
+		return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors), dto.ServerActionResponse{}
+	}
+	if code == 200 {
+		response := &dto.ServerActionResponse{}
+		response.FromBytes(resp)
+		return nil, *response
+	}
+	return nil, dto.ServerActionResponse{}
 }
