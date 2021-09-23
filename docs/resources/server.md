@@ -42,8 +42,8 @@ The following arguments are supported:
 * `hostname` - (Required) Server hostname.
 * `description` - Server description.
 * `os` - (Required) The server’s OS ID used when the server was created (e.g., ubuntu/bionic, centos/centos7). For a full list of available operating systems visit [API docs](https://developers.phoenixnap.com/docs/bmc/1).
-* `type` - (Required) Server type ID. Cannot be changed once a server is created (e.g., s1.c1.small, s1.c1.medium). 
-* `location` - (Required) Server Location ID. Cannot be changed once a server is created (e.g., PHX).
+* `type` - (Required) Server type ID. Cannot be changed once a server is created (e.g., s1.c1.small, s1.c1.medium). For a full list of available types visit [API docs](https://developers.phoenixnap.com/docs/bmc/1). 
+* `location` - (Required) Server Location ID. Cannot be changed once a server is created (e.g., PHX). For a full list of available locations visit [API docs](https://developers.phoenixnap.com/docs/bmc/1)
 * `installDefaultSshKeys` - Whether or not to install SSH keys marked as default in addition to any SSH keys specified in this request.
 * `ssh_keys` - A list of SSH Keys that will be installed on the server.
 * `ssh_key_ids` - A list of SSH key IDs that will be installed on the server in addition to any SSH keys specified in this request.
@@ -51,7 +51,9 @@ The following arguments are supported:
 * `pricing_model` - Server pricing model. Currently this field should be set to HOURLY, ONE_MONTH_RESERVATION, TWELVE_MONTHS_RESERVATION, TWENTY_FOUR_MONTHS_RESERVATION or THIRTY_SIX_MONTHS_RESERVATION.
 * `network_type` - The type of network configuration for this server. Currently this field should be set to PUBLIC_AND_PRIVATE or PRIVATE_ONLY.
 * `rdp_allowed_ips` - List of IPs allowed for RDP access to Windows OS. Supported in single IP, CIDR and range format. When undefined, RDP is disabled. To allow RDP access from any IP use 0.0.0.0/0. Must contain at least 1 item.
+* `management_access_allowed_ips` - Define list of IPs allowed to access the Management UI. Supported in single IP, CIDR and range format. When undefined, Management UI is disabled.Must contain at least 1 item.
 * `action` - Action to perform on server. Allowed actions are: reboot, reset, powered-on, powered-off, shutdown.
+
 
 ## Attributes Reference
 
@@ -77,6 +79,10 @@ The following attributes are exported:
 * `password` - Password set for user Admin on Windows server which will only be returned in response to provisioning a server.
 * `network_type` - The type of network configuration for this server. 
 * `cluster_id` - The cluster reference id if any.
+* `management_ui_url` - The URL of the management UI which will only be returned in response to provisioning a server.
+* `root_password` - Password set for user root on an ESXi server which will only be returned in response to provisioning a server.
+* `management_access_allowed_ips` - A list of IPs allowed to access the Management UI. Supported in single IP, CIDR and range format. When undefined, Management UI is disabled.
+* `provisioned_on` - Date and time when server was provisioned.
 
 
  

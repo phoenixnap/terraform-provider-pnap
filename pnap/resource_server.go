@@ -1,9 +1,11 @@
 package pnap
 
 import (
+	"strings"
 	"fmt"
 	"log"
 	"time"
+	"encoding/json"
 
 	//"github.com/phoenixnap/go-sdk-bmc/client"
 	"github.com/phoenixnap/go-sdk-bmc/command"
@@ -129,6 +131,7 @@ func resourceServer() *schema.Resource {
 			"rdp_allowed_ips": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
+				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"password": &schema.Schema{
@@ -140,6 +143,26 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"management_ui_url": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"root_password": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+				//Sensitive: true,
+			},
+			"management_access_allowed_ips": &schema.Schema{
+				Type:     schema.TypeSet,
+				Optional: true,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"provisioned_on": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 		},
 	}
 }
@@ -185,8 +208,15 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
 	dtoWindows.RdpAllowedIps = allowedIps
 	dtoOsConfiguration := dto.OsConfiguration{}
-	dtoOsConfiguration.Windows = dtoWindows
+	dtoOsConfiguration.Windows = &dtoWindows
 	request.OsConfiguration = dtoOsConfiguration
+
+	temp3 := d.Get("management_access_allowed_ips").(*schema.Set).List()
+	managementAccessAllowedIps := make([]string, len(temp3))
+	for i, v := range temp3 {
+		managementAccessAllowedIps[i] = fmt.Sprint(v)
+	}
+	request.OsConfiguration.ManagementAccessAllowedIps = managementAccessAllowedIps
 
 	requestCommand := command.NewCreateServerCommand(client, *request)
 
@@ -200,6 +230,11 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		response.FromBytes(resp)
 		d.SetId(response.ID)
 		d.Set("password", response.Password)
+		if(&response.OsConfiguration != nil){
+			d.Set("root_password", response.OsConfiguration.RootPassword)
+			d.Set("management_ui_url", response.OsConfiguration.ManagementUiUrl)
+		}
+
 		waitResultError := resourceWaitForCreate(response.ID, &client)
 		if waitResultError != nil {
 			return waitResultError
@@ -258,6 +293,23 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("pricing_model", response.PricingModel)
 	
 	d.Set("cluster_id", response.ClusterID)
+	if(&response.OsConfiguration != nil && response.OsConfiguration.ManagementAccessAllowedIps != nil){
+		var mgmntAccessAllowedIps []interface{}
+		for _, k := range response.OsConfiguration.ManagementAccessAllowedIps {
+			mgmntAccessAllowedIps = append(mgmntAccessAllowedIps, k)
+		}
+		d.Set("management_access_allowed_ips", mgmntAccessAllowedIps)
+	}
+
+	if(&response.OsConfiguration != nil && response.OsConfiguration.Windows != nil && response.OsConfiguration.Windows.RdpAllowedIps != nil){
+		var rdpAllowedIps []interface{}
+		for _, k := range response.OsConfiguration.Windows.RdpAllowedIps {
+			rdpAllowedIps = append(rdpAllowedIps, k)
+		}
+		d.Set("rdp_allowed_ips", rdpAllowedIps)
+	}
+
+	d.Set("provisioned_on", response.ProvisionedOn)
 
 	
 	return nil
@@ -329,27 +381,55 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			}
 			request.SshKeyIds = keyIds
 
-			dtoWindows := dto.Windows{}
 
-			temp2 := d.Get("rdp_allowed_ips").(*schema.Set).List()
-			allowedIps := make([]string, len(temp2))
-			for i, v := range temp2 {
-				allowedIps[i] = fmt.Sprint(v)
+			dtoOsConfiguration := dto.OsConfiguration{}
+			isWindows:= strings.Contains(d.Get("os").(string), "windows")
+			isEsxi:= strings.Contains(d.Get("os").(string), "esxi")
+  
+			if(isWindows){
+				//log.Printf("Waiting for server windows to be reseted...")
+				dtoWindows := dto.Windows{}
+				temp2 := d.Get("rdp_allowed_ips").(*schema.Set).List()
+			    allowedIps := make([]string, len(temp2))
+			    for i, v := range temp2 {
+				   allowedIps[i] = fmt.Sprint(v)
+			    }
+
+			     dtoWindows.RdpAllowedIps = allowedIps
+				 dtoOsConfiguration.Windows = &dtoWindows
+				 dtoOsConfiguration.Esxi = nil
 			}
 
-			dtoWindows.RdpAllowedIps = allowedIps
-			dtoOsConfiguration := dto.OsConfiguration{}
-			dtoOsConfiguration.Windows = dtoWindows
+            if(isEsxi){
+				//log.Printf("Waiting for server esxi to be reseted...")
+				dtoEsxi := dto.Esxi{}
+				temp3 := d.Get("management_access_allowed_ips").(*schema.Set).List()
+	            managementAccessAllowedIps := make([]string, len(temp3))
+	            for i, v := range temp3 {
+		          managementAccessAllowedIps[i] = fmt.Sprint(v)
+	            }
+	            dtoEsxi.ManagementAccessAllowedIps = managementAccessAllowedIps
+				dtoOsConfiguration.Esxi = &dtoEsxi
+				dtoOsConfiguration.Windows = nil
+				
+			}
+			
 			request.OsConfiguration = dtoOsConfiguration
-
+			//b, err := json.MarshalIndent(request, "", "  ")
+			//log.Printf("request object is" + string(b))
 			request.ID = d.Id()
-
 			requestCommand = command.NewResetCommand(client, *request)
 			err, resp := runResetCommand(requestCommand)
 			if err != nil {
 				return err
 			}
 			d.Set("password", resp.Password)
+
+			 if(&resp.OsConfiguration != nil && resp.OsConfiguration.Esxi != nil){
+				d.Set("root_password", resp.OsConfiguration.Esxi.RootPassword)
+				d.Set("management_ui_url", resp.OsConfiguration.Esxi.ManagementUiUrl)
+			}
+ 
 			waitResultError := resourceWaitForCreate(d.Id(), &client)
 			if waitResultError != nil {
 				return waitResultError
