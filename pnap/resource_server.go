@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"encoding/json"
 
 	//"github.com/phoenixnap/go-sdk-bmc/client"
 	"github.com/phoenixnap/go-sdk-bmc/command"
