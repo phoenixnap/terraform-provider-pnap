@@ -1,17 +1,23 @@
 package pnap
 
 import (
+	"encoding/json"
 	"strings"
 	"fmt"
 	"log"
 	"time"
 
 	//"github.com/phoenixnap/go-sdk-bmc/client"
-	"github.com/phoenixnap/go-sdk-bmc/command"
-	"github.com/phoenixnap/go-sdk-bmc/dto"
+	//"github.com/phoenixnap/go-sdk-bmc/command"
+	//"github.com/phoenixnap/go-sdk-bmc/dto"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	client "github.com/phoenixnap/go-sdk-bmc/client/pnapClient"
+	//client "github.com/phoenixnap/go-sdk-bmc/client/pnapClient"
+
+	"github.com/PNAP/go-sdk-helper-bmc/receiver"
+	"github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/server"
+	//helpercommand "github.com/PNAP/go-sdk-helper-bmc/command"
+	bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi"
 
 )
 
@@ -111,6 +117,7 @@ func resourceServer() *schema.Resource {
 			"install_default_ssh_keys": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
+				Default: true,
 			},
 			"ssh_key_ids": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -162,68 +169,239 @@ func resourceServer() *schema.Resource {
 				Computed: true,
 			},
 
+			"network_configuration": &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+				  Schema: map[string]*schema.Schema{
+					"private_network_configuration": &schema.Schema{  
+						Type:     schema.TypeList,
+						Optional: true,
+						Computed: true,
+						MaxItems: 1,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+						  		"gateway_address": &schema.Schema{
+									Type:     schema.TypeString,
+									Optional: true,
+									Computed: true,
+						  		},
+						  		"configuration_type": &schema.Schema{
+							  		Type:     schema.TypeString,
+							  		Computed: true,
+									Optional: true,
+									Default:  nil,
+						  		},
+								"private_networks": &schema.Schema{
+									Type:     schema.TypeList,
+									Computed: true,
+									Optional: true,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"server_private_network": &schema.Schema{  
+												Type:     schema.TypeList,
+												Optional: true,
+												Computed: true,
+												MaxItems: 1,
+												Elem: &schema.Resource{
+													Schema: map[string]*schema.Schema{
+														"id": &schema.Schema{
+															Type:     schema.TypeString,
+															Required: true,
+														  },
+														  "ips": &schema.Schema{
+															Type:     schema.TypeSet,
+															Optional: true,
+															Computed: true,
+															Elem:     &schema.Schema{Type: schema.TypeString},
+														  },
+														  "dhcp": &schema.Schema{
+															Type:     schema.TypeBool,
+															Optional: true,
+															Computed: true,
+															Default: nil,
+														  },
+													},
+												},
+											},
+										},
+
+									},
+								},
+					  		},
+						},
+				    },
+				   },
+				},
+			},
 		},
 	}
 }
 
 func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
-	client := m.(client.PNAPClient)
+	client := m.(receiver.BMCSDK)
 
-	request := &dto.ProvisionedServer{}
-	request.Name = d.Get("hostname").(string)
-	request.Description = d.Get("description").(string)
+	request := &bmcapiclient.ServerCreate{}
+	request.Hostname = d.Get("hostname").(string)
+	var desc = d.Get("description").(string)
+	if(len(desc)>0){
+		request.Description = &desc
+	}
 	request.Os = d.Get("os").(string)
 	request.Type = d.Get("type").(string)
 	request.Location = d.Get("location").(string)
-	request.NetworkType = d.Get("network_type").(string)
+	var networkType = d.Get("network_type").(string)
 
-	request.ReservationId = d.Get("reservation_id").(string)
-	request.PricingModel = d.Get("pricing_model").(string)
+	if(len(networkType)>0){
+		request.NetworkType = &networkType
+	}
 
-	request.InstallDefaultSshKeys = d.Get("install_default_ssh_keys").(bool)
+	
+
+	var resId = d.Get("reservation_id").(string)
+	if(len(resId)>0){
+		request.ReservationId = &resId
+	}
+	
+
+	var prModel = d.Get("pricing_model").(string)
+	if(len(prModel)>0){
+		request.PricingModel = &prModel
+	}
+
+	var installDefault = d.Get("install_default_ssh_keys").(bool)
+	request.InstallDefaultSshKeys = &installDefault
 	temp := d.Get("ssh_keys").(*schema.Set).List()
 	keys := make([]string, len(temp))
 	for i, v := range temp {
 		keys[i] = fmt.Sprint(v)
 	}
-	request.SshKeys = keys
+	//todo
+	request.SshKeys = &keys
 
 	temp1 := d.Get("ssh_key_ids").(*schema.Set).List()
 	keyIds := make([]string, len(temp1))
 	for i, v := range temp1 {
 		keyIds[i] = fmt.Sprint(v)
 	}
-	request.SshKeyIds = keyIds
-
-
-	dtoWindows := dto.Windows{}
+	//todo
+	request.SshKeyIds = &keyIds
 
 	temp2 := d.Get("rdp_allowed_ips").(*schema.Set).List()
 	allowedIps := make([]string, len(temp2))
 	for i, v := range temp2 {
 		allowedIps[i] = fmt.Sprint(v)
 	}
-
-	dtoWindows.RdpAllowedIps = allowedIps
-	dtoOsConfiguration := dto.OsConfiguration{}
-	dtoOsConfiguration.Windows = &dtoWindows
-	request.OsConfiguration = dtoOsConfiguration
-
 	temp3 := d.Get("management_access_allowed_ips").(*schema.Set).List()
 	managementAccessAllowedIps := make([]string, len(temp3))
 	for i, v := range temp3 {
 		managementAccessAllowedIps[i] = fmt.Sprint(v)
 	}
-	request.OsConfiguration.ManagementAccessAllowedIps = managementAccessAllowedIps
+	if(len(temp2) > 0 || len(temp3) > 0){
+		dtoOsConfiguration := bmcapiclient.OsConfiguration{}
+		
+		if(len(temp2) > 0){
+			dtoWindows := bmcapiclient.OsConfigurationWindows{} 
+			dtoWindows.RdpAllowedIps = &allowedIps
+			dtoOsConfiguration.Windows = &dtoWindows
+		}
+		if(len(temp3) > 0){
+			dtoOsConfiguration.ManagementAccessAllowedIps = &managementAccessAllowedIps
+		}
+		request.OsConfiguration = &dtoOsConfiguration
+	}
 
-	requestCommand := command.NewCreateServerCommand(client, *request)
+	// private network block
+	networkConfiguration := d.Get("network_configuration").([]interface{})[0]
+	networkConfigurationItem := networkConfiguration.(map[string]interface{})
+	privateNetworkConfiguration := networkConfigurationItem["private_network_configuration"].([]interface{})[0]
+	privateNetworkConfigurationItem := privateNetworkConfiguration.(map[string]interface{})
+	
+	gatewayAddress:=privateNetworkConfigurationItem["gateway_address"].(string)
+	configurationType:=privateNetworkConfigurationItem["configuration_type"].(string)
+	privateNetworks := privateNetworkConfigurationItem["private_networks"].([]interface{})
+	
+
+	if (len(gatewayAddress)>0 || len(configurationType)>0 || len(privateNetworks)>0){
+		networkConfigurationObject:= bmcapiclient.NetworkConfiguration{}
+		privateNetworkConfigurationObject  := bmcapiclient.PrivateNetworkConfiguration{}
+		if (len(gatewayAddress)>0){
+			privateNetworkConfigurationObject.GatewayAddress = &gatewayAddress
+		}
+		
+		if (len(configurationType)>0){
+			privateNetworkConfigurationObject.ConfigurationType = &configurationType
+		}
+
+		networkConfigurationObject.PrivateNetworkConfiguration = &privateNetworkConfigurationObject
+		if (len(privateNetworks)>0){
+		
+			serPrivateNets := make([]bmcapiclient.ServerPrivateNetwork, len(privateNetworks))
+			
+			for k, j := range privateNetworks {
+				serverPrivateNetworkObject := bmcapiclient.ServerPrivateNetwork{}
+
+				privateNetworkItem:=j.(map[string]interface{})
+
+				serverPrivateNetwork := privateNetworkItem["server_private_network"].([]interface{})[0]
+				serverPrivateNetworkItem:=serverPrivateNetwork.(map[string]interface{})
+
+
+				id:=serverPrivateNetworkItem["id"].(string)
+				tempIps:=serverPrivateNetworkItem["ips"].(*schema.Set).List()
+		
+				
+				NetIps := make([]string, len(tempIps))
+				for i, v := range tempIps {
+					NetIps[i] = fmt.Sprint(v)
+				}
+				dhcp:=serverPrivateNetworkItem["dhcp"].(bool)
+			
+				if(len(id))>0{
+					serverPrivateNetworkObject.Id=id
+				}
+				if(len(NetIps))>0{
+					serverPrivateNetworkObject.Ips=&NetIps
+				}
+				
+				serverPrivateNetworkObject.Dhcp=&dhcp
+				serPrivateNets[k] = serverPrivateNetworkObject
+		
+			}
+			privateNetworkConfigurationObject.PrivateNetworks = &serPrivateNets
+		}
+		request.NetworkConfiguration = &networkConfigurationObject
+			b, _ := json.MarshalIndent(request, "", "  ")
+			log.Printf("request object is" + string(b))
+	}
+
+	
+
+
+	// end of private network block
+	requestCommand := server.NewCreateServerCommand(client, *request)
 
 	resp, err := requestCommand.Execute()
 	if err != nil {
 		return err
+	}else{
+		
+		d.SetId(resp.Id)
+		d.Set("password", resp.Password)
+		if(resp.OsConfiguration != nil){
+			d.Set("root_password", resp.OsConfiguration.RootPassword)
+			d.Set("management_ui_url", resp.OsConfiguration.ManagementUiUrl)
+		}
+
+		waitResultError := resourceWaitForCreate(resp.Id, &client)
+		if waitResultError != nil {
+			return waitResultError
+		}
 	}
-	code := resp.StatusCode
+	/* code := resp.StatusCode
 	if code == 200 {
 		response := &dto.LongServer{}
 		response.FromBytes(resp)
@@ -242,73 +420,73 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		response := &dto.ErrorMessage{}
 		response.FromBytes(resp)
 		return fmt.Errorf("API create server Returned Code %v Message: %s Validation Errors: %s", code, response.Message, response.ValidationErrors)
-	}
+	} */
 
 	return resourceServerRead(d, m)
 }
 
 func resourceServerRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(client.PNAPClient)
+	client := m.(receiver.BMCSDK)
 	serverID := d.Id()
-	requestCommand := command.NewGetServerCommand(client, serverID)
+	requestCommand := server.NewGetServerCommand(client, serverID)
 	resp, err := requestCommand.Execute()
 	if err != nil {
 		return err
 	}
-	code := resp.StatusCode
+	/* code := resp.StatusCode
 	if code != 200 {
 		response := &dto.ErrorMessage{}
 		response.FromBytes(resp)
 		return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
 	}
 	response := &dto.LongServer{}
-	response.FromBytes(resp)
-	d.SetId(response.ID)
-	d.Set("status", response.Status)
-	d.Set("hostname", response.Name)
-	d.Set("description", response.Description)
-	d.Set("os", response.Os)
-	d.Set("type", response.Type)
-	d.Set("location", response.Location)
-	d.Set("cpu", response.CPU)
-	d.Set("cpu_count", response.CPUCount)
-	d.Set("cores_per_cpu", response.CoresPerCpu)
-	d.Set("cpu_frequency_in_ghz", response.CPUFrequency)
-	d.Set("ram", response.RAM)
-	d.Set("storage", response.Storage)
-	d.Set("network_type", response.NetworkType)
+	response.FromBytes(resp) */
+	d.SetId(resp.Id)
+	d.Set("status", resp.Status)
+	d.Set("hostname", resp.Hostname)
+	d.Set("description", resp.Description)
+	d.Set("os", resp.Os)
+	d.Set("type", resp.Type)
+	d.Set("location", resp.Location)
+	d.Set("cpu", resp.Cpu)
+	d.Set("cpu_count", resp.CpuCount)
+	d.Set("cores_per_cpu", resp.CoresPerCpu)
+	d.Set("cpu_frequency_in_ghz", resp.CpuFrequency)
+	d.Set("ram", resp.Ram)
+	d.Set("storage", resp.Storage)
+	d.Set("network_type", resp.NetworkType)
 	d.Set("action", "")
 	var privateIPs []interface{}
-	for _, v := range response.PrivateIPAddresses {
+	for _, v := range resp.PrivateIpAddresses {
 		privateIPs = append(privateIPs, v)
 	}
 	d.Set("private_ip_addresses", privateIPs)
 	var publicIPs []interface{}
-	for _, k := range response.PublicIPAddresses {
+	for _, k := range resp.PublicIpAddresses {
 		publicIPs = append(publicIPs, k)
 	}
 	d.Set("public_ip_addresses", publicIPs)
-	d.Set("reservation_id", response.ReservationID)
-	d.Set("pricing_model", response.PricingModel)
+	d.Set("reservation_id", resp.ReservationId)
+	d.Set("pricing_model", resp.PricingModel)
 	
-	d.Set("cluster_id", response.ClusterID)
-	if(&response.OsConfiguration != nil && response.OsConfiguration.ManagementAccessAllowedIps != nil){
+	d.Set("cluster_id", resp.ClusterId)
+	if(resp.OsConfiguration != nil && resp.OsConfiguration.ManagementAccessAllowedIps != nil){
 		var mgmntAccessAllowedIps []interface{}
-		for _, k := range response.OsConfiguration.ManagementAccessAllowedIps {
+		for _, k := range *resp.OsConfiguration.ManagementAccessAllowedIps {
 			mgmntAccessAllowedIps = append(mgmntAccessAllowedIps, k)
 		}
 		d.Set("management_access_allowed_ips", mgmntAccessAllowedIps)
 	}
 
-	if(&response.OsConfiguration != nil && response.OsConfiguration.Windows != nil && response.OsConfiguration.Windows.RdpAllowedIps != nil){
+	if(resp.OsConfiguration != nil && resp.OsConfiguration.Windows != nil && resp.OsConfiguration.Windows.RdpAllowedIps != nil){
 		var rdpAllowedIps []interface{}
-		for _, k := range response.OsConfiguration.Windows.RdpAllowedIps {
+		for _, k := range *resp.OsConfiguration.Windows.RdpAllowedIps {
 			rdpAllowedIps = append(rdpAllowedIps, k)
 		}
 		d.Set("rdp_allowed_ips", rdpAllowedIps)
 	}
 
-	d.Set("provisioned_on", response.ProvisionedOn)
+	d.Set("provisioned_on", resp.ProvisionedOn.String())
 
 	
 	return nil
@@ -316,16 +494,16 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 
 func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 	if d.HasChange("action") {
-		client := m.(client.PNAPClient)
-		var requestCommand command.Executor
+		client := m.(receiver.BMCSDK)
+		//var requestCommand helpercommand.Executor
 		newStatus := d.Get("action").(string)
 
 		switch newStatus {
 		case "powered-on":
 			//do power-on request
 			serverID := d.Id()
-			requestCommand = command.NewPowerOnCommand(client, serverID)
-			err := run(requestCommand)
+			requestCommand := server.NewPowerOnServerCommand(client, serverID)
+			_, err := requestCommand.Execute()
 			if err != nil {
 				return err
 			}
@@ -338,8 +516,8 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 
 			serverID := d.Id()
 
-			requestCommand = command.NewPowerOffCommand(client, serverID)
-			err := run(requestCommand)
+			requestCommand := server.NewPowerOffServerCommand(client, serverID)
+			_, err := requestCommand.Execute()
 			if err != nil {
 				return err
 			}
@@ -352,8 +530,8 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 
 			serverID := d.Id()
 
-			requestCommand = command.NewRebootCommand(client, serverID)
-			err := run(requestCommand)
+			requestCommand := server.NewRebootServerCommand(client, serverID)
+			_, err := requestCommand.Execute()
 			if err != nil {
 				return err
 			}
@@ -363,14 +541,14 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			}
 		case "reset":
 			//reset
-			request := &dto.ProvisionedServer{}
+			request := &bmcapiclient.ServerReset{}
 			temp := d.Get("ssh_keys").(*schema.Set).List()
 			keys := make([]string, len(temp))
 			for i, v := range temp {
 				keys[i] = fmt.Sprint(v)
 			}
-			request.SshKeys = keys
-			request.InstallDefaultSshKeys = d.Get("install_default_ssh_keys").(bool)
+			request.SshKeys = &keys
+			request.InstallDefaultSshKeys = d.Get("install_default_ssh_keys").(*bool)
 
 
 			temp1 := d.Get("ssh_key_ids").(*schema.Set).List()
@@ -378,53 +556,55 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			for i, v := range temp1 {
 				keyIds[i] = fmt.Sprint(v)
 			}
-			request.SshKeyIds = keyIds
+			request.SshKeyIds = &keyIds
 
 
-			dtoOsConfiguration := dto.OsConfiguration{}
+			dtoOsConfiguration := bmcapiclient.OsConfigurationMap{}
 			isWindows:= strings.Contains(d.Get("os").(string), "windows")
 			isEsxi:= strings.Contains(d.Get("os").(string), "esxi")
   
 			if(isWindows){
 				//log.Printf("Waiting for server windows to be reseted...")
-				dtoWindows := dto.Windows{}
+				dtoWindows := bmcapiclient.OsConfigurationWindows{}
 				temp2 := d.Get("rdp_allowed_ips").(*schema.Set).List()
 			    allowedIps := make([]string, len(temp2))
 			    for i, v := range temp2 {
 				   allowedIps[i] = fmt.Sprint(v)
 			    }
 
-			     dtoWindows.RdpAllowedIps = allowedIps
+			     dtoWindows.RdpAllowedIps = &allowedIps
 				 dtoOsConfiguration.Windows = &dtoWindows
 				 dtoOsConfiguration.Esxi = nil
+				 request.OsConfiguration = &dtoOsConfiguration
 			}
 
             if(isEsxi){
 				//log.Printf("Waiting for server esxi to be reseted...")
-				dtoEsxi := dto.Esxi{}
+				dtoEsxi := bmcapiclient.OsConfigurationMapEsxi{}
 				temp3 := d.Get("management_access_allowed_ips").(*schema.Set).List()
 	            managementAccessAllowedIps := make([]string, len(temp3))
 	            for i, v := range temp3 {
 		          managementAccessAllowedIps[i] = fmt.Sprint(v)
 	            }
-	            dtoEsxi.ManagementAccessAllowedIps = managementAccessAllowedIps
+	            dtoEsxi.ManagementAccessAllowedIps = &managementAccessAllowedIps
 				dtoOsConfiguration.Esxi = &dtoEsxi
 				dtoOsConfiguration.Windows = nil
+				request.OsConfiguration = &dtoOsConfiguration
 				
 			}
 			
-			request.OsConfiguration = dtoOsConfiguration
+			
 			//b, err := json.MarshalIndent(request, "", "  ")
 			//log.Printf("request object is" + string(b))
-			request.ID = d.Id()
-			requestCommand = command.NewResetCommand(client, *request)
-			err, resp := runResetCommand(requestCommand)
+			//request.Id = d.Id()
+			requestCommand := server.NewResetServerCommand(client, d.Id(), *request)
+			resp, err := requestCommand.Execute()
 			if err != nil {
 				return err
 			}
 			d.Set("password", resp.Password)
 
-			 if(&resp.OsConfiguration != nil && resp.OsConfiguration.Esxi != nil){
+			 if(resp.OsConfiguration != nil && resp.OsConfiguration.Esxi != nil){
 				d.Set("root_password", resp.OsConfiguration.Esxi.RootPassword)
 				d.Set("management_ui_url", resp.OsConfiguration.Esxi.ManagementUiUrl)
 			}
@@ -438,8 +618,8 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 
 			serverID := d.Id()
 
-			requestCommand = command.NewShutDownCommand(client, serverID)
-			err := run(requestCommand)
+			requestCommand := server.NewShutDownServerCommand(client, serverID)
+			_, err := requestCommand.Execute()
 			if err != nil {
 				return err
 			}
@@ -453,24 +633,24 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		}
 
 	} else if d.HasChange("pricing_model"){
-		client := m.(client.PNAPClient)
-		var requestCommand command.Executor
+		client := m.(receiver.BMCSDK)
+		//var requestCommand command.Executor
 		//reserve action
-		request := &dto.ProvisionedServer{}
-		request.ID = d.Id()
+		request := &bmcapiclient.ServerReserve{}
+		//request.Id = d.Id()
 		request.PricingModel = d.Get("pricing_model").(string)
 
-		requestCommand = command.NewReserveCommand(client, *request)
-		resp, err := requestCommand.Execute()
+		requestCommand := server.NewReserveServerCommand(client, d.Id(),  *request)
+		_, err := requestCommand.Execute()
 		if err != nil {
 			return err
 		}
-		code := resp.StatusCode
+	/* 	code := resp.StatusCode
 		if code != 200 {
 			response := &dto.ErrorMessage{}
 			response.FromBytes(resp)
 			return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
-		}
+		} */
 	} else {
 		return fmt.Errorf("Unsuported action")
 	}
@@ -479,25 +659,25 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceServerDelete(d *schema.ResourceData, m interface{}) error {
-	client := m.(client.PNAPClient)
+	client := m.(receiver.BMCSDK)
 
 	serverID := d.Id()
 
-	requestCommand := command.NewDeleteServerCommand(client, serverID)
-	resp, err := requestCommand.Execute()
+	requestCommand := server.NewDeleteServerCommand(client, serverID)
+	_, err := requestCommand.Execute()
 	if err != nil {
 		return err
 	}
-	code := resp.StatusCode
+	/* code := resp.StatusCode
 	if code != 200 && code != 404 {
 		response := &dto.ErrorMessage{}
 		response.FromBytes(resp)
 		return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
-	}
+	} */
 	return nil
 }
 
-func resourceWaitForCreate(id string, client *client.PNAPClient) error {
+func resourceWaitForCreate(id string, client *receiver.BMCSDK) error {
 	log.Printf("Waiting for server %s to be created...", id)
 
 	stateConf := &resource.StateChangeConf{
@@ -517,7 +697,7 @@ func resourceWaitForCreate(id string, client *client.PNAPClient) error {
 	return nil
 }
 
-func resourceWaitForPowerON(id string, client *client.PNAPClient) error {
+func resourceWaitForPowerON(id string, client *receiver.BMCSDK) error {
 	log.Printf("Waiting for server %s to power on...", id)
 
 	stateConf := &resource.StateChangeConf{
@@ -537,7 +717,7 @@ func resourceWaitForPowerON(id string, client *client.PNAPClient) error {
 	return nil
 }
 
-func resourceWaitForPowerOff(id string, client *client.PNAPClient) error {
+func resourceWaitForPowerOff(id string, client *receiver.BMCSDK) error {
 	log.Printf("Waiting for server %s to power off...", id)
 
 	stateConf := &resource.StateChangeConf{
@@ -557,18 +737,20 @@ func resourceWaitForPowerOff(id string, client *client.PNAPClient) error {
 	return nil
 }
 
-func refreshForCreate(client *client.PNAPClient, id string) resource.StateRefreshFunc {
+func refreshForCreate(client *receiver.BMCSDK, id string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 
-		requestCommand := &command.GetServerCommand{}
-		requestCommand.SetRequester(client)
+		requestCommand := server.NewGetServerCommand(*client, id)
+		/* requestCommand.SetRequester(client)
 		serverID := id
-		requestCommand.SetServerID(serverID)
+		requestCommand.SetServerID(serverID) */
 		resp, err := requestCommand.Execute()
 		if err != nil {
 			return 0, "", err
+		}else{
+			return 0, resp.Status, nil
 		}
-		code := resp.StatusCode
+	/* 	code := resp.StatusCode
 		if code != 200 {
 			response := &dto.ErrorMessage{}
 			response.FromBytes(resp)
@@ -576,11 +758,11 @@ func refreshForCreate(client *client.PNAPClient, id string) resource.StateRefres
 		}
 		response := &dto.LongServer{}
 		response.FromBytes(resp)
-		return 0, response.Status, nil
-	}
+		return 0, response.Status, nil*/
+	} 
 }
 
-func run(command command.Executor) error {
+/* func run(command command.Executor) error {
 	resp, err := command.Execute()
 	if err != nil {
 		return err
@@ -611,4 +793,4 @@ func runResetCommand(command command.Executor) (error, dto.ServerActionResponse)
 		return nil, *response
 	}
 	return nil, dto.ServerActionResponse{}
-}
+} */

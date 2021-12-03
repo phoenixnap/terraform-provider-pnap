@@ -2,9 +2,13 @@ package pnap
 
 import (
 	//"github.com/phoenixnap/go-sdk-bmc/client"
-	"github.com/phoenixnap/go-sdk-bmc/dto"
-	newClient "github.com/phoenixnap/go-sdk-bmc/client/pnapClient"
+	//"github.com/phoenixnap/go-sdk-bmc/dto"
+	//newClient "github.com/phoenixnap/go-sdk-bmc/client/pnapClient"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/PNAP/go-sdk-helper-bmc/receiver"
+	"github.com/PNAP/go-sdk-helper-bmc/dto"
+	//bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi"
 )
 
 // Provider inits the root of provider
@@ -31,6 +35,11 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"pnap_ssh_key": resourceSshKey(),
 			"pnap_server": resourceServer(),
+			"pnap_private_network": resourcePrivateNetwork(),
+		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"pnap_ssh_key": dataSourceSshKey(),
+			"pnap_server": dataSourceServer(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
@@ -41,38 +50,45 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	clientSecret := d.Get("client_secret").(string)
 	configFilePath := d.Get("config_file_path").(string)
 
+	configuration := dto.Configuration{}
+	configuration.UserAgent = "terraform-provider-pnap"
 	if (clientId != "") && (clientSecret != ""){
-		auth := dto.Authentication{ClientID : clientId,
+		configuration.ClientID = clientId
+		configuration.ClientSecret = clientSecret
+		configuration.TokenURL = "https://auth.phoenixnap.com/auth/realms/BMC/protocol/openid-connect/token"
+		configuration.ApiHostName = "https://api.phoenixnap.com/"
+		/* auth := dto.Authentication{ClientID : clientId,
 		ClientSecret: clientSecret,
 		TokenURL: "https://auth.phoenixnap.com/auth/realms/BMC/protocol/openid-connect/token",
 		ApiHostName:"https://api.phoenixnap.com/",
 		PoweredBy: "terraform-provider-pnap"}
-		cl := newClient.NewPNAPClient(auth)
+		cl := newClient.NewPNAPClient(auth) */
+		cl := receiver.NewBMCSDK(configuration)
 		return cl, nil
 	}
 
 	if (configFilePath != ""){
 	
-		cl, confErr := newClient.NewPNAPClientWithCustomConfig(configFilePath)
-		if confErr == nil {
+		cl, confErr := receiver.NewBMCSDKWithCustomConfig(configFilePath, configuration)
+		/* if confErr == nil {
 			auth := dto.Authentication{ClientID : "",
 			ClientSecret: "",
 			TokenURL: "",
 			ApiHostName:"",
 			PoweredBy: "terraform-provider-pnap"}
 			cl.SetAuthentication(auth)
-		}
+		} */
 		return cl, confErr
 	}
 
-	client, confErr := newClient.NewPNAPClientWithDefaultConfig()
-	if confErr == nil {
+	client, confErr := receiver.NewBMCSDKWithDefaultConfig(configuration)
+	/* if confErr == nil {
 		auth := dto.Authentication{ClientID : "",
 		ClientSecret: "",
 		TokenURL: "",
 		ApiHostName:"",
 		PoweredBy: "terraform-provider-pnap"}
 		client.SetAuthentication(auth)
-	}
+	} */
 	return client, confErr
 }

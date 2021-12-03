@@ -3,10 +3,15 @@ package pnap
 import (
 	"fmt"
 
-	"github.com/phoenixnap/go-sdk-bmc/command"
-	"github.com/phoenixnap/go-sdk-bmc/dto"
+	//"github.com/phoenixnap/go-sdk-bmc/command"
+	//"github.com/phoenixnap/go-sdk-bmc/dto"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	client "github.com/phoenixnap/go-sdk-bmc/client/pnapClient"
+	//client "github.com/phoenixnap/go-sdk-bmc/client/pnapClient"
+
+	"github.com/PNAP/go-sdk-helper-bmc/receiver"
+	"github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/sshkey"
+	//helpercommand "github.com/PNAP/go-sdk-helper-bmc/command"
+	bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi"
 
 )
 
@@ -56,84 +61,84 @@ func resourceSshKey() *schema.Resource {
 
 func resourceSshKeyCreate(d *schema.ResourceData, m interface{}) error {
 
-	client := m.(client.PNAPClient)
+	client := m.(receiver.BMCSDK)
 
-	request := &dto.SshKey{}
+	request := &bmcapiclient.SshKeyCreate{}
 	request.Name = d.Get("name").(string)
 	request.Default = d.Get("default").(bool)
 	request.Key = d.Get("key").(string)
 	
 
-	requestCommand := command.NewCreateSshKeyCommand(client, *request)
+	requestCommand := sshkey.NewCreateSshKeyCommand(client, *request)
 
 	resp, err := requestCommand.Execute()
 	if err != nil {
 		return err
 	}
-	code := resp.StatusCode
-	if code == 201 {
-		response := &dto.SshKey{}
-		response.FromBytes(resp)
-		d.SetId(response.ID)
+	//code := resp.StatusCode
+	//if code == 201 {
+		//response := &dto.SshKey{}
+		//response.FromBytes(resp)
+		d.SetId(resp.Id)
 		
-	} else {
+	/* } else {
 		response := &dto.ErrorMessage{}
 		response.FromBytes(resp)
 		return fmt.Errorf("API Returned Code %v Message: %s Validation Errors: %s", code, response.Message, response.ValidationErrors)
-	}
+	} */
 
 	return resourceSshKeyRead(d, m)
 }
 
 func resourceSshKeyRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(client.PNAPClient)
+	client := m.(receiver.BMCSDK)
 	keyID := d.Id()
-	requestCommand := command.NewGetSshKeyCommand(client, keyID)
+	requestCommand := sshkey.NewGetSshKeyCommand(client, keyID)
 	resp, err := requestCommand.Execute()
 	if err != nil {
 		return err
 	}
-	code := resp.StatusCode
+	/* code := resp.StatusCode
 	if code != 200 {
 		response := &dto.ErrorMessage{}
 		response.FromBytes(resp)
 		return fmt.Errorf("API Returned Code from read method: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
-	}
-	response := &dto.SshKey{}
-	response.FromBytes(resp)
-	d.SetId(response.ID)
-	d.Set("default", response.Default)
-	d.Set("name", response.Name)
-	d.Set("key", response.Key)
-	d.Set("fingerprint", response.Fingerprint)
-	d.Set("created_on", response.CreatedOn)
-	d.Set("last_updated_on", response.LastUpdatedOn)
+	} */
+	//response := &dto.SshKey{}
+	//response.FromBytes(resp)
+	d.SetId(resp.Id)
+	d.Set("default", resp.Default)
+	d.Set("name", resp.Name)
+	d.Set("key", resp.Key)
+	d.Set("fingerprint", resp.Fingerprint)
+	d.Set("created_on", resp.CreatedOn.String())
+	d.Set("last_updated_on", resp.LastUpdatedOn.String())
 	
 	return nil
 }
 
 func resourceSshKeyUpdate(d *schema.ResourceData, m interface{}) error {
 	if d.HasChange("name") || d.HasChange("default") {
-		client := m.(client.PNAPClient)
-		var requestCommand command.Executor
+		client := m.(receiver.BMCSDK)
+		//var requestCommand command.Executor
 		
-		request := &dto.SshKey{}
+		request := &bmcapiclient.SshKeyUpdate{}
 		request.Name = d.Get("name").(string)
 		request.Default = d.Get("default").(bool)
-		request.ID = d.Id()
-		requestCommand = command.NewUpdateSshKeyCommand(client, *request)
+		//request.Id = d.Id()
+		requestCommand := sshkey.NewUpdateSshKeyCommand(client, d.Id(), *request)
 
-		resp, err := requestCommand.Execute()
+		_, err := requestCommand.Execute()
 		if err != nil {
 			return err
 		}
-		code := resp.StatusCode
+		/* code := resp.StatusCode
 		if code != 200 {
 			response := &dto.ErrorMessage{}
 			response.FromBytes(resp)
 			return fmt.Errorf("API Returned Code %v Message: %s Validation Errors: %s", code, response.Message, response.ValidationErrors)
 			
-		}
+		} */
 	}  else {
 		return fmt.Errorf("Unsuported action")
 	}
@@ -142,20 +147,20 @@ func resourceSshKeyUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceSshKeyDelete(d *schema.ResourceData, m interface{}) error {
-	client := m.(client.PNAPClient)
+	client := m.(receiver.BMCSDK)
 
 	sshKeyID := d.Id()
 
-	requestCommand := command.NewDeleteSshKeyCommand(client, sshKeyID)
-	resp, err := requestCommand.Execute()
+	requestCommand := sshkey.NewDeleteSshKeyCommand(client, sshKeyID)
+	_, err := requestCommand.Execute()
 	if err != nil {
 		return err
 	}
-	code := resp.StatusCode
+	/* code := resp.StatusCode
 	if code != 200 && code != 404 {
 		response := &dto.ErrorMessage{}
 		response.FromBytes(resp)
 		return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
-	}
+	} */
 	return nil
 }
