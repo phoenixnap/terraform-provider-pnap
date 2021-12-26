@@ -5,17 +5,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/phoenixnap/go-sdk-bmc/client"
-	"github.com/phoenixnap/go-sdk-bmc/command"
-	"github.com/phoenixnap/go-sdk-bmc/dto"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+
+	helperserver "github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/server"
+	"github.com/PNAP/go-sdk-helper-bmc/receiver"
+	bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi"
 )
 
 func TestAccPnapServer_basic(t *testing.T) {
 
-	var server dto.LongServer
+	var server bmcapiclient.Server
 	// generate a random name for each widget test run, to avoid
 	// collisions from multiple concurrent tests.
 	// the acctest package includes many helpers such as RandStringFromCharSet
@@ -145,17 +146,18 @@ func TestAccPnapServer_shutdowntest(t *testing.T) {
 // testAccPreCheck validates the necessary test API keys exist
 // in the testing environment
 func testAccPreCheck(t *testing.T) {
-	err := client.VerifyConfiguration()
+	//client := testAccProvider.Meta().(receiver.BMCSDK)
+	/* err := client..VerifyConfiguration()
 	if err != nil {
 		t.Fatal(err)
-	}
+	} */
 }
 
 // testAccCheckServerResourceDestroy verifies the server
 // has been destroyed
 func testAccCheckServerResourceDestroy(s *terraform.State) error {
 	// get configured client from metadata
-	client := testAccProvider.Meta().(client.PNAPClient)
+	client := testAccProvider.Meta().(receiver.BMCSDK)
 	// loop through the resources in state, verifying each server
 	// is destroyed
 	for _, rs := range s.RootModule().Resources {
@@ -164,21 +166,21 @@ func testAccCheckServerResourceDestroy(s *terraform.State) error {
 		}
 
 		// Retrieve our server by referencing it's state ID for API lookup
-		requestCommand := command.NewGetServerCommand(client, rs.Primary.ID)
+		requestCommand := helperserver.NewGetServerCommand(client, rs.Primary.ID)
 
-		resp, err := requestCommand.Execute()
-		code := resp.StatusCode
-		if err != nil {
-			return err
+		_, err := requestCommand.Execute()
+		/* code := resp.StatusCode */
+		if err == nil {
+			return fmt.Errorf("PNAP Server (%s) still exists", rs.Primary.ID)
 		}
-		if code != 200 && code != 404 {
+		/* if code != 200 && code != 404 {
 			response := &dto.ErrorMessage{}
 			response.FromBytes(resp)
 			return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
 		}
 		if code == 200 {
 			return fmt.Errorf("PNAP Server (%s) still exists", rs.Primary.ID)
-		}
+		} */
 	}
 
 	return nil
@@ -278,7 +280,7 @@ resource "pnap_server" "%s" {
 // testAccCheckServerExists uses the SDK directly to retrieve
 // the server, and stores it in the provided
 // *dto.LongServer
-func testAccCheckServerExists(resourceName string, server *dto.LongServer) resource.TestCheckFunc {
+func testAccCheckServerExists(resourceName string, server *bmcapiclient.Server) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		// retrieve the resource by name from state
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -289,17 +291,20 @@ func testAccCheckServerExists(resourceName string, server *dto.LongServer) resou
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("Server ID is not set")
 		}
-		// retrieve the configured client from the test setup
-		client := testAccProvider.Meta().(client.PNAPClient)
 
-		requestCommand := command.NewGetServerCommand(client, rs.Primary.ID)
+		// retrieve the configured client from the test setup
+		client := testAccProvider.Meta().(receiver.BMCSDK)
+
+		requestCommand := helperserver.NewGetServerCommand(client, rs.Primary.ID)
 
 		resp, err := requestCommand.Execute()
 
 		if err != nil {
 			return err
+		} else {
+			*server = *resp
 		}
-		code := resp.StatusCode
+		/* code := resp.StatusCode
 		if code != 200 && code != 404 {
 			response := &dto.ErrorMessage{}
 			response.FromBytes(resp)
@@ -312,17 +317,17 @@ func testAccCheckServerExists(resourceName string, server *dto.LongServer) resou
 			resultServer := &dto.LongServer{}
 			resultServer.FromBytes(resp)
 			*server = *resultServer
-		}
+		} */
 		return nil
 	}
 }
 
 // testAccCheckServerAttributes verifies attributes are set correctly by
 // Terraform
-func testAccCheckServerAttributes(resourceName string, server *dto.LongServer) resource.TestCheckFunc {
+func testAccCheckServerAttributes(resourceName string, server *bmcapiclient.Server) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		if server.Name != resourceName {
-			return fmt.Errorf("hostname not set to %s name is %s", resourceName, server.Name)
+		if server.Hostname != resourceName {
+			return fmt.Errorf("hostname not set to %s name is %s", resourceName, server.Hostname)
 		}
 
 		if server.Os != "ubuntu/bionic" {
@@ -337,10 +342,10 @@ func testAccCheckServerAttributes(resourceName string, server *dto.LongServer) r
 		if server.Status != "powered-on" {
 			return fmt.Errorf("status is not set, should be powered-on")
 		}
-		if len(server.PrivateIPAddresses) < 1 {
+		if len(server.PrivateIpAddresses) < 1 {
 			return fmt.Errorf("private ip is not set")
 		}
-		if len(server.PublicIPAddresses) < 1 {
+		if len(server.PublicIpAddresses) < 1 {
 			return fmt.Errorf("public ip is not set")
 		}
 
@@ -350,10 +355,10 @@ func testAccCheckServerAttributes(resourceName string, server *dto.LongServer) r
 
 // testAccCheckServerStatusAttribute verifies status attribute is set correctly by
 // Terraform
-func testAccCheckServerStatusAttribute(resourceName string, server *dto.LongServer) resource.TestCheckFunc {
+func testAccCheckServerStatusAttribute(resourceName string, server *bmcapiclient.Server) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		if server.Name != resourceName {
-			return fmt.Errorf("hostname not set to %s name is %s", resourceName, server.Name)
+		if server.Hostname != resourceName {
+			return fmt.Errorf("hostname not set to %s name is %s", resourceName, server.Hostname)
 		}
 		if server.Status != "powered-off" {
 			return fmt.Errorf("status is not set, should be powered-off")
@@ -367,33 +372,36 @@ func init() {
 		F: func(region string) error {
 
 			// retrieve the configured client from the test setup
-			client := testAccProvider.Meta().(client.PNAPClient)
+			client := testAccProvider.Meta().(receiver.BMCSDK)
 
-			requestCommand := command.NewGetServersCommand(client)
+			requestCommand := helperserver.NewGetServersCommand(client)
 			resp, err := requestCommand.Execute()
-			response := &dto.Servers{}
+			//response := &dto.Servers{}
 			if err != nil {
 				return fmt.Errorf("Error getting servers: %s", err)
-			}
-			response.FromBytes(resp)
+			} else {
 
-			for _, instance := range *response {
-				if strings.HasPrefix(instance.Name, "acctest") {
-					deleteCommand := command.NewDeleteServerCommand(client, instance.ID)
-					resp, err := deleteCommand.Execute()
+				//response.FromBytes(resp)
 
-					if err != nil {
-						return fmt.Errorf("Error destroying %s during sweep: %s ", instance.Name, err)
+				for _, instance := range resp {
+					if strings.HasPrefix(instance.Hostname, "acctest") {
+						deleteCommand := helperserver.NewDeleteServerCommand(client, instance.Id)
+						_, err := deleteCommand.Execute()
+
+						if err != nil {
+							return fmt.Errorf("Error destroying %s during sweep: %s ", instance.Hostname, err)
+						}
+						/* code := resp.StatusCode
+						if code != 200 && code != 404 {
+							delresponse := &dto.ErrorMessage{}
+							delresponse.FromBytes(resp)
+							return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, delresponse.Message, delresponse.ValidationErrors)
+						} */
+
 					}
-					code := resp.StatusCode
-					if code != 200 && code != 404 {
-						delresponse := &dto.ErrorMessage{}
-						delresponse.FromBytes(resp)
-						return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, delresponse.Message, delresponse.ValidationErrors)
-					}
-
 				}
 			}
+
 			return nil
 		},
 	})

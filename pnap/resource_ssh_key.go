@@ -3,19 +3,12 @@ package pnap
 import (
 	"fmt"
 
-	//"github.com/phoenixnap/go-sdk-bmc/command"
-	//"github.com/phoenixnap/go-sdk-bmc/dto"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	//client "github.com/phoenixnap/go-sdk-bmc/client/pnapClient"
-
-	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/sshkey"
-	//helpercommand "github.com/PNAP/go-sdk-helper-bmc/command"
+	"github.com/PNAP/go-sdk-helper-bmc/receiver"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi"
-
 )
-
-
 
 func resourceSshKey() *schema.Resource {
 	return &schema.Resource{
@@ -31,27 +24,27 @@ func resourceSshKey() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"default": &schema.Schema{
+			"default": {
 				Type:     schema.TypeBool,
 				Required: true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"key": &schema.Schema{
+			"key": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"fingerprint": &schema.Schema{
+			"fingerprint": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"created_on": &schema.Schema{
+			"created_on": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"last_updated_on": &schema.Schema{
+			"last_updated_on": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -67,7 +60,6 @@ func resourceSshKeyCreate(d *schema.ResourceData, m interface{}) error {
 	request.Name = d.Get("name").(string)
 	request.Default = d.Get("default").(bool)
 	request.Key = d.Get("key").(string)
-	
 
 	requestCommand := sshkey.NewCreateSshKeyCommand(client, *request)
 
@@ -77,10 +69,10 @@ func resourceSshKeyCreate(d *schema.ResourceData, m interface{}) error {
 	}
 	//code := resp.StatusCode
 	//if code == 201 {
-		//response := &dto.SshKey{}
-		//response.FromBytes(resp)
-		d.SetId(resp.Id)
-		
+	//response := &dto.SshKey{}
+	//response.FromBytes(resp)
+	d.SetId(resp.Id)
+
 	/* } else {
 		response := &dto.ErrorMessage{}
 		response.FromBytes(resp)
@@ -113,7 +105,7 @@ func resourceSshKeyRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("fingerprint", resp.Fingerprint)
 	d.Set("created_on", resp.CreatedOn.String())
 	d.Set("last_updated_on", resp.LastUpdatedOn.String())
-	
+
 	return nil
 }
 
@@ -121,7 +113,7 @@ func resourceSshKeyUpdate(d *schema.ResourceData, m interface{}) error {
 	if d.HasChange("name") || d.HasChange("default") {
 		client := m.(receiver.BMCSDK)
 		//var requestCommand command.Executor
-		
+
 		request := &bmcapiclient.SshKeyUpdate{}
 		request.Name = d.Get("name").(string)
 		request.Default = d.Get("default").(bool)
@@ -137,10 +129,10 @@ func resourceSshKeyUpdate(d *schema.ResourceData, m interface{}) error {
 			response := &dto.ErrorMessage{}
 			response.FromBytes(resp)
 			return fmt.Errorf("API Returned Code %v Message: %s Validation Errors: %s", code, response.Message, response.ValidationErrors)
-			
+
 		} */
-	}  else {
-		return fmt.Errorf("Unsuported action")
+	} else {
+		return fmt.Errorf("unsuported action")
 	}
 	return resourceSshKeyRead(d, m)
 

@@ -23,8 +23,8 @@ The following authentication methods are supported:
 - Environment variables
 - Configuration file
 
-Static credentials can be provided by adding an `client_id` and `client_secret`
-in-line in the pnap provider block:
+Static credentials can be provided by adding a `client_id` and a `client_secret`
+to the pnap provider block:
 
 Usage:
 

@@ -1,45 +1,42 @@
 package pnap
 
 import (
-	//"github.com/phoenixnap/go-sdk-bmc/client"
-	//"github.com/phoenixnap/go-sdk-bmc/dto"
-	//newClient "github.com/phoenixnap/go-sdk-bmc/client/pnapClient"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/PNAP/go-sdk-helper-bmc/dto"
-	//bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi"
+	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 )
 
 // Provider inits the root of provider
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"client_id": &schema.Schema{
-			  Type:        schema.TypeString,
-			  Optional:    true,
-			  DefaultFunc: schema.EnvDefaultFunc("PNAP_CLIENT_ID", nil),
-			},
-			"client_secret": &schema.Schema{
-			  Type:        schema.TypeString,
-			  Optional:    true,
-			  Sensitive:   true,
-			  DefaultFunc: schema.EnvDefaultFunc("PNAP_CLIENT_SECRET", nil),
-			},
-			"config_file_path": {
+			"client_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "",
+				DefaultFunc: schema.EnvDefaultFunc("PNAP_CLIENT_ID", nil),
 			},
-		  },
+			"client_secret": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Sensitive:   true,
+				DefaultFunc: schema.EnvDefaultFunc("PNAP_CLIENT_SECRET", nil),
+			},
+			"config_file_path": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
+			},
+		},
 		ResourcesMap: map[string]*schema.Resource{
-			"pnap_ssh_key": resourceSshKey(),
-			"pnap_server": resourceServer(),
+			"pnap_ssh_key":         resourceSshKey(),
+			"pnap_server":          resourceServer(),
 			"pnap_private_network": resourcePrivateNetwork(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"pnap_ssh_key": dataSourceSshKey(),
-			"pnap_server": dataSourceServer(),
+			"pnap_ssh_key":         dataSourceSshKey(),
+			"pnap_server":          dataSourceServer(),
+			"pnap_private_network": dataSourcePrivateNetwork(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
@@ -52,7 +49,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 
 	configuration := dto.Configuration{}
 	configuration.UserAgent = "terraform-provider-pnap"
-	if (clientId != "") && (clientSecret != ""){
+	if (clientId != "") && (clientSecret != "") {
 		configuration.ClientID = clientId
 		configuration.ClientSecret = clientSecret
 		configuration.TokenURL = "https://auth.phoenixnap.com/auth/realms/BMC/protocol/openid-connect/token"
@@ -67,8 +64,8 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		return cl, nil
 	}
 
-	if (configFilePath != ""){
-	
+	if configFilePath != "" {
+
 		cl, confErr := receiver.NewBMCSDKWithCustomConfig(configFilePath, configuration)
 		/* if confErr == nil {
 			auth := dto.Authentication{ClientID : "",

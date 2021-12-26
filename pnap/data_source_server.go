@@ -3,16 +3,10 @@ package pnap
 import (
 	"fmt"
 
-	//"github.com/phoenixnap/go-sdk-bmc/client"
-	//"github.com/phoenixnap/go-sdk-bmc/command"
-	//"github.com/phoenixnap/go-sdk-bmc/dto"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	//client "github.com/phoenixnap/go-sdk-bmc/client/pnapClient"
 
-	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/server"
-	//bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi"
+	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 )
 
 func dataSourceServer() *schema.Resource {
@@ -20,47 +14,47 @@ func dataSourceServer() *schema.Resource {
 
 		Read: dataSourceServerRead,
 		Schema: map[string]*schema.Schema{
-			"id": &schema.Schema{
+			"id": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Computed:      true,
 				ConflictsWith: []string{"hostname"},
 			},
-			"hostname": &schema.Schema{
+			"hostname": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Computed:      true,
 				ConflictsWith: []string{"id"},
 			},
-			"status": &schema.Schema{
+			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"primary_ip_address": &schema.Schema{
+			"primary_ip_address": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"private_ip_addresses": &schema.Schema{
+			"private_ip_addresses": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"public_ip_addresses": &schema.Schema{
+			"public_ip_addresses": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"os": &schema.Schema{
+			"os": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"type": &schema.Schema{
+			"type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"location": &schema.Schema{
+			"location": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -114,7 +108,7 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if numOfServers > 1 {
-		return fmt.Errorf("Too many devices found with hostname %s (found %d, expected 1)", d.Get("hostname").(string), numOfServers)
+		return fmt.Errorf("too many devices found with hostname %s (found %d, expected 1)", d.Get("hostname").(string), numOfServers)
 	}
 
 	return nil

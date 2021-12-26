@@ -3,14 +3,9 @@ package pnap
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	/* client "github.com/phoenixnap/go-sdk-bmc/client/pnapClient"
-	"github.com/phoenixnap/go-sdk-bmc/command"
-	"github.com/phoenixnap/go-sdk-bmc/dto" */
-
-	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/sshkey"
-	
+	"github.com/PNAP/go-sdk-helper-bmc/receiver"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceSshKey() *schema.Resource {
@@ -18,15 +13,15 @@ func dataSourceSshKey() *schema.Resource {
 		Read: dataSourceSshKeyRead,
 
 		Schema: map[string]*schema.Schema{
-			"default": &schema.Schema{
+			"default": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"key": &schema.Schema{
+			"key": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -62,7 +57,7 @@ func dataSourceSshKeyRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 	if numOfKeys > 1 {
-		return fmt.Errorf("Too many ssh keys with name %s (found %d, expected 1)", d.Get("name").(string), numOfKeys)
+		return fmt.Errorf("too many ssh keys with name %s (found %d, expected 1)", d.Get("name").(string), numOfKeys)
 	}
 
 	return nil

@@ -2,23 +2,18 @@ package pnap
 
 import (
 	"encoding/json"
-	"strings"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
-	//"github.com/phoenixnap/go-sdk-bmc/client"
-	//"github.com/phoenixnap/go-sdk-bmc/command"
-	//"github.com/phoenixnap/go-sdk-bmc/dto"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	//client "github.com/phoenixnap/go-sdk-bmc/client/pnapClient"
 
-	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/server"
-	//helpercommand "github.com/PNAP/go-sdk-helper-bmc/command"
-	bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi"
+	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 
+	bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi"
 )
 
 const (
@@ -117,7 +112,7 @@ func resourceServer() *schema.Resource {
 			"install_default_ssh_keys": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default: true,
+				Default:  true,
 			},
 			"ssh_key_ids": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -141,8 +136,8 @@ func resourceServer() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"password": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:      schema.TypeString,
+				Computed:  true,
 				Sensitive: true,
 			},
 			"cluster_id": &schema.Schema{
@@ -175,65 +170,64 @@ func resourceServer() *schema.Resource {
 				Computed: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
-				  Schema: map[string]*schema.Schema{
-					"private_network_configuration": &schema.Schema{  
-						Type:     schema.TypeList,
-						Optional: true,
-						Computed: true,
-						MaxItems: 1,
-						Elem: &schema.Resource{
-							Schema: map[string]*schema.Schema{
-						  		"gateway_address": &schema.Schema{
-									Type:     schema.TypeString,
-									Optional: true,
-									Computed: true,
-						  		},
-						  		"configuration_type": &schema.Schema{
-							  		Type:     schema.TypeString,
-							  		Computed: true,
-									Optional: true,
-									Default:  nil,
-						  		},
-								"private_networks": &schema.Schema{
-									Type:     schema.TypeList,
-									Computed: true,
-									Optional: true,
-									Elem: &schema.Resource{
-										Schema: map[string]*schema.Schema{
-											"server_private_network": &schema.Schema{  
-												Type:     schema.TypeList,
-												Optional: true,
-												Computed: true,
-												MaxItems: 1,
-												Elem: &schema.Resource{
-													Schema: map[string]*schema.Schema{
-														"id": &schema.Schema{
-															Type:     schema.TypeString,
-															Required: true,
-														  },
-														  "ips": &schema.Schema{
-															Type:     schema.TypeSet,
-															Optional: true,
-															Computed: true,
-															Elem:     &schema.Schema{Type: schema.TypeString},
-														  },
-														  "dhcp": &schema.Schema{
-															Type:     schema.TypeBool,
-															Optional: true,
-															Computed: true,
-															Default: nil,
-														  },
+					Schema: map[string]*schema.Schema{
+						"private_network_configuration": &schema.Schema{
+							Type:     schema.TypeList,
+							Optional: true,
+							Computed: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"gateway_address": &schema.Schema{
+										Type:     schema.TypeString,
+										Optional: true,
+										Computed: true,
+									},
+									"configuration_type": &schema.Schema{
+										Type:     schema.TypeString,
+										Computed: true,
+										Optional: true,
+										Default:  nil,
+									},
+									"private_networks": &schema.Schema{
+										Type:     schema.TypeList,
+										Computed: true,
+										Optional: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"server_private_network": &schema.Schema{
+													Type:     schema.TypeList,
+													Optional: true,
+													Computed: true,
+													MaxItems: 1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"id": &schema.Schema{
+																Type:     schema.TypeString,
+																Required: true,
+															},
+															"ips": &schema.Schema{
+																Type:     schema.TypeSet,
+																Optional: true,
+																Computed: true,
+																Elem:     &schema.Schema{Type: schema.TypeString},
+															},
+															"dhcp": &schema.Schema{
+																Type:     schema.TypeBool,
+																Optional: true,
+																Computed: true,
+																Default:  nil,
+															},
+														},
 													},
 												},
 											},
 										},
-
 									},
 								},
-					  		},
+							},
 						},
-				    },
-				   },
+					},
 				},
 			},
 		},
@@ -247,7 +241,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	request := &bmcapiclient.ServerCreate{}
 	request.Hostname = d.Get("hostname").(string)
 	var desc = d.Get("description").(string)
-	if(len(desc)>0){
+	if len(desc) > 0 {
 		request.Description = &desc
 	}
 	request.Os = d.Get("os").(string)
@@ -255,20 +249,17 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	request.Location = d.Get("location").(string)
 	var networkType = d.Get("network_type").(string)
 
-	if(len(networkType)>0){
+	if len(networkType) > 0 {
 		request.NetworkType = &networkType
 	}
 
-	
-
 	var resId = d.Get("reservation_id").(string)
-	if(len(resId)>0){
+	if len(resId) > 0 {
 		request.ReservationId = &resId
 	}
-	
 
 	var prModel = d.Get("pricing_model").(string)
-	if(len(prModel)>0){
+	if len(prModel) > 0 {
 		request.PricingModel = &prModel
 	}
 
@@ -300,86 +291,83 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	for i, v := range temp3 {
 		managementAccessAllowedIps[i] = fmt.Sprint(v)
 	}
-	if(len(temp2) > 0 || len(temp3) > 0){
+	if len(temp2) > 0 || len(temp3) > 0 {
 		dtoOsConfiguration := bmcapiclient.OsConfiguration{}
-		
-		if(len(temp2) > 0){
-			dtoWindows := bmcapiclient.OsConfigurationWindows{} 
+
+		if len(temp2) > 0 {
+			dtoWindows := bmcapiclient.OsConfigurationWindows{}
 			dtoWindows.RdpAllowedIps = &allowedIps
 			dtoOsConfiguration.Windows = &dtoWindows
 		}
-		if(len(temp3) > 0){
+		if len(temp3) > 0 {
 			dtoOsConfiguration.ManagementAccessAllowedIps = &managementAccessAllowedIps
 		}
 		request.OsConfiguration = &dtoOsConfiguration
 	}
 
 	// private network block
-	networkConfiguration := d.Get("network_configuration").([]interface{})[0]
-	networkConfigurationItem := networkConfiguration.(map[string]interface{})
-	privateNetworkConfiguration := networkConfigurationItem["private_network_configuration"].([]interface{})[0]
-	privateNetworkConfigurationItem := privateNetworkConfiguration.(map[string]interface{})
-	
-	gatewayAddress:=privateNetworkConfigurationItem["gateway_address"].(string)
-	configurationType:=privateNetworkConfigurationItem["configuration_type"].(string)
-	privateNetworks := privateNetworkConfigurationItem["private_networks"].([]interface{})
-	
+	if d.Get("network_configuration") != nil && len(d.Get("network_configuration").([]interface{})) > 0 {
 
-	if (len(gatewayAddress)>0 || len(configurationType)>0 || len(privateNetworks)>0){
-		networkConfigurationObject:= bmcapiclient.NetworkConfiguration{}
-		privateNetworkConfigurationObject  := bmcapiclient.PrivateNetworkConfiguration{}
-		if (len(gatewayAddress)>0){
-			privateNetworkConfigurationObject.GatewayAddress = &gatewayAddress
-		}
-		
-		if (len(configurationType)>0){
-			privateNetworkConfigurationObject.ConfigurationType = &configurationType
-		}
+		networkConfiguration := d.Get("network_configuration").([]interface{})[0]
+		networkConfigurationItem := networkConfiguration.(map[string]interface{})
+		privateNetworkConfiguration := networkConfigurationItem["private_network_configuration"].([]interface{})[0]
+		privateNetworkConfigurationItem := privateNetworkConfiguration.(map[string]interface{})
 
-		networkConfigurationObject.PrivateNetworkConfiguration = &privateNetworkConfigurationObject
-		if (len(privateNetworks)>0){
-		
-			serPrivateNets := make([]bmcapiclient.ServerPrivateNetwork, len(privateNetworks))
-			
-			for k, j := range privateNetworks {
-				serverPrivateNetworkObject := bmcapiclient.ServerPrivateNetwork{}
+		gatewayAddress := privateNetworkConfigurationItem["gateway_address"].(string)
+		configurationType := privateNetworkConfigurationItem["configuration_type"].(string)
+		privateNetworks := privateNetworkConfigurationItem["private_networks"].([]interface{})
 
-				privateNetworkItem:=j.(map[string]interface{})
-
-				serverPrivateNetwork := privateNetworkItem["server_private_network"].([]interface{})[0]
-				serverPrivateNetworkItem:=serverPrivateNetwork.(map[string]interface{})
-
-
-				id:=serverPrivateNetworkItem["id"].(string)
-				tempIps:=serverPrivateNetworkItem["ips"].(*schema.Set).List()
-		
-				
-				NetIps := make([]string, len(tempIps))
-				for i, v := range tempIps {
-					NetIps[i] = fmt.Sprint(v)
-				}
-				dhcp:=serverPrivateNetworkItem["dhcp"].(bool)
-			
-				if(len(id))>0{
-					serverPrivateNetworkObject.Id=id
-				}
-				if(len(NetIps))>0{
-					serverPrivateNetworkObject.Ips=&NetIps
-				}
-				
-				serverPrivateNetworkObject.Dhcp=&dhcp
-				serPrivateNets[k] = serverPrivateNetworkObject
-		
+		if len(gatewayAddress) > 0 || len(configurationType) > 0 || len(privateNetworks) > 0 {
+			networkConfigurationObject := bmcapiclient.NetworkConfiguration{}
+			privateNetworkConfigurationObject := bmcapiclient.PrivateNetworkConfiguration{}
+			if len(gatewayAddress) > 0 {
+				privateNetworkConfigurationObject.GatewayAddress = &gatewayAddress
 			}
-			privateNetworkConfigurationObject.PrivateNetworks = &serPrivateNets
-		}
-		request.NetworkConfiguration = &networkConfigurationObject
+
+			if len(configurationType) > 0 {
+				privateNetworkConfigurationObject.ConfigurationType = &configurationType
+			}
+
+			networkConfigurationObject.PrivateNetworkConfiguration = &privateNetworkConfigurationObject
+			if len(privateNetworks) > 0 {
+
+				serPrivateNets := make([]bmcapiclient.ServerPrivateNetwork, len(privateNetworks))
+
+				for k, j := range privateNetworks {
+					serverPrivateNetworkObject := bmcapiclient.ServerPrivateNetwork{}
+
+					privateNetworkItem := j.(map[string]interface{})
+
+					serverPrivateNetwork := privateNetworkItem["server_private_network"].([]interface{})[0]
+					serverPrivateNetworkItem := serverPrivateNetwork.(map[string]interface{})
+
+					id := serverPrivateNetworkItem["id"].(string)
+					tempIps := serverPrivateNetworkItem["ips"].(*schema.Set).List()
+
+					NetIps := make([]string, len(tempIps))
+					for i, v := range tempIps {
+						NetIps[i] = fmt.Sprint(v)
+					}
+					dhcp := serverPrivateNetworkItem["dhcp"].(bool)
+
+					if (len(id)) > 0 {
+						serverPrivateNetworkObject.Id = id
+					}
+					if (len(NetIps)) > 0 {
+						serverPrivateNetworkObject.Ips = &NetIps
+					}
+
+					serverPrivateNetworkObject.Dhcp = &dhcp
+					serPrivateNets[k] = serverPrivateNetworkObject
+
+				}
+				privateNetworkConfigurationObject.PrivateNetworks = &serPrivateNets
+			}
+			request.NetworkConfiguration = &networkConfigurationObject
 			b, _ := json.MarshalIndent(request, "", "  ")
 			log.Printf("request object is" + string(b))
+		}
 	}
-
-	
-
 
 	// end of private network block
 	requestCommand := server.NewCreateServerCommand(client, *request)
@@ -387,11 +375,11 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	resp, err := requestCommand.Execute()
 	if err != nil {
 		return err
-	}else{
-		
+	} else {
+
 		d.SetId(resp.Id)
 		d.Set("password", resp.Password)
-		if(resp.OsConfiguration != nil){
+		if resp.OsConfiguration != nil {
 			d.Set("root_password", resp.OsConfiguration.RootPassword)
 			d.Set("management_ui_url", resp.OsConfiguration.ManagementUiUrl)
 		}
@@ -468,9 +456,9 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("public_ip_addresses", publicIPs)
 	d.Set("reservation_id", resp.ReservationId)
 	d.Set("pricing_model", resp.PricingModel)
-	
+
 	d.Set("cluster_id", resp.ClusterId)
-	if(resp.OsConfiguration != nil && resp.OsConfiguration.ManagementAccessAllowedIps != nil){
+	if resp.OsConfiguration != nil && resp.OsConfiguration.ManagementAccessAllowedIps != nil {
 		var mgmntAccessAllowedIps []interface{}
 		for _, k := range *resp.OsConfiguration.ManagementAccessAllowedIps {
 			mgmntAccessAllowedIps = append(mgmntAccessAllowedIps, k)
@@ -478,7 +466,7 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("management_access_allowed_ips", mgmntAccessAllowedIps)
 	}
 
-	if(resp.OsConfiguration != nil && resp.OsConfiguration.Windows != nil && resp.OsConfiguration.Windows.RdpAllowedIps != nil){
+	if resp.OsConfiguration != nil && resp.OsConfiguration.Windows != nil && resp.OsConfiguration.Windows.RdpAllowedIps != nil {
 		var rdpAllowedIps []interface{}
 		for _, k := range *resp.OsConfiguration.Windows.RdpAllowedIps {
 			rdpAllowedIps = append(rdpAllowedIps, k)
@@ -488,7 +476,6 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 
 	d.Set("provisioned_on", resp.ProvisionedOn.String())
 
-	
 	return nil
 }
 
@@ -550,7 +537,6 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			request.SshKeys = &keys
 			request.InstallDefaultSshKeys = d.Get("install_default_ssh_keys").(*bool)
 
-
 			temp1 := d.Get("ssh_key_ids").(*schema.Set).List()
 			keyIds := make([]string, len(temp1))
 			for i, v := range temp1 {
@@ -558,42 +544,40 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			}
 			request.SshKeyIds = &keyIds
 
-
 			dtoOsConfiguration := bmcapiclient.OsConfigurationMap{}
-			isWindows:= strings.Contains(d.Get("os").(string), "windows")
-			isEsxi:= strings.Contains(d.Get("os").(string), "esxi")
-  
-			if(isWindows){
+			isWindows := strings.Contains(d.Get("os").(string), "windows")
+			isEsxi := strings.Contains(d.Get("os").(string), "esxi")
+
+			if isWindows {
 				//log.Printf("Waiting for server windows to be reseted...")
 				dtoWindows := bmcapiclient.OsConfigurationWindows{}
 				temp2 := d.Get("rdp_allowed_ips").(*schema.Set).List()
-			    allowedIps := make([]string, len(temp2))
-			    for i, v := range temp2 {
-				   allowedIps[i] = fmt.Sprint(v)
-			    }
+				allowedIps := make([]string, len(temp2))
+				for i, v := range temp2 {
+					allowedIps[i] = fmt.Sprint(v)
+				}
 
-			     dtoWindows.RdpAllowedIps = &allowedIps
-				 dtoOsConfiguration.Windows = &dtoWindows
-				 dtoOsConfiguration.Esxi = nil
-				 request.OsConfiguration = &dtoOsConfiguration
+				dtoWindows.RdpAllowedIps = &allowedIps
+				dtoOsConfiguration.Windows = &dtoWindows
+				dtoOsConfiguration.Esxi = nil
+				request.OsConfiguration = &dtoOsConfiguration
 			}
 
-            if(isEsxi){
+			if isEsxi {
 				//log.Printf("Waiting for server esxi to be reseted...")
 				dtoEsxi := bmcapiclient.OsConfigurationMapEsxi{}
 				temp3 := d.Get("management_access_allowed_ips").(*schema.Set).List()
-	            managementAccessAllowedIps := make([]string, len(temp3))
-	            for i, v := range temp3 {
-		          managementAccessAllowedIps[i] = fmt.Sprint(v)
-	            }
-	            dtoEsxi.ManagementAccessAllowedIps = &managementAccessAllowedIps
+				managementAccessAllowedIps := make([]string, len(temp3))
+				for i, v := range temp3 {
+					managementAccessAllowedIps[i] = fmt.Sprint(v)
+				}
+				dtoEsxi.ManagementAccessAllowedIps = &managementAccessAllowedIps
 				dtoOsConfiguration.Esxi = &dtoEsxi
 				dtoOsConfiguration.Windows = nil
 				request.OsConfiguration = &dtoOsConfiguration
-				
+
 			}
-			
-			
+
 			//b, err := json.MarshalIndent(request, "", "  ")
 			//log.Printf("request object is" + string(b))
 			//request.Id = d.Id()
@@ -604,11 +588,11 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			}
 			d.Set("password", resp.Password)
 
-			 if(resp.OsConfiguration != nil && resp.OsConfiguration.Esxi != nil){
+			if resp.OsConfiguration != nil && resp.OsConfiguration.Esxi != nil {
 				d.Set("root_password", resp.OsConfiguration.Esxi.RootPassword)
 				d.Set("management_ui_url", resp.OsConfiguration.Esxi.ManagementUiUrl)
 			}
- 
+
 			waitResultError := resourceWaitForCreate(d.Id(), &client)
 			if waitResultError != nil {
 				return waitResultError
@@ -632,7 +616,7 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			return fmt.Errorf("Unsuported action")
 		}
 
-	} else if d.HasChange("pricing_model"){
+	} else if d.HasChange("pricing_model") {
 		client := m.(receiver.BMCSDK)
 		//var requestCommand command.Executor
 		//reserve action
@@ -640,12 +624,12 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		//request.Id = d.Id()
 		request.PricingModel = d.Get("pricing_model").(string)
 
-		requestCommand := server.NewReserveServerCommand(client, d.Id(),  *request)
+		requestCommand := server.NewReserveServerCommand(client, d.Id(), *request)
 		_, err := requestCommand.Execute()
 		if err != nil {
 			return err
 		}
-	/* 	code := resp.StatusCode
+		/* 	code := resp.StatusCode
 		if code != 200 {
 			response := &dto.ErrorMessage{}
 			response.FromBytes(resp)
@@ -747,10 +731,10 @@ func refreshForCreate(client *receiver.BMCSDK, id string) resource.StateRefreshF
 		resp, err := requestCommand.Execute()
 		if err != nil {
 			return 0, "", err
-		}else{
+		} else {
 			return 0, resp.Status, nil
 		}
-	/* 	code := resp.StatusCode
+		/* 	code := resp.StatusCode
 		if code != 200 {
 			response := &dto.ErrorMessage{}
 			response.FromBytes(resp)
@@ -759,7 +743,7 @@ func refreshForCreate(client *receiver.BMCSDK, id string) resource.StateRefreshF
 		response := &dto.LongServer{}
 		response.FromBytes(resp)
 		return 0, response.Status, nil*/
-	} 
+	}
 }
 
 /* func run(command command.Executor) error {

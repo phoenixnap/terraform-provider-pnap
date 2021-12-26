@@ -29,6 +29,23 @@ resource "pnap_server" "Test-Server-1" {
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@122.16.1.126"
     
     ]
+    network_configuration {
+      private_network_configuration {
+        configuration_type = "USER_DEFINED"
+        private_networks  {
+          server_private_network {
+              id = pnap_private_network.Test-Network-33.id
+              ips=["10.0.0.12"]
+          }
+        }
+        private_networks  {
+          server_private_network {
+              id = pnap_private_network.Test-Network-44.id
+              ips=["172.16.0.12"]
+          }
+        }
+      }
+    }
     #pricing_model = "ONE_MONTH_RESERVATION"
     #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
     #action = "powered-on"
@@ -52,7 +69,23 @@ The following arguments are supported:
 * `network_type` - The type of network configuration for this server. Currently this field should be set to PUBLIC_AND_PRIVATE or PRIVATE_ONLY.
 * `rdp_allowed_ips` - List of IPs allowed for RDP access to Windows OS. Supported in single IP, CIDR and range format. When undefined, RDP is disabled. To allow RDP access from any IP use 0.0.0.0/0. Must contain at least 1 item.
 * `management_access_allowed_ips` - Define list of IPs allowed to access the Management UI. Supported in single IP, CIDR and range format. When undefined, Management UI is disabled.Must contain at least 1 item.
+* `network_configuration` - Entire network details of bare metal server. Structure is documented below.
 * `action` - Action to perform on server. Allowed actions are: reboot, reset, powered-on, powered-off, shutdown.
+
+
+The `network_configuration` block has field `private_network_configuration`.
+The `private_network_configuration` block has 3 fields:
+
+* `gateway_address` - The address of the gateway assigned / to assign to the server. It'll be null and won't be displayed as part of response body if server is a member of both public and private networks. When used as part of request body, it has to match one of the IP addresses used in the existing assigned private networks for the relevant location. Also, this field can be submitted only when provisioning a server without being a member of any public network.
+* `configuration_type` - Determines the approach for configuring IP blocks for the server being provisioned. Currently this field should be set to `USE_OR_CREATE_DEFAULT` or `USER_DEFINED`. Default value is `USE_OR_CREATE_DEFAULT`.
+* `private_networks` - The list of private networks this server is member of. When this field is part of request body, it'll be used to specify the private networks to assign to this server upon provisioning. Used alongside the `USER_DEFINED` configurationType.
+
+The `private_networks` block has field `server_private_network`.
+The `server_private_network` block has 3 fields:
+
+* `id` - (Required) The network identifier.
+* `ips` - IPs to configure/configured on the server. Should be null or empty list if DHCP is true. Must contain at most 10 items.
+* `dhcp` - Determines whether DHCP is enabled for this server. Should be false if ips is not an empty list. Not supported for proxmox OS. Default value is `false`.
 
 
 ## Attributes Reference
@@ -82,6 +115,7 @@ The following attributes are exported:
 * `management_ui_url` - The URL of the management UI which will only be returned in response to provisioning a server.
 * `root_password` - Password set for user root on an ESXi server which will only be returned in response to provisioning a server.
 * `management_access_allowed_ips` - A list of IPs allowed to access the Management UI. Supported in single IP, CIDR and range format. When undefined, Management UI is disabled.
+* `network_configuration` - Entire network details of bare metal server.
 * `provisioned_on` - Date and time when server was provisioned.
 
 
