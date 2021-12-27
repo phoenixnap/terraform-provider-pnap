@@ -3,7 +3,7 @@ module github.com/phoenixnap/terraform-provider-pnap
 go 1.13
 
 require (
-	github.com/PNAP/go-sdk-helper-bmc v0.1.0
+	github.com/PNAP/go-sdk-helper-bmc v0.1.1
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect
 	github.com/aws/aws-sdk-go v1.37.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.8.2 // indirect
