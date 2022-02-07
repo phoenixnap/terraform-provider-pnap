@@ -28,7 +28,7 @@ resource "pnap_reservation" "Test-Reservation-1" {
 The following arguments are supported:
 
 * `sku` - (Required) The sku code of product pricing plan.
-* `auto_renew` - A flag indicating whether the reservation will auto-renew (default is true).
+* `auto_renew` - A flag indicating whether the reservation will auto-renew (default is true, it can only be modified after the creation of resource).
 * `auto_renew_disable_reason` - The reason for disabling auto-renewal.
 
 
@@ -46,7 +46,7 @@ The following attributes are exported:
 * `end_date_time` - The point in time (in UTC) when the reservation ends.
 * `last_renewal_date_time` - The point in time (in UTC) when the reservation was renewed last.
 * `next_renewal_date_time` - The point in time (in UTC) when the reservation will be renewed if auto renew is set to true.
-* `auto_renew` - A flag indicating whether the reservation will auto-renew (default is true).
+* `auto_renew` - A flag indicating whether the reservation will auto-renew (default is true, it can only be modified after the creation of resource).
 * `sku` - The sku that will be applied to this reservation.
 * `price` - Reservation price.
 * `price_unit` - The unit to which the price applies.
