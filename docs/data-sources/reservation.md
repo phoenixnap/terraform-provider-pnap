@@ -52,7 +52,7 @@ The following attributes are exported:
 * `last_renewal_date_time` - The point in time (in UTC) when the reservation was renewed last.
 * `next_renewal_date_time` - The point in time (in UTC) when the reservation will be renewed if auto renew is set to true.
 * `auto_renew` - A flag indicating whether the reservation will auto-renew (default is true, it can only be modified after the creation of resource).
-* `sku` - The sku applied to this reservation.
+* `sku` - The SKU applied to this reservation.
 * `price` - Reservation price.
 * `price_unit` - The unit to which the price applies.
 * `assigned_resource_id` - The resource ID currently being assigned to reservation.
