@@ -14,12 +14,13 @@ Provides a phoenixNAP reservation datasource. This can be used to read reservati
 
 ## Example Usage
 
-Fetch a reservation by ID and show it's details in alphabetical order. 
+Fetch a reservation by ID or SKU and show it's details in alphabetical order. 
 
 ```hcl
 # Fetch a reservation
 data "pnap_reservation" "test" {
   id = "e6afba51-7de8-4080-83ab-0f915570659c"
+  sku = "XXX-XXX-XXX"
 }
 
 # Show the reservation details
@@ -32,7 +33,8 @@ output "reservation" {
 
 The following arguments are supported:
 
-* `id` - (Required) The reservation identifier.
+* `id` - The reservation identifier.
+* `sku` - The SKU code of product pricing plan.
 
 
 ## Attributes Reference
@@ -49,7 +51,7 @@ The following attributes are exported:
 * `end_date_time` - The point in time (in UTC) when the reservation ends.
 * `last_renewal_date_time` - The point in time (in UTC) when the reservation was renewed last.
 * `next_renewal_date_time` - The point in time (in UTC) when the reservation will be renewed if auto renew is set to true.
-* `auto_renew` - A flag indicating whether the reservation will auto-renew (default is true).
+* `auto_renew` - A flag indicating whether the reservation will auto-renew (default is true, it can only be modified after the creation of resource).
 * `sku` - The sku applied to this reservation.
 * `price` - Reservation price.
 * `price_unit` - The unit to which the price applies.

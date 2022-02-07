@@ -15,7 +15,8 @@ func dataSourceReservation() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Computed: true,
 			},
 			"product_code": {
 				Type:     schema.TypeString,
@@ -59,6 +60,7 @@ func dataSourceReservation() *schema.Resource {
 			},
 			"sku": {
 				Type:     schema.TypeString,
+				Optional: true,
 				Computed: true,
 			},
 			"price": {
@@ -84,31 +86,84 @@ func dataSourceReservationRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	numOfKeys := 0
-	for _, instance := range resp {
-		if instance.ID == d.Get("id").(string) {
-			numOfKeys++
-			d.SetId(instance.ID)
-			d.Set("id", instance.ID)
-			d.Set("product_code", instance.ProductCode)
-			d.Set("product_category", instance.ProductCategory)
-			d.Set("location", instance.Location)
-			d.Set("reservation_model", instance.ReservationModel)
-			d.Set("initial_invoice_model", instance.InitialInvoiceModel)
-			d.Set("start_date_time", instance.StartDateTime.String())
-			d.Set("end_date_time", instance.EndDateTime.String())
-			d.Set("last_renewal_date_time", instance.LastRenewalDateTime.String())
-			d.Set("next_renewal_date_time", instance.NextRenewalDateTime.String())
-			d.Set("auto_renew", instance.AutoRenew)
-			d.Set("sku", instance.SKU)
-			d.Set("price", instance.Price)
-			d.Set("price_unit", instance.PriceUnit)
-			d.Set("assigned_resource_id", instance.AssignedResourceID)
+	if len(d.Get("id").(string)) > 0 && len(d.Get("sku").(string)) > 0 {
+		numOfKeys := 0
+		for _, instance := range resp {
+			if instance.ID == d.Get("id").(string) && instance.SKU == d.Get("sku").(string) {
+				numOfKeys++
+				d.SetId(instance.ID)
+				d.Set("id", instance.ID)
+				d.Set("product_code", instance.ProductCode)
+				d.Set("product_category", instance.ProductCategory)
+				d.Set("location", instance.Location)
+				d.Set("reservation_model", instance.ReservationModel)
+				d.Set("initial_invoice_model", instance.InitialInvoiceModel)
+				d.Set("start_date_time", instance.StartDateTime.String())
+				d.Set("end_date_time", instance.EndDateTime.String())
+				d.Set("last_renewal_date_time", instance.LastRenewalDateTime.String())
+				d.Set("next_renewal_date_time", instance.NextRenewalDateTime.String())
+				d.Set("auto_renew", instance.AutoRenew)
+				d.Set("sku", instance.SKU)
+				d.Set("price", instance.Price)
+				d.Set("price_unit", instance.PriceUnit)
+				d.Set("assigned_resource_id", instance.AssignedResourceID)
+			}
+		}
+		if numOfKeys > 1 {
+			return fmt.Errorf("too many reservations with id %s and sku %s (found %d, expected 1)", d.Get("id").(string), d.Get("sku").(string), numOfKeys)
+		}
+	} else if len(d.Get("sku").(string)) > 0 {
+		numOfKeys := 0
+		for _, instance := range resp {
+			if instance.SKU == d.Get("sku").(string) {
+				numOfKeys++
+				d.SetId(instance.ID)
+				d.Set("id", instance.ID)
+				d.Set("product_code", instance.ProductCode)
+				d.Set("product_category", instance.ProductCategory)
+				d.Set("location", instance.Location)
+				d.Set("reservation_model", instance.ReservationModel)
+				d.Set("initial_invoice_model", instance.InitialInvoiceModel)
+				d.Set("start_date_time", instance.StartDateTime.String())
+				d.Set("end_date_time", instance.EndDateTime.String())
+				d.Set("last_renewal_date_time", instance.LastRenewalDateTime.String())
+				d.Set("next_renewal_date_time", instance.NextRenewalDateTime.String())
+				d.Set("auto_renew", instance.AutoRenew)
+				d.Set("sku", instance.SKU)
+				d.Set("price", instance.Price)
+				d.Set("price_unit", instance.PriceUnit)
+				d.Set("assigned_resource_id", instance.AssignedResourceID)
+			}
+		}
+		if numOfKeys > 1 {
+			return fmt.Errorf("too many reservations with sku %s (found %d, expected 1)", d.Get("sku").(string), numOfKeys)
+		}
+	} else {
+		numOfKeys := 0
+		for _, instance := range resp {
+			if instance.ID == d.Get("id").(string) {
+				numOfKeys++
+				d.SetId(instance.ID)
+				d.Set("id", instance.ID)
+				d.Set("product_code", instance.ProductCode)
+				d.Set("product_category", instance.ProductCategory)
+				d.Set("location", instance.Location)
+				d.Set("reservation_model", instance.ReservationModel)
+				d.Set("initial_invoice_model", instance.InitialInvoiceModel)
+				d.Set("start_date_time", instance.StartDateTime.String())
+				d.Set("end_date_time", instance.EndDateTime.String())
+				d.Set("last_renewal_date_time", instance.LastRenewalDateTime.String())
+				d.Set("next_renewal_date_time", instance.NextRenewalDateTime.String())
+				d.Set("auto_renew", instance.AutoRenew)
+				d.Set("sku", instance.SKU)
+				d.Set("price", instance.Price)
+				d.Set("price_unit", instance.PriceUnit)
+				d.Set("assigned_resource_id", instance.AssignedResourceID)
+			}
+		}
+		if numOfKeys > 1 {
+			return fmt.Errorf("too many reservations with id %s (found %d, expected 1)", d.Get("id").(string), numOfKeys)
 		}
 	}
-	if numOfKeys > 1 {
-		return fmt.Errorf("too many reservations with id %s (found %d, expected 1)", d.Get("id").(string), numOfKeys)
-	}
-
 	return nil
 }
