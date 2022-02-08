@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	pnapRetryTimeout       = 30 * time.Minute
+	pnapRetryTimeout       = 100 * time.Minute
 	pnapDeleteRetryTimeout = 15 * time.Minute
 	pnapRetryDelay         = 5 * time.Second
 	pnapRetryMinTimeout    = 3 * time.Second
