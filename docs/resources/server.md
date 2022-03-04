@@ -73,7 +73,7 @@ The following arguments are supported:
 * `action` - Action to perform on server. Allowed actions are: reboot, reset, powered-on, powered-off, shutdown.
 
 
-The `network_configuration` block has field `private_network_configuration`.
+The `network_configuration` block has 2 fields: `private_network_configuration` and `ip_blocks_configuration`.
 The `private_network_configuration` block has 3 fields:
 
 * `gateway_address` - The address of the gateway assigned / to assign to the server. It'll be null and won't be displayed as part of response body if server is a member of both public and private networks. When used as part of request body, it has to match one of the IP addresses used in the existing assigned private networks for the relevant location. Also, this field can be submitted only when provisioning a server without being a member of any public network.
@@ -87,6 +87,17 @@ The `server_private_network` block has 3 fields:
 * `ips` - IPs to configure/configured on the server. Should be null or empty list if DHCP is true. Must contain at most 10 items.
 * `dhcp` - Determines whether DHCP is enabled for this server. Should be false if ips is not an empty list. Not supported for proxmox OS. Default value is `false`.
 
+The `ip_blocks_configuration` is the second field of the `network_configuration` block.
+The `ip_blocks_configuration` block has 2 fields:
+
+* `configuration_type` - Determines the approach for configuring IP blocks for the server being provisioned. If `PURCHASE_NEW` is selected, the smallest supported range, depending on the operating system, is allocated to the server. The following values are allowed: `PURCHASE_NEW`, `USER_DEFINED`, `NONE`. Default value is `PURCHASE_NEW`.
+* `ip_blocks` - Used to specify the previously purchased IP blocks to assign to this server upon provisioning. Used alongside the `USER_DEFINED` configurationType. Must contain at most 1 item.
+
+The `ip_blocks` block has field `server_ip_block`.
+The `server_ip_block` block has 2 fields:
+
+* `id` - (Required) The IP Block's ID.
+* `vlan_id` - The VLAN on which this IP block has been configured within the network switch.
 
 ## Attributes Reference
 
@@ -100,7 +111,7 @@ The following attributes are exported:
 * `hostname ` - Server hostname.
 * `id` - The unique identifier of the server.
 * `location` - Server Location ID. Cannot be changed once a server is created.
-* `os` - The server’s OS ID used when the server was created. 
+* `os` - The server’s OS ID used when the server was created.
 * `ram` - A description of the machine RAM.
 * `status` - The status of the server.
 * `storage`- A description of the machine storage.
