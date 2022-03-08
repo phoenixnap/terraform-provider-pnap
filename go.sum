@@ -44,8 +44,8 @@ github.com/Microsoft/go-winio v0.4.14/go.mod h1:qXqCSQ3Xa7+6tgxaGTIe4Kpcdsi+P8jB
 github.com/Microsoft/go-winio v0.4.16 h1:FtSW/jqD+l4ba5iPBj9CODVtgfYAD8w2wS923g/cFDk=
 github.com/Microsoft/go-winio v0.4.16/go.mod h1:XB6nPKklQyQ7GC9LdcBEcBl8PF76WugXOPRXwdLnMv0=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
-github.com/PNAP/go-sdk-helper-bmc v0.1.3 h1:EM4rSZvvyLTN/H/O5tohULzHnLbtvvV98bSayO7bym8=
-github.com/PNAP/go-sdk-helper-bmc v0.1.3/go.mod h1:nJ1RM/quNtuEZjQWl8QtiPVQ1Bltp/KBEx8u6qGPtnE=
+github.com/PNAP/go-sdk-helper-bmc v0.3.2-alpha h1:nHGUNxIbzXFhX198msrGP1WGypnE6G/0abLGWDdZUVE=
+github.com/PNAP/go-sdk-helper-bmc v0.3.2-alpha/go.mod h1:1Oz0mL1bjXowZ7AGhfu76Zc08pcv0xjIEUY911Ifb/E=
 github.com/agext/levenshtein v1.2.1/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
 github.com/agext/levenshtein v1.2.2 h1:0S/Yg6LYmFJ5stwQeRp6EeOcCbj7xiqQSdNelsXvaqE=
 github.com/agext/levenshtein v1.2.2/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
@@ -342,8 +342,10 @@ github.com/pelletier/go-toml v1.2.0 h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/phoenixnap/go-sdk-bmc/auditapi v1.0.0 h1:OcyHXCKOsl20vF2LvxGkkVhDJE6tr/gu57KigGpQD7c=
 github.com/phoenixnap/go-sdk-bmc/auditapi v1.0.0/go.mod h1:ulNP1g6LRxaz3ClILMoLzBu3E0jRRCpp0A8AOP8q4B8=
-github.com/phoenixnap/go-sdk-bmc/bmcapi v1.0.0 h1:Ya/S34rwyi2h+2Lm0G22rawSJz5L6CsIq7OVABpNtNU=
-github.com/phoenixnap/go-sdk-bmc/bmcapi v1.0.0/go.mod h1:VI5LhqwK8/3q9ULTGp9wadV5SFTiREW3xLBW/ImWaT4=
+github.com/phoenixnap/go-sdk-bmc/bmcapi v1.1.0-alpha h1:x9VkhJmdV67rifYcZg5hCRwkJkPY35oUhKifQwqA7+U=
+github.com/phoenixnap/go-sdk-bmc/bmcapi v1.1.0-alpha/go.mod h1:VI5LhqwK8/3q9ULTGp9wadV5SFTiREW3xLBW/ImWaT4=
+github.com/phoenixnap/go-sdk-bmc/ipapi v1.0.0-alpha h1:6wKp42kMpWW2P5mfVEVQN6UmNmOTEXaJXBgLrzruNOM=
+github.com/phoenixnap/go-sdk-bmc/ipapi v1.0.0-alpha/go.mod h1:vNBqvOx0P8Z52FR3GUzUaEKp7DrVysc3goNokz5aQzI=
 github.com/phoenixnap/go-sdk-bmc/networkapi v1.0.0 h1:vgMRk/ciPxcvYPX2RwaH5lfnzbkoN92gNfC08pcmYko=
 github.com/phoenixnap/go-sdk-bmc/networkapi v1.0.0/go.mod h1:6SJ9vKIDejJRNGIk3mqQRCIX8le76ntsuwBnza3YUs0=
 github.com/phoenixnap/go-sdk-bmc/ranchersolutionapi v1.0.0 h1:N1cqoplM97lvncittaKX3IK/Fc2wLihNWYKpzURPBbA=
@@ -521,8 +523,8 @@ golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45/go.mod h1:gOpvHmFTYa4Iltr
 golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=
 golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=
 golang.org/x/oauth2 v0.0.0-20210218202405-ba52d332ba99/go.mod h1:KelEdhl1UZF7XfJ4dDtk6s++YSgaE7mD/BuKKDLBl4A=
-golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 h1:RerP+noqYHUQ8CMRcPlC2nvTa4dcBIjegkuWdcUDuqg=
-golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8/go.mod h1:KelEdhl1UZF7XfJ4dDtk6s++YSgaE7mD/BuKKDLBl4A=
+golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602 h1:0Ja1LBD+yisY6RWM/BH7TJVXWsSjs2VwBSmvSX4HdBc=
+golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602/go.mod h1:KelEdhl1UZF7XfJ4dDtk6s++YSgaE7mD/BuKKDLBl4A=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181108010431-42b317875d0f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=

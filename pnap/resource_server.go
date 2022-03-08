@@ -519,7 +519,7 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	}
 	response := &dto.LongServer{}
 	response.FromBytes(resp) */
-	d.SetId(resp.Id)
+	//d.SetId(resp.Id)
 	d.Set("status", resp.Status)
 	d.Set("hostname", resp.Hostname)
 	d.Set("description", resp.Description)
@@ -882,7 +882,12 @@ func runResetCommand(command command.Executor) (error, dto.ServerActionResponse)
 } */
 
 func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncInput []interface{}) []interface{} {
-	if len(ncInput) > 0 {
+	if netConf != nil { //len(ncInput)
+		if len(ncInput) == 0 {
+			ncInput = make([]interface{}, 1)
+			n := make(map[string]interface{})
+			ncInput[0] = n
+		}
 		nci := ncInput[0]
 		nciMap := nci.(map[string]interface{})
 
@@ -929,14 +934,24 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 				pnc[0] = pncItem
 				nciMap["private_network_configuration"] = pnc
 			}
-			ibc := nciMap["ip_blocks_configuration"].([]interface{})
-			ibci := ibc[0]
-			ibcInput := ibci.(map[string]interface{})
 
 			if netConf.IpBlocksConfiguration != nil {
+
 				ipBlocksConf := *netConf.IpBlocksConfiguration
 
 				if ipBlocksConf.IpBlocks != nil {
+
+					ibc := nciMap["ip_blocks_configuration"]
+
+					if ibc == nil || len(ibc.([]interface{})) == 0 {
+						ibc = make([]interface{}, 1)
+						ibci := make(map[string]interface{})
+						ibc.([]interface{})[0] = ibci
+					}
+
+					ibci := ibc.([]interface{})[0]
+					ibcInput := ibci.(map[string]interface{})
+
 					ipBlocks := *ipBlocksConf.IpBlocks
 					ib := make([]interface{}, len(ipBlocks))
 					for i, j := range ipBlocks {
@@ -955,8 +970,8 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 					ibcInput["ip_blocks"] = ib
 				}
 			}
-			return ncInput
+			//return ncInput
 		}
 	}
-	return make([]interface{}, 0)
+	return ncInput
 }
