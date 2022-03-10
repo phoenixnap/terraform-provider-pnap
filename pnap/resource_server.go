@@ -741,10 +741,27 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 
 func resourceServerDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(receiver.BMCSDK)
-
 	serverID := d.Id()
+
+	var deleteIpBlocks = false
+	var ncInput = d.Get("network_configuration").([]interface{})
+	if len(ncInput) == 0 {
+		deleteIpBlocks = true
+	} else if len(ncInput) > 0 {
+		nci := ncInput[0]
+		nciMap := nci.(map[string]interface{})
+		ibc := nciMap["ip_blocks_configuration"]
+		if ibc == nil || len(ibc.([]interface{})) == 0 {
+			deleteIpBlocks = true
+		} else if ibc != nil && len(ibc.([]interface{})) > 0 {
+			ibci := ibc.([]interface{})[0]
+			ibcInput := ibci.(map[string]interface{})
+			if ibcInput["ip_blocks"] == nil || len(ibcInput["ip_blocks"].([]interface{})) == 0 {
+				deleteIpBlocks = true
+			}
+		}
+	}
 	relinquishIpBlock := bmcapiclient.RelinquishIpBlock{}
-	deleteIpBlocks := false
 	relinquishIpBlock.DeleteIpBlocks = &deleteIpBlocks
 	b, _ := json.MarshalIndent(relinquishIpBlock, "", "  ")
 	log.Printf("relinquishIpBlock object is" + string(b))
