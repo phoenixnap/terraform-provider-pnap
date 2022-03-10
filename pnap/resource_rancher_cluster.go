@@ -370,7 +370,7 @@ func resourceRancherClusterRead(d *schema.ResourceData, m interface{}) error {
 	if resp.InitialClusterVersion != nil {
 		d.Set("initial_cluster_version", *resp.InitialClusterVersion)
 	}
-	if resp.NodePools != nil {
+	if resp.NodePools != nil && len(*resp.NodePools) > 0 {
 		var np = d.Get("node_pools").([]interface{})
 		flatPools := flattenNodePools(*resp.NodePools, np)
 		if err := d.Set("node_pools", flatPools); err != nil {
