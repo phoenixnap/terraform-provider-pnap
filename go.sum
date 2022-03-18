@@ -44,8 +44,8 @@ github.com/Microsoft/go-winio v0.4.14/go.mod h1:qXqCSQ3Xa7+6tgxaGTIe4Kpcdsi+P8jB
 github.com/Microsoft/go-winio v0.4.16 h1:FtSW/jqD+l4ba5iPBj9CODVtgfYAD8w2wS923g/cFDk=
 github.com/Microsoft/go-winio v0.4.16/go.mod h1:XB6nPKklQyQ7GC9LdcBEcBl8PF76WugXOPRXwdLnMv0=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
-github.com/PNAP/go-sdk-helper-bmc v0.3.2 h1:+pqCBlB6lSQinlwHdkCO/0ChGpQ7NkqmfKhwP+9Aefs=
-github.com/PNAP/go-sdk-helper-bmc v0.3.2/go.mod h1:AlnFi2QETj5myd+eUylnZh+yE0zZaavSlvx8HBXTh/E=
+github.com/PNAP/go-sdk-helper-bmc v0.3.3 h1:HCpOQF/34O5/0R7zT9FF/aZAGqWUDaXcUm9n9RMXPM4=
+github.com/PNAP/go-sdk-helper-bmc v0.3.3/go.mod h1:AlnFi2QETj5myd+eUylnZh+yE0zZaavSlvx8HBXTh/E=
 github.com/agext/levenshtein v1.2.1/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
 github.com/agext/levenshtein v1.2.2 h1:0S/Yg6LYmFJ5stwQeRp6EeOcCbj7xiqQSdNelsXvaqE=
 github.com/agext/levenshtein v1.2.2/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
@@ -352,6 +352,8 @@ github.com/phoenixnap/go-sdk-bmc/ranchersolutionapi v1.0.0 h1:N1cqoplM97lvncitta
 github.com/phoenixnap/go-sdk-bmc/ranchersolutionapi v1.0.0/go.mod h1:nFkhVvk0eOqlaPJE899y/ZNbMqgHzXpMhpxdY/hknRw=
 github.com/phoenixnap/go-sdk-bmc/tagapi v1.0.0 h1:VylVu2zKETfWBdUtYpkqLRHCBaew8GSBKBEdcwa98JA=
 github.com/phoenixnap/go-sdk-bmc/tagapi v1.0.0/go.mod h1:3tqCAEEQcXXQ/XS/F5VaAvycmoqk6g0ST6nF2Kfys9k=
+github.com/phoenixnap/go-sdk-bmc/tagapi v1.1.0 h1:BVONs8Fl1+YT945hVTuFbMGvZn3uKCG7Mb9EEitUXog=
+github.com/phoenixnap/go-sdk-bmc/tagapi v1.1.0/go.mod h1:3tqCAEEQcXXQ/XS/F5VaAvycmoqk6g0ST6nF2Kfys9k=
 github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
