@@ -3,12 +3,12 @@ layout: "pnap"
 page_title: "phoenixNAP: pnap_products"
 sidebar_current: "docs-pnap-datasource-products"
 description: |-
-  Provides a phoenixNAP product datasource. This can be used to read products.
+  Provides a phoenixNAP products datasource. This can be used to read products.
 ---
 
 # pnap_products Datasource
 
-Provides a phoenixNAP product datasource. This can be used to read products.
+Provides a phoenixNAP products datasource. This can be used to read products.
 
 
 
