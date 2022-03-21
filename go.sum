@@ -44,8 +44,8 @@ github.com/Microsoft/go-winio v0.4.14/go.mod h1:qXqCSQ3Xa7+6tgxaGTIe4Kpcdsi+P8jB
 github.com/Microsoft/go-winio v0.4.16 h1:FtSW/jqD+l4ba5iPBj9CODVtgfYAD8w2wS923g/cFDk=
 github.com/Microsoft/go-winio v0.4.16/go.mod h1:XB6nPKklQyQ7GC9LdcBEcBl8PF76WugXOPRXwdLnMv0=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
-github.com/PNAP/go-sdk-helper-bmc v0.3.3 h1:HCpOQF/34O5/0R7zT9FF/aZAGqWUDaXcUm9n9RMXPM4=
-github.com/PNAP/go-sdk-helper-bmc v0.3.3/go.mod h1:AlnFi2QETj5myd+eUylnZh+yE0zZaavSlvx8HBXTh/E=
+github.com/PNAP/go-sdk-helper-bmc v0.3.4 h1:tYmVF2WTdz9VoYFf5CBNYSHwjBAi9ycx3kHdocEMb4g=
+github.com/PNAP/go-sdk-helper-bmc v0.3.4/go.mod h1:AlnFi2QETj5myd+eUylnZh+yE0zZaavSlvx8HBXTh/E=
 github.com/agext/levenshtein v1.2.1/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
 github.com/agext/levenshtein v1.2.2 h1:0S/Yg6LYmFJ5stwQeRp6EeOcCbj7xiqQSdNelsXvaqE=
 github.com/agext/levenshtein v1.2.2/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
