@@ -181,6 +181,32 @@ func resourceRancherCluster() *schema.Resource {
 					},
 				},
 			},
+			"workload_configuration": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"server_count": {
+							Type:     schema.TypeInt,
+							Optional: true,
+							Default:  1,
+						},
+						"server_type": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"location": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
 			"status_description": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -310,6 +336,25 @@ func resourceRancherClusterCreate(d *schema.ResourceData, m interface{}) error {
 			}
 		}
 		request.Configuration = &configurationObject
+	}
+
+	if d.Get("workload_configuration") != nil && len(d.Get("workload_configuration").([]interface{})) > 0 {
+		wConfiguration := d.Get("workload_configuration").([]interface{})[0]
+		wConfigurationItem := wConfiguration.(map[string]interface{})
+
+		wConfigurationObject := rancherapiclient.WorkloadClusterConfig{}
+
+		name := wConfigurationItem["name"].(string)
+		if len(name) > 0 {
+			wConfigurationObject.Name = &name
+		}
+		serverCount := int32(wConfigurationItem["server_count"].(int))
+		wConfigurationObject.ServerCount = &serverCount
+
+		wConfigurationObject.ServerType = wConfigurationItem["server_type"].(string)
+		wConfigurationObject.Location = wConfigurationItem["location"].(string)
+
+		request.WorkloadConfiguration = &wConfigurationObject
 		b, _ := json.MarshalIndent(request, "", "  ")
 		log.Printf("request object is" + string(b))
 	}
@@ -377,30 +422,6 @@ func resourceRancherClusterRead(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 	}
-	// if resp.NodePools != nil {
-	// 	flatPool := flattenNodePools(*resp.NodePools)
-	// 	flatPools := make([]interface{}, 1)
-	// 	var np = d.Get("node_pools").([]interface{})
-	// 	if len(np) == 1 {
-	// 		n := d.Get("node_pools").([]interface{})[0]
-	// 		nItem := n.(map[string]interface{})
-	// 		if nItem["ssh_config"] != nil && len(nItem["ssh_config"].([]interface{})) > 0 {
-	// 			sshConfig := nItem["ssh_config"].([]interface{})[0]
-	// 			sshConfigItem := sshConfig.(map[string]interface{})
-	// 			sc := make([]interface{}, 1)
-	// 			sci := make(map[string]interface{})
-	// 			sc[0] = sci
-	// 			sci["install_default_keys"] = sshConfigItem["install_default_keys"].(bool)
-	// 			sci["keys"] = sshConfigItem["keys"].(*schema.Set).List()
-	// 			sci["key_ids"] = sshConfigItem["key_ids"].(*schema.Set).List()
-	// 			flatPool["ssh_config"] = sc
-	// 		}
-	// 	}
-	// 	flatPools[0] = flatPool
-	// 	if err := d.Set("node_pools", flatPools); err != nil {
-	// 		return err
-	// 	}
-	// }
 	if resp.StatusDescription != nil {
 		d.Set("status_description", *resp.StatusDescription)
 	}
@@ -460,33 +481,6 @@ func flattenNodePools(nodePools []rancherapiclient.NodePool, np []interface{}) [
 	}
 	return np
 }
-
-// func flattenNodePools(nodePools []rancherapiclient.NodePool) map[string]interface{} {
-
-// 	n := make(map[string]interface{})
-// 	if nodePools[0].Name != nil {
-// 		n["name"] = *nodePools[0].Name
-// 	}
-// 	if nodePools[0].NodeCount != nil {
-// 		n["node_count"] = int(*nodePools[0].NodeCount)
-// 	}
-// 	if nodePools[0].ServerType != nil {
-// 		n["server_type"] = *nodePools[0].ServerType
-// 	}
-// 	if nodePools[0].Nodes != nil {
-// 		vNo := *nodePools[0].Nodes
-// 		nodes := make([]interface{}, len(vNo))
-// 		for j, k := range vNo {
-// 			node := make(map[string]interface{})
-// 			if k.ServerId != nil {
-// 				node["server_id"] = *k.ServerId
-// 			}
-// 			nodes[j] = node
-// 		}
-// 		n["nodes"] = nodes
-// 	}
-// 	return n
-// }
 
 func clusterWaitForCreate(id string, client *receiver.BMCSDK) error {
 	log.Printf("Waiting for cluster %s to be created...", id)
