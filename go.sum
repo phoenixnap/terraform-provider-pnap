@@ -350,6 +350,8 @@ github.com/phoenixnap/go-sdk-bmc/networkapi v1.0.0 h1:vgMRk/ciPxcvYPX2RwaH5lfnzb
 github.com/phoenixnap/go-sdk-bmc/networkapi v1.0.0/go.mod h1:6SJ9vKIDejJRNGIk3mqQRCIX8le76ntsuwBnza3YUs0=
 github.com/phoenixnap/go-sdk-bmc/ranchersolutionapi v1.0.0 h1:N1cqoplM97lvncittaKX3IK/Fc2wLihNWYKpzURPBbA=
 github.com/phoenixnap/go-sdk-bmc/ranchersolutionapi v1.0.0/go.mod h1:nFkhVvk0eOqlaPJE899y/ZNbMqgHzXpMhpxdY/hknRw=
+github.com/phoenixnap/go-sdk-bmc/ranchersolutionapi v1.0.2-0.20220329122317-f7978e5a06bf h1:5iUI4fZEjvjMk6jrbzFjDpgz9rCbyw3cUk2A0z8iWCE=
+github.com/phoenixnap/go-sdk-bmc/ranchersolutionapi v1.0.2-0.20220329122317-f7978e5a06bf/go.mod h1:nFkhVvk0eOqlaPJE899y/ZNbMqgHzXpMhpxdY/hknRw=
 github.com/phoenixnap/go-sdk-bmc/tagapi v1.0.0 h1:VylVu2zKETfWBdUtYpkqLRHCBaew8GSBKBEdcwa98JA=
 github.com/phoenixnap/go-sdk-bmc/tagapi v1.0.0/go.mod h1:3tqCAEEQcXXQ/XS/F5VaAvycmoqk6g0ST6nF2Kfys9k=
 github.com/phoenixnap/go-sdk-bmc/tagapi v1.1.0 h1:BVONs8Fl1+YT945hVTuFbMGvZn3uKCG7Mb9EEitUXog=
