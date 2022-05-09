@@ -564,7 +564,9 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("rdp_allowed_ips", rdpAllowedIps)
 	}
 
-	d.Set("provisioned_on", resp.ProvisionedOn.String())
+	if resp.ProvisionedOn != nil {
+		d.Set("provisioned_on", resp.ProvisionedOn.String())
+	}
 
 	var ncInput = d.Get("network_configuration").([]interface{})
 	networkConfiguration := flattenNetworkConfiguration(&resp.NetworkConfiguration, ncInput)
