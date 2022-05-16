@@ -913,40 +913,84 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 		if netConf != nil {
 			if netConf.PrivateNetworkConfiguration != nil {
 				prNetConf := *netConf.PrivateNetworkConfiguration
-				pnc := make([]interface{}, 1)
-				pncItem := make(map[string]interface{})
-
+				//pnc := make([]interface{}, 1)
+				var pnc []interface{}
+				if (nciMap["private_network_configuration"]) != nil {
+					pnc = nciMap["private_network_configuration"].([]interface{})
+				} else {
+					pnc = make([]interface{}, 1)
+				}
+				//pncItem := make(map[string]interface{})
+				var pncItem map[string]interface{}
+				if len(pnc) > 0 && pnc[0] != nil {
+					pncItem = pnc[0].(map[string]interface{})
+				} else {
+					pncItem = make(map[string]interface{})
+				}
 				if prNetConf.GatewayAddress != nil {
 					pncItem["gateway_adress"] = *prNetConf.GatewayAddress
 				}
-				if prNetConf.ConfigurationType != nil {
+				if prNetConf.ConfigurationType != nil && len(*prNetConf.ConfigurationType) > 0 {
 					pncItem["configuration_type"] = *prNetConf.ConfigurationType
 				}
 				if prNetConf.PrivateNetworks != nil {
 					prNet := *prNetConf.PrivateNetworks
-					pn := make([]interface{}, len(prNet))
+					//pn := make([]interface{}, len(prNet))
+					var pn []interface{}
+					var pnetworksExists = false
+					if pncItem["private_networks"] != nil {
+						pn = pncItem["private_networks"].([]interface{})
+						pnetworksExists = true
+					} else {
+						pn = make([]interface{}, len(prNet))
+						pnetworksExists = false
+					}
 					for i, j := range prNet {
-						pnItem := make(map[string]interface{})
-						spn := make([]interface{}, 1)
-						spnItem := make(map[string]interface{})
+						for k, _ := range pn {
+							if !pnetworksExists || pn[k].(map[string]interface{})["server_private_network"].([]interface{})[0].(map[string]interface{})["id"] == j.Id {
 
-						spnItem["id"] = j.Id
-						if j.Ips != nil {
-							ips := make([]interface{}, len(*j.Ips))
-							for k, l := range *j.Ips {
-								ips[k] = l
+								var pnItem map[string]interface{}
+								var spn []interface{}
+								var spnItem map[string]interface{}
+
+								if !pnetworksExists {
+									pnItem = make(map[string]interface{})
+									spn = make([]interface{}, 1)
+									spnItem = make(map[string]interface{})
+								} else {
+									//pnItem := make(map[string]interface{})
+									pnItem = pn[k].(map[string]interface{})
+
+									//spn := make([]interface{}, 1)
+									spn = pnItem["server_private_network"].([]interface{})
+									//spnItem := make(map[string]interface{})
+									spnItem = spn[0].(map[string]interface{})
+								}
+
+								spnItem["id"] = j.Id
+								if j.Ips != nil {
+									ips := make([]interface{}, len(*j.Ips))
+									for k, l := range *j.Ips {
+										ips[k] = l
+									}
+									spnItem["ips"] = ips
+								}
+								if j.Dhcp != nil {
+									spnItem["dhcp"] = *j.Dhcp
+								}
+								if j.StatusDescription != nil {
+									spnItem["status_description"] = *j.StatusDescription
+								}
+								if !pnetworksExists {
+									spn[0] = spnItem
+									pnItem["server_private_network"] = spn
+									pn[i] = pnItem
+								}
 							}
-							spnItem["ips"] = ips
+							if !pnetworksExists {
+								break
+							}
 						}
-						if j.Dhcp != nil {
-							spnItem["dhcp"] = *j.Dhcp
-						}
-						if j.StatusDescription != nil {
-							spnItem["status_description"] = *j.StatusDescription
-						}
-						spn[0] = spnItem
-						pnItem["server_private_network"] = spn
-						pn[i] = pnItem
 					}
 					pncItem["private_networks"] = pn
 				}
