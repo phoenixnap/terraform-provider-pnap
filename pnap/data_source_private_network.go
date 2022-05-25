@@ -61,6 +61,10 @@ func dataSourcePrivateNetwork() *schema.Resource {
 					},
 				},
 			},
+			"created_on": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -90,7 +94,7 @@ func dataSourcePrivateNetworkRead(d *schema.ResourceData, m interface{}) error {
 			if err := d.Set("servers", servers); err != nil {
 				return err
 			}
-
+			d.Set("created_on", instance.CreatedOn.String())
 		}
 	}
 	if numOfNets > 1 {

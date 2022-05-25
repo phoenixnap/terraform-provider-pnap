@@ -36,6 +36,7 @@ func Provider() *schema.Provider {
 			"pnap_ip_block":        resourceIpBlock(),
 			"pnap_rancher_cluster": resourceRancherCluster(),
 			"pnap_tag":             resourceTag(),
+			"pnap_public_network":  resourcePublicNetwork(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"pnap_ssh_key":              dataSourceSshKey(),
@@ -48,6 +49,7 @@ func Provider() *schema.Provider {
 			"pnap_tag":                  dataSourceTag(),
 			"pnap_products":             dataSourceProducts(),
 			"pnap_product_availability": dataSourceProductAvailability(),
+			"pnap_public_network":       dataSourcePublicNetwork(),
 		},
 		ConfigureFunc: providerConfigure,
 	}

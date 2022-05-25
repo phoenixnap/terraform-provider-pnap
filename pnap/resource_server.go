@@ -171,6 +171,11 @@ func resourceServer() *schema.Resource {
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"gateway_address": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+							Optional: true,
+						},
 						"private_network_configuration": &schema.Schema{
 							Type:     schema.TypeList,
 							Optional: true,
@@ -178,7 +183,7 @@ func resourceServer() *schema.Resource {
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"gateway_address": &schema.Schema{
+									"gateway_address": &schema.Schema{ //Deprecated
 										Type:     schema.TypeString,
 										Optional: true,
 										Computed: true,
@@ -274,6 +279,48 @@ func resourceServer() *schema.Resource {
 								},
 							},
 						},
+						"public_network_configuration": &schema.Schema{
+							Type:     schema.TypeList,
+							Optional: true,
+							Computed: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"public_networks": &schema.Schema{
+										Type:     schema.TypeList,
+										Computed: true,
+										Optional: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"server_public_network": &schema.Schema{
+													Type:     schema.TypeList,
+													Optional: true,
+													Computed: true,
+													MaxItems: 1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"id": &schema.Schema{
+																Type:     schema.TypeString,
+																Required: true,
+															},
+															"ips": &schema.Schema{
+																Type:     schema.TypeSet,
+																Required: true,
+																Elem:     &schema.Schema{Type: schema.TypeString},
+															},
+															"status_description": &schema.Schema{
+																Type:     schema.TypeString,
+																Computed: true,
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -352,14 +399,17 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		request.OsConfiguration = &dtoOsConfiguration
 	}
 
-	// private network block
+	// network block
 	if d.Get("network_configuration") != nil && len(d.Get("network_configuration").([]interface{})) > 0 {
 
 		networkConfiguration := d.Get("network_configuration").([]interface{})[0]
 		networkConfigurationItem := networkConfiguration.(map[string]interface{})
 
 		networkConfigurationObject := bmcapiclient.NetworkConfiguration{}
-
+		gatewayAddress := networkConfigurationItem["gateway_address"].(string)
+		if len(gatewayAddress) > 0 {
+			networkConfigurationObject.GatewayAddress = &gatewayAddress
+		}
 		if networkConfigurationItem["private_network_configuration"] != nil && len(networkConfigurationItem["private_network_configuration"].([]interface{})) > 0 {
 			privateNetworkConfiguration := networkConfigurationItem["private_network_configuration"].([]interface{})[0]
 			privateNetworkConfigurationItem := privateNetworkConfiguration.(map[string]interface{})
@@ -454,12 +504,48 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 				}
 			}
 		}
+		if networkConfigurationItem["public_network_configuration"] != nil && len(networkConfigurationItem["public_network_configuration"].([]interface{})) > 0 {
+			publicNetworkConfiguration := networkConfigurationItem["public_network_configuration"].([]interface{})[0]
+			publicNetworkConfigurationItem := publicNetworkConfiguration.(map[string]interface{})
+			publicNetworks := publicNetworkConfigurationItem["public_networks"].([]interface{})
+
+			if len(publicNetworks) > 0 {
+				publicNetworkConfigurationObject := bmcapiclient.PublicNetworkConfiguration{}
+				networkConfigurationObject.PublicNetworkConfiguration = &publicNetworkConfigurationObject
+				serPublicNets := make([]bmcapiclient.ServerPublicNetwork, len(publicNetworks))
+
+				for k, j := range publicNetworks {
+					serverPublicNetworkObject := bmcapiclient.ServerPublicNetwork{}
+
+					publicNetworkItem := j.(map[string]interface{})
+
+					serverPublicNetwork := publicNetworkItem["server_public_network"].([]interface{})[0]
+					serverPublicNetworkItem := serverPublicNetwork.(map[string]interface{})
+
+					id := serverPublicNetworkItem["id"].(string)
+					tempIps := serverPublicNetworkItem["ips"].(*schema.Set).List()
+
+					NetIps := make([]string, len(tempIps))
+					for i, v := range tempIps {
+						NetIps[i] = fmt.Sprint(v)
+					}
+					if (len(id)) > 0 {
+						serverPublicNetworkObject.Id = id
+					}
+					if (len(NetIps)) > 0 {
+						serverPublicNetworkObject.Ips = NetIps
+					}
+					serPublicNets[k] = serverPublicNetworkObject
+				}
+				publicNetworkConfigurationObject.PublicNetworks = &serPublicNets
+			}
+		}
 		request.NetworkConfiguration = &networkConfigurationObject
 		b, _ := json.MarshalIndent(request, "", "  ")
 		log.Printf("request object is" + string(b))
 	}
 
-	// end of private network block
+	// end of network block
 	requestCommand := server.NewCreateServerCommand(client, *request)
 
 	resp, err := requestCommand.Execute()
@@ -911,11 +997,14 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 		nciMap := nci.(map[string]interface{})
 
 		if netConf != nil {
+			if netConf.GatewayAddress != nil {
+				nciMap["gateway_address"] = *netConf.GatewayAddress
+			}
 			if netConf.PrivateNetworkConfiguration != nil {
 				prNetConf := *netConf.PrivateNetworkConfiguration
 				//pnc := make([]interface{}, 1)
 				var pnc []interface{}
-				if (nciMap["private_network_configuration"]) != nil {
+				if (nciMap["private_network_configuration"]) != nil && len(nciMap["private_network_configuration"].([]interface{})) > 0 {
 					pnc = nciMap["private_network_configuration"].([]interface{})
 				} else {
 					pnc = make([]interface{}, 1)
@@ -997,15 +1086,10 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 				pnc[0] = pncItem
 				nciMap["private_network_configuration"] = pnc
 			}
-
 			if netConf.IpBlocksConfiguration != nil {
-
 				ipBlocksConf := *netConf.IpBlocksConfiguration
-
 				if ipBlocksConf.IpBlocks != nil {
-
 					ibc := nciMap["ip_blocks_configuration"]
-
 					if ibc == nil || len(ibc.([]interface{})) == 0 {
 						ibc = make([]interface{}, 1)
 						ibci := make(map[string]interface{})
@@ -1031,6 +1115,38 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 						ib[i] = ibItem
 					}
 					ibcInput["ip_blocks"] = ib
+				}
+			}
+			if netConf.PublicNetworkConfiguration != nil {
+				pubNetConf := *netConf.PublicNetworkConfiguration
+				if pubNetConf.PublicNetworks != nil {
+					pubnc := nciMap["public_network_configuration"]
+					if pubnc == nil || len(pubnc.([]interface{})) == 0 {
+						pubnc = make([]interface{}, 1)
+						pubnci := make(map[string]interface{})
+						pubnc.([]interface{})[0] = pubnci
+					}
+
+					pubnci := pubnc.([]interface{})[0]
+					pubncInput := pubnci.(map[string]interface{})
+
+					pubNets := *pubNetConf.PublicNetworks
+					if pubncInput["public_networks"] != nil && len(pubncInput["public_networks"].([]interface{})) > 0 {
+						pubNetInput := pubncInput["public_networks"].([]interface{})
+						for _, j := range pubNetInput {
+							pubNetInputItem := j.(map[string]interface{})
+							serPubNet := pubNetInputItem["server_public_network"].([]interface{})[0]
+							serPubNetItem := serPubNet.(map[string]interface{})
+							id := serPubNetItem["id"].(string)
+							for _, l := range pubNets {
+								if id == l.Id {
+									if l.StatusDescription != nil {
+										serPubNetItem["status_description"] = *l.StatusDescription
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 			//return ncInput
