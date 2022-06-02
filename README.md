@@ -63,7 +63,7 @@ The *pnap* provider will be installed on `terraform init` as a template of the `
 
 ## Developing the provider
 
-If you want to work on developing the provider, you need to have [Go](http://www.golang.org) installed on your machine. Go version 1.13.7+ is *required*. You will also need to properly set up a [GOPATH](http://golang.org/doc/code.html#GOPATH) and add `$GOPATH/bin` to your `$PATH`.
+If you want to work on developing the provider, you need to have [Go](http://www.golang.org) installed on your machine. Go version 1.16.15+ is *required*. You will also need to properly set up a [GOPATH](http://golang.org/doc/code.html#GOPATH) and add `$GOPATH/bin` to your `$PATH`.
 
 To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
 
