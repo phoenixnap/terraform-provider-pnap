@@ -21,7 +21,7 @@ Terraform is a powerful infrastructure as code tool for provisioning and managin
 ## Requirements
 -	[Bare Metal Cloud](https://bmc.phoenixnap.com) account
 -	[Terraform](https://www.terraform.io/downloads.html) 0.12.2+
--	[Go](https://golang.org/doc/install) 1.13 (to build the provider plugin)
+-	[Go](https://golang.org/doc/install) 1.16.15+ (to build the provider plugin)
 
 ## Creating a Bare Metal Cloud account
 You need to have a Bare Metal Cloud account in order to use the ***pnap*** Terraform provider with Bare Metal Cloud. 
