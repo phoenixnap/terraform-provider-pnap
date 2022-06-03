@@ -55,36 +55,6 @@ func resourcePrivateNetwork() *schema.Resource {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			/* "servers": &schema.Schema{
-				Type:     schema.TypeList,
-				Computed: true,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"server": &schema.Schema{
-							Type:     schema.TypeList,
-							Optional: true,
-							Computed: true,
-							MaxItems: 1,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"id": &schema.Schema{
-										Type:     schema.TypeString,
-										Optional: true,
-										Computed: true,
-									},
-									"ips": &schema.Schema{
-										Type:     schema.TypeSet,
-										Optional: true,
-										Computed: true,
-										Elem:     &schema.Schema{Type: schema.TypeString},
-									},
-								},
-							},
-						},
-					},
-				},
-			}, */
 			"servers": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -101,6 +71,10 @@ func resourcePrivateNetwork() *schema.Resource {
 						},
 					},
 				},
+			},
+			"created_on": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		},
 	}
@@ -138,8 +112,8 @@ func resourcePrivateNetworkCreate(d *schema.ResourceData, m interface{}) error {
 
 func resourcePrivateNetworkRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(receiver.BMCSDK)
-	keyID := d.Id()
-	requestCommand := privatenetwork.NewGetPrivateNetworkCommand(client, keyID)
+	networkID := d.Id()
+	requestCommand := privatenetwork.NewGetPrivateNetworkCommand(client, networkID)
 	resp, err := requestCommand.Execute()
 	if err != nil {
 		return err
@@ -159,11 +133,15 @@ func resourcePrivateNetworkRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("servers", servers); err != nil {
 		return err
 	}
+	if len(resp.CreatedOn.String()) > 0 {
+		d.Set("created_on", resp.CreatedOn.String())
+	}
+
 	return nil
 }
 
 func resourcePrivateNetworkUpdate(d *schema.ResourceData, m interface{}) error {
-	if d.HasChange("name") || d.HasChange("default") {
+	if d.HasChange("name") || d.HasChange("location_default") || d.HasChange("description") {
 		client := m.(receiver.BMCSDK)
 
 		request := &networkapiclient.PrivateNetworkModify{}
@@ -181,7 +159,7 @@ func resourcePrivateNetworkUpdate(d *schema.ResourceData, m interface{}) error {
 		}
 
 	} else {
-		return fmt.Errorf("unsuported action")
+		return fmt.Errorf("unsupported action")
 	}
 	return resourcePrivateNetworkRead(d, m)
 
@@ -190,9 +168,9 @@ func resourcePrivateNetworkUpdate(d *schema.ResourceData, m interface{}) error {
 func resourcePrivateNetworkDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(receiver.BMCSDK)
 
-	sshKeyID := d.Id()
+	networkID := d.Id()
 
-	requestCommand := privatenetwork.NewDeletePrivateNetworkCommand(client, sshKeyID)
+	requestCommand := privatenetwork.NewDeletePrivateNetworkCommand(client, networkID)
 	err := requestCommand.Execute()
 	if err != nil {
 		return err

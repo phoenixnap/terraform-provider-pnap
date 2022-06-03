@@ -51,7 +51,7 @@ The following attributes are exported:
 * `type` - Server type ID. Cannot be changed once a server is created. 
 * `private_ip_addresses` - Private IP Addresses assigned to server. Must contain at least 1 item. 
 * `public_ip_addresses` - Public IP Addresses assigned to server. Must contain at least 1 item.
-* `primary_ip_address` - First usable public IP addreeess.
+* `primary_ip_address` - First usable public IP Addresses.
 
 
 

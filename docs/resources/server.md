@@ -73,10 +73,14 @@ The following arguments are supported:
 * `action` - Action to perform on server. Allowed actions are: reboot, reset, powered-on, powered-off, shutdown.
 
 
-The `network_configuration` block has 2 fields: `private_network_configuration` and `ip_blocks_configuration`.
+The `network_configuration` block has 4 fields: `gateway_address`, `private_network_configuration`, `ip_blocks_configuration` and `public_network_configuration`.
+
+* `gateway_address` -The address of the gateway assigned / to assign to the server. When used as part of request body, IP address has to be part of private/public network assigned to this server.
+
+The `private_network_configuration` is the second field of the `network_configuration` block. 
 The `private_network_configuration` block has 3 fields:
 
-* `gateway_address` - The address of the gateway assigned / to assign to the server. It'll be null and won't be displayed as part of response body if server is a member of both public and private networks. When used as part of request body, it has to match one of the IP addresses used in the existing assigned private networks for the relevant location. Also, this field can be submitted only when provisioning a server without being a member of any public network.
+* `gateway_address` - (Deprecated) The address of the gateway assigned / to assign to the server. When used as part of request body, it has to match one of the IP addresses used in the existing assigned private networks for the relevant location. Deprecated in favour of a common gateway address across all networks available under `network_configuration`.
 * `configuration_type` - Determines the approach for configuring IP blocks for the server being provisioned. Currently this field should be set to `USE_OR_CREATE_DEFAULT` or `USER_DEFINED`. Default value is `USE_OR_CREATE_DEFAULT`.
 * `private_networks` - The list of private networks this server is member of. When this field is part of request body, it'll be used to specify the private networks to assign to this server upon provisioning. Used alongside the `USER_DEFINED` configurationType.
 
@@ -87,7 +91,7 @@ The `server_private_network` block has 3 fields:
 * `ips` - IPs to configure/configured on the server. Should be null or empty list if DHCP is true. Must contain at most 10 items.
 * `dhcp` - Determines whether DHCP is enabled for this server. Should be false if ips is not an empty list. Not supported for proxmox OS. Default value is `false`.
 
-The `ip_blocks_configuration` is the second field of the `network_configuration` block.
+The `ip_blocks_configuration` is the third field of the `network_configuration` block.
 The `ip_blocks_configuration` block has 2 fields:
 
 * `configuration_type` - Determines the approach for configuring IP blocks for the server being provisioned. If `PURCHASE_NEW` is selected, the smallest supported range, depending on the operating system, is allocated to the server. The following values are allowed: `PURCHASE_NEW`, `USER_DEFINED`, `NONE`. Default value is `PURCHASE_NEW`.
@@ -98,6 +102,15 @@ The `server_ip_block` block has 2 fields:
 
 * `id` - (Required) The IP Block's ID.
 * `vlan_id` - The VLAN on which this IP block has been configured within the network switch.
+
+The `public_network_configuration` is the fourth field of the `network_configuration` block. 
+The `public_network_configuration` block has field `public_networks`:
+
+The `public_networks` block has field `server_public_network`.
+The `server_public_network` block has 2 fields:
+
+* `id` - (Required) The network identifier.
+* `ips` - (Required) IPs to configure on the server. IPs must be within the network's range. Must contain at least 1 item.
 
 ## Attributes Reference
 

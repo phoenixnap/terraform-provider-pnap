@@ -32,22 +32,21 @@ output "servers" {
 
 The following arguments are supported:
 
-* `name` - (Required) The friendly name of this private network. This name should be unique.
+* `name` - (Required) The friendly name of this private network.
 
 ## Attributes Reference
 
 The following attributes are exported:
 
 * `id` - The private network identifier.
-* `name` - The friendly name of this private network. This name should be unique.
+* `name` - The friendly name of this private network.
 * `description` - The description of this private network.
-* `location` - The location of this private network. Supported values are `PHX`, `ASH`, `SGP`, `NLD`, `CHI` and `SEA`.
-* `location_default` - Identifies network as the default private network for the specified location. Default value is `false`
+* `location` - The location of this private network.
+* `location_default` - Identifies network as the default private network for the specified location. Default value is `false`.
 * `cidr` - IP range associated with this private network in CIDR notation.
 * `vlan_id `- The VLAN of this private network.
-* `servers ` - List of server details linked to the Private Network.
-
-The Server Details block has 2 fields:
-
-* `id` - (Required) The server identifier.
-* `ips` - List of private IPs associated to the server.
+* `type` - The type of the private network.
+* `servers ` - List of servers' details linked to the private network.
+    * `id` - The server identifier.
+    * `ips` - List of private IPs associated to the server.
+* `created_on` - Date and time when this private network was created.
