@@ -119,7 +119,9 @@ func dataSourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 				return err
 			}
 			d.Set("is_bring_your_own", instance.IsBringYourOwn)
-			d.Set("created_on", instance.CreatedOn.String())
+			if len(instance.CreatedOn.String()) > 0 {
+				d.Set("created_on", instance.CreatedOn.String())
+			}
 		}
 	}
 	if numOfKeys > 1 {

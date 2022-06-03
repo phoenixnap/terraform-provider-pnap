@@ -97,7 +97,9 @@ func dataSourcePublicNetworkRead(d *schema.ResourceData, m interface{}) error {
 			if err := d.Set("ip_blocks", ipBlocks); err != nil {
 				return err
 			}
-			d.Set("created_on", instance.CreatedOn.String())
+			if len(instance.CreatedOn.String()) > 0 {
+				d.Set("created_on", instance.CreatedOn.String())
+			}
 			d.Set("vlan_id", instance.VlanId)
 
 			memberships := flattenMemberships(instance.Memberships)

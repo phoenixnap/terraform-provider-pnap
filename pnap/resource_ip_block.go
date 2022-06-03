@@ -182,8 +182,9 @@ func resourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 	d.Set("is_bring_your_own", resp.IsBringYourOwn)
-	d.Set("created_on", resp.CreatedOn.String())
-
+	if len(resp.CreatedOn.String()) > 0 {
+		d.Set("created_on", resp.CreatedOn.String())
+	}
 	return nil
 }
 

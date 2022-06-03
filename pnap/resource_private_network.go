@@ -133,7 +133,9 @@ func resourcePrivateNetworkRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("servers", servers); err != nil {
 		return err
 	}
-	d.Set("created_on", resp.CreatedOn.String())
+	if len(resp.CreatedOn.String()) > 0 {
+		d.Set("created_on", resp.CreatedOn.String())
+	}
 
 	return nil
 }

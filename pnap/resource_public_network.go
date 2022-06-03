@@ -153,8 +153,9 @@ func resourcePublicNetworkRead(d *schema.ResourceData, m interface{}) error {
 		var ibInput = d.Get("ip_blocks").([]interface{})
 		d.Set("ip_blocks", ibInput)
 	}
-
-	d.Set("created_on", resp.CreatedOn.String())
+	if len(resp.CreatedOn.String()) > 0 {
+		d.Set("created_on", resp.CreatedOn.String())
+	}
 	d.Set("vlan_id", resp.VlanId)
 
 	memberships := flattenMemberships(resp.Memberships)
