@@ -37,188 +37,193 @@ func resourceServer() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"status": &schema.Schema{
+			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"hostname": &schema.Schema{
+			"hostname": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"private_ip_addresses": &schema.Schema{
+			"private_ip_addresses": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"public_ip_addresses": &schema.Schema{
+			"public_ip_addresses": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"os": &schema.Schema{
+			"os": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"type": &schema.Schema{
+			"type": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"ssh_keys": &schema.Schema{
+			"ssh_keys": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"location": &schema.Schema{
+			"location": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"cpu": &schema.Schema{
+			"cpu": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"cpu_count": &schema.Schema{
+			"cpu_count": {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"cores_per_cpu": &schema.Schema{
+			"cores_per_cpu": {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"cpu_frequency_in_ghz": &schema.Schema{
+			"cpu_frequency_in_ghz": {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"ram": &schema.Schema{
+			"ram": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"storage": &schema.Schema{
+			"storage": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"action": &schema.Schema{
+			"action": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"network_type": &schema.Schema{
+			"network_type": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-			"install_default_ssh_keys": &schema.Schema{
+			"install_default_ssh_keys": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
 			},
-			"ssh_key_ids": &schema.Schema{
+			"ssh_key_ids": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"reservation_id": &schema.Schema{
+			"reservation_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-			"pricing_model": &schema.Schema{
+			"pricing_model": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-			"rdp_allowed_ips": &schema.Schema{
+			"rdp_allowed_ips": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"password": &schema.Schema{
+			"password": {
 				Type:      schema.TypeString,
 				Computed:  true,
 				Sensitive: true,
 			},
-			"cluster_id": &schema.Schema{
+			"cluster_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"management_ui_url": &schema.Schema{
+			"management_ui_url": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"root_password": &schema.Schema{
+			"root_password": {
 				Type:     schema.TypeString,
 				Computed: true,
 				//Sensitive: true,
 			},
-			"management_access_allowed_ips": &schema.Schema{
+			"management_access_allowed_ips": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"provisioned_on": &schema.Schema{
+			"provisioned_on": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"network_configuration": &schema.Schema{
+			"network_configuration": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Computed: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"private_network_configuration": &schema.Schema{
+						"gateway_address": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Optional: true,
+						},
+						"private_network_configuration": {
 							Type:     schema.TypeList,
 							Optional: true,
 							Computed: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"gateway_address": &schema.Schema{
+									"gateway_address": { //Deprecated
 										Type:     schema.TypeString,
 										Optional: true,
 										Computed: true,
 									},
-									"configuration_type": &schema.Schema{
+									"configuration_type": {
 										Type:     schema.TypeString,
 										Computed: true,
 										Optional: true,
 										Default:  nil,
 									},
-									"private_networks": &schema.Schema{
+									"private_networks": {
 										Type:     schema.TypeList,
 										Computed: true,
 										Optional: true,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
-												"server_private_network": &schema.Schema{
+												"server_private_network": {
 													Type:     schema.TypeList,
 													Optional: true,
 													Computed: true,
 													MaxItems: 1,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
-															"id": &schema.Schema{
+															"id": {
 																Type:     schema.TypeString,
 																Required: true,
 															},
-															"ips": &schema.Schema{
+															"ips": {
 																Type:     schema.TypeSet,
 																Optional: true,
 																Computed: true,
 																Elem:     &schema.Schema{Type: schema.TypeString},
 															},
-															"dhcp": &schema.Schema{
+															"dhcp": {
 																Type:     schema.TypeBool,
 																Optional: true,
 																Computed: true,
 																Default:  nil,
 															},
-															"status_description": &schema.Schema{
+															"status_description": {
 																Type:     schema.TypeString,
 																Computed: true,
 															},
@@ -231,38 +236,80 @@ func resourceServer() *schema.Resource {
 								},
 							},
 						},
-						"ip_blocks_configuration": &schema.Schema{
+						"ip_blocks_configuration": {
 							Type:     schema.TypeList,
 							Optional: true,
 							Computed: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"configuration_type": &schema.Schema{
+									"configuration_type": {
 										Type:     schema.TypeString,
 										Computed: true,
 										Optional: true,
 									},
-									"ip_blocks": &schema.Schema{
+									"ip_blocks": {
 										Type:     schema.TypeList,
 										Optional: true,
 										Computed: true,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
-												"server_ip_block": &schema.Schema{
+												"server_ip_block": {
 													Type:     schema.TypeList,
 													Optional: true,
 													Computed: true,
 													MaxItems: 1,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
-															"id": &schema.Schema{
+															"id": {
 																Type:     schema.TypeString,
 																Required: true,
 															},
-															"vlan_id": &schema.Schema{
+															"vlan_id": {
 																Type:     schema.TypeInt,
 																Optional: true,
+																Computed: true,
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"public_network_configuration": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Computed: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"public_networks": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Optional: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"server_public_network": {
+													Type:     schema.TypeList,
+													Optional: true,
+													Computed: true,
+													MaxItems: 1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"id": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+															"ips": {
+																Type:     schema.TypeSet,
+																Required: true,
+																Elem:     &schema.Schema{Type: schema.TypeString},
+															},
+															"status_description": {
+																Type:     schema.TypeString,
 																Computed: true,
 															},
 														},
@@ -352,14 +399,17 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		request.OsConfiguration = &dtoOsConfiguration
 	}
 
-	// private network block
+	// network block
 	if d.Get("network_configuration") != nil && len(d.Get("network_configuration").([]interface{})) > 0 {
 
 		networkConfiguration := d.Get("network_configuration").([]interface{})[0]
 		networkConfigurationItem := networkConfiguration.(map[string]interface{})
 
 		networkConfigurationObject := bmcapiclient.NetworkConfiguration{}
-
+		gatewayAddress := networkConfigurationItem["gateway_address"].(string)
+		if len(gatewayAddress) > 0 {
+			networkConfigurationObject.GatewayAddress = &gatewayAddress
+		}
 		if networkConfigurationItem["private_network_configuration"] != nil && len(networkConfigurationItem["private_network_configuration"].([]interface{})) > 0 {
 			privateNetworkConfiguration := networkConfigurationItem["private_network_configuration"].([]interface{})[0]
 			privateNetworkConfigurationItem := privateNetworkConfiguration.(map[string]interface{})
@@ -454,12 +504,48 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 				}
 			}
 		}
+		if networkConfigurationItem["public_network_configuration"] != nil && len(networkConfigurationItem["public_network_configuration"].([]interface{})) > 0 {
+			publicNetworkConfiguration := networkConfigurationItem["public_network_configuration"].([]interface{})[0]
+			publicNetworkConfigurationItem := publicNetworkConfiguration.(map[string]interface{})
+			publicNetworks := publicNetworkConfigurationItem["public_networks"].([]interface{})
+
+			if len(publicNetworks) > 0 {
+				publicNetworkConfigurationObject := bmcapiclient.PublicNetworkConfiguration{}
+				networkConfigurationObject.PublicNetworkConfiguration = &publicNetworkConfigurationObject
+				serPublicNets := make([]bmcapiclient.ServerPublicNetwork, len(publicNetworks))
+
+				for k, j := range publicNetworks {
+					serverPublicNetworkObject := bmcapiclient.ServerPublicNetwork{}
+
+					publicNetworkItem := j.(map[string]interface{})
+
+					serverPublicNetwork := publicNetworkItem["server_public_network"].([]interface{})[0]
+					serverPublicNetworkItem := serverPublicNetwork.(map[string]interface{})
+
+					id := serverPublicNetworkItem["id"].(string)
+					tempIps := serverPublicNetworkItem["ips"].(*schema.Set).List()
+
+					NetIps := make([]string, len(tempIps))
+					for i, v := range tempIps {
+						NetIps[i] = fmt.Sprint(v)
+					}
+					if (len(id)) > 0 {
+						serverPublicNetworkObject.Id = id
+					}
+					if (len(NetIps)) > 0 {
+						serverPublicNetworkObject.Ips = NetIps
+					}
+					serPublicNets[k] = serverPublicNetworkObject
+				}
+				publicNetworkConfigurationObject.PublicNetworks = &serPublicNets
+			}
+		}
 		request.NetworkConfiguration = &networkConfigurationObject
 		b, _ := json.MarshalIndent(request, "", "  ")
 		log.Printf("request object is" + string(b))
 	}
 
-	// end of private network block
+	// end of network block
 	requestCommand := server.NewCreateServerCommand(client, *request)
 
 	resp, err := requestCommand.Execute()
@@ -479,26 +565,6 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 			return waitResultError
 		}
 	}
-	/* code := resp.StatusCode
-	if code == 200 {
-		response := &dto.LongServer{}
-		response.FromBytes(resp)
-		d.SetId(response.ID)
-		d.Set("password", response.Password)
-		if(&response.OsConfiguration != nil){
-			d.Set("root_password", response.OsConfiguration.RootPassword)
-			d.Set("management_ui_url", response.OsConfiguration.ManagementUiUrl)
-		}
-
-		waitResultError := resourceWaitForCreate(response.ID, &client)
-		if waitResultError != nil {
-			return waitResultError
-		}
-	} else {
-		response := &dto.ErrorMessage{}
-		response.FromBytes(resp)
-		return fmt.Errorf("API create server Returned Code %v Message: %s Validation Errors: %s", code, response.Message, response.ValidationErrors)
-	} */
 
 	return resourceServerRead(d, m)
 }
@@ -511,15 +577,7 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	/* code := resp.StatusCode
-	if code != 200 {
-		response := &dto.ErrorMessage{}
-		response.FromBytes(resp)
-		return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
-	}
-	response := &dto.LongServer{}
-	response.FromBytes(resp) */
-	//d.SetId(resp.Id)
+
 	d.Set("status", resp.Status)
 	d.Set("hostname", resp.Hostname)
 	d.Set("description", resp.Description)
@@ -676,10 +734,6 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 				request.OsConfiguration = &dtoOsConfiguration
 
 			}
-
-			//b, err := json.MarshalIndent(request, "", "  ")
-			//log.Printf("request object is" + string(b))
-			//request.Id = d.Id()
 			requestCommand := server.NewResetServerCommand(client, d.Id(), *request)
 			resp, err := requestCommand.Execute()
 			if err != nil {
@@ -712,7 +766,7 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			}
 
 		case "default":
-			return fmt.Errorf("Unsuported action")
+			return fmt.Errorf("unsupported action")
 		}
 
 	} else if d.HasChange("pricing_model") {
@@ -728,14 +782,9 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		if err != nil {
 			return err
 		}
-		/* 	code := resp.StatusCode
-		if code != 200 {
-			response := &dto.ErrorMessage{}
-			response.FromBytes(resp)
-			return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
-		} */
+
 	} else {
-		return fmt.Errorf("Unsuported action")
+		return fmt.Errorf("unsupported action")
 	}
 	return resourceServerRead(d, m)
 
@@ -773,12 +822,7 @@ func resourceServerDelete(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	/* code := resp.StatusCode
-	if code != 200 && code != 404 {
-		response := &dto.ErrorMessage{}
-		response.FromBytes(resp)
-		return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
-	} */
+
 	return nil
 }
 
@@ -846,59 +890,15 @@ func refreshForCreate(client *receiver.BMCSDK, id string) resource.StateRefreshF
 	return func() (interface{}, string, error) {
 
 		requestCommand := server.NewGetServerCommand(*client, id)
-		/* requestCommand.SetRequester(client)
-		serverID := id
-		requestCommand.SetServerID(serverID) */
+
 		resp, err := requestCommand.Execute()
 		if err != nil {
 			return 0, "", err
 		} else {
 			return 0, resp.Status, nil
 		}
-		/* 	code := resp.StatusCode
-		if code != 200 {
-			response := &dto.ErrorMessage{}
-			response.FromBytes(resp)
-			return 0, "", fmt.Errorf("API refressh for create Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
-		}
-		response := &dto.LongServer{}
-		response.FromBytes(resp)
-		return 0, response.Status, nil*/
 	}
 }
-
-/* func run(command command.Executor) error {
-	resp, err := command.Execute()
-	if err != nil {
-		return err
-	}
-	code := resp.StatusCode
-	if code != 200 {
-		response := &dto.ErrorMessage{}
-		response.FromBytes(resp)
-		return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors)
-	}
-	return nil
-}
-
-func runResetCommand(command command.Executor) (error, dto.ServerActionResponse) {
-	resp, err := command.Execute()
-	if err != nil {
-		return err, dto.ServerActionResponse{}
-	}
-	code := resp.StatusCode
-	if code != 200 {
-		response := &dto.ErrorMessage{}
-		response.FromBytes(resp)
-		return fmt.Errorf("API Returned Code: %v, Message: %v, Validation Errors: %v", code, response.Message, response.ValidationErrors), dto.ServerActionResponse{}
-	}
-	if code == 200 {
-		response := &dto.ServerActionResponse{}
-		response.FromBytes(resp)
-		return nil, *response
-	}
-	return nil, dto.ServerActionResponse{}
-} */
 
 func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncInput []interface{}) []interface{} {
 	if netConf != nil { //len(ncInput)
@@ -911,11 +911,14 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 		nciMap := nci.(map[string]interface{})
 
 		if netConf != nil {
+			if netConf.GatewayAddress != nil {
+				nciMap["gateway_address"] = *netConf.GatewayAddress
+			}
 			if netConf.PrivateNetworkConfiguration != nil {
 				prNetConf := *netConf.PrivateNetworkConfiguration
 				//pnc := make([]interface{}, 1)
 				var pnc []interface{}
-				if (nciMap["private_network_configuration"]) != nil {
+				if (nciMap["private_network_configuration"]) != nil && len(nciMap["private_network_configuration"].([]interface{})) > 0 {
 					pnc = nciMap["private_network_configuration"].([]interface{})
 				} else {
 					pnc = make([]interface{}, 1)
@@ -997,15 +1000,10 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 				pnc[0] = pncItem
 				nciMap["private_network_configuration"] = pnc
 			}
-
 			if netConf.IpBlocksConfiguration != nil {
-
 				ipBlocksConf := *netConf.IpBlocksConfiguration
-
 				if ipBlocksConf.IpBlocks != nil {
-
 					ibc := nciMap["ip_blocks_configuration"]
-
 					if ibc == nil || len(ibc.([]interface{})) == 0 {
 						ibc = make([]interface{}, 1)
 						ibci := make(map[string]interface{})
@@ -1031,6 +1029,38 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 						ib[i] = ibItem
 					}
 					ibcInput["ip_blocks"] = ib
+				}
+			}
+			if netConf.PublicNetworkConfiguration != nil {
+				pubNetConf := *netConf.PublicNetworkConfiguration
+				if pubNetConf.PublicNetworks != nil {
+					pubnc := nciMap["public_network_configuration"]
+					if pubnc == nil || len(pubnc.([]interface{})) == 0 {
+						pubnc = make([]interface{}, 1)
+						pubnci := make(map[string]interface{})
+						pubnc.([]interface{})[0] = pubnci
+					}
+
+					pubnci := pubnc.([]interface{})[0]
+					pubncInput := pubnci.(map[string]interface{})
+
+					pubNets := *pubNetConf.PublicNetworks
+					if pubncInput["public_networks"] != nil && len(pubncInput["public_networks"].([]interface{})) > 0 {
+						pubNetInput := pubncInput["public_networks"].([]interface{})
+						for _, j := range pubNetInput {
+							pubNetInputItem := j.(map[string]interface{})
+							serPubNet := pubNetInputItem["server_public_network"].([]interface{})[0]
+							serPubNetItem := serPubNet.(map[string]interface{})
+							id := serPubNetItem["id"].(string)
+							for _, l := range pubNets {
+								if id == l.Id {
+									if l.StatusDescription != nil {
+										serPubNetItem["status_description"] = *l.StatusDescription
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 			//return ncInput
