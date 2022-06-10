@@ -39,7 +39,6 @@ func resourceIpBlock() *schema.Resource {
 			"tags": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"tag_assignment": {
@@ -60,7 +59,7 @@ func resourceIpBlock() *schema.Resource {
 									"value": {
 										Type:     schema.TypeString,
 										Optional: true,
-										Computed: true,
+										Default:  nil,
 									},
 									"is_billing_tag": {
 										Type:     schema.TypeBool,
@@ -201,6 +200,36 @@ func resourceIpBlockUpdate(d *schema.ResourceData, m interface{}) error {
 		if err != nil {
 			return err
 		}
+	} else if d.HasChange("tags") {
+		tags := d.Get("tags").([]interface{})
+		client := m.(receiver.BMCSDK)
+		ipBlockID := d.Id()
+
+		var request []ipapiclient.TagAssignmentRequest
+
+		if len(tags) > 0 {
+			request = make([]ipapiclient.TagAssignmentRequest, len(tags))
+
+			for i, j := range tags {
+				tarObject := ipapiclient.TagAssignmentRequest{}
+				tagsItem := j.(map[string]interface{})
+
+				tagAssign := tagsItem["tag_assignment"].([]interface{})[0]
+				tagAssignItem := tagAssign.(map[string]interface{})
+
+				tarObject.Name = tagAssignItem["name"].(string)
+				value := tagAssignItem["value"].(string)
+				if len(value) > 0 {
+					tarObject.Value = &value
+				}
+				request[i] = tarObject
+			}
+		}
+		requestCommand := ipblock.NewPutTagsIpBlockCommand(client, ipBlockID, request)
+		_, err := requestCommand.Execute()
+		if err != nil {
+			return err
+		}
 	} else {
 		return fmt.Errorf("unsupported action")
 	}
@@ -232,15 +261,17 @@ func flattenTags(tagsRead *[]ipapiclient.TagAssignment, tagsInput []interface{})
 		tags := *tagsRead
 		for _, j := range tagsInput {
 			tagsInputItem := j.(map[string]interface{})
-			tagAssign := tagsInputItem["tag_assignment"].([]interface{})[0]
-			tagAssignItem := tagAssign.(map[string]interface{})
-			nameInput := tagAssignItem["name"].(string)
-			for _, l := range tags {
-				if nameInput == l.Name {
-					tagAssignItem["id"] = l.Id
-					tagAssignItem["value"] = l.Value
-					tagAssignItem["is_billing_tag"] = l.IsBillingTag
-					tagAssignItem["created_by"] = l.CreatedBy
+			if tagsInputItem["tag_assignment"] != nil && len(tagsInputItem["tag_assignment"].([]interface{})) > 0 {
+				tagAssign := tagsInputItem["tag_assignment"].([]interface{})[0]
+				tagAssignItem := tagAssign.(map[string]interface{})
+				nameInput := tagAssignItem["name"].(string)
+				for _, l := range tags {
+					if nameInput == l.Name {
+						tagAssignItem["id"] = l.Id
+						tagAssignItem["value"] = l.Value
+						tagAssignItem["is_billing_tag"] = l.IsBillingTag
+						tagAssignItem["created_by"] = l.CreatedBy
+					}
 				}
 			}
 		}

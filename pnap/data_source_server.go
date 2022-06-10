@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/phoenixnap/go-sdk-bmc/bmcapi"
 
 	"github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/server"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
@@ -58,6 +59,34 @@ func dataSourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"tags": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"is_billing_tag": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
+						"created_by": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -104,6 +133,10 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 			d.Set("public_ip_addresses", publicIPs)
 			d.Set("primary_ip_address", instance.PublicIpAddresses[0])
 
+			tags := flattenServerDataTags(instance.Tags)
+			if err := d.Set("tags", tags); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -112,4 +145,27 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	return nil
+}
+
+// Returns list of assigned tags
+func flattenServerDataTags(tags *[]bmcapi.TagAssignment) []interface{} {
+	if tags != nil {
+		readTags := *tags
+		tagsMake := make([]interface{}, len(readTags))
+		for i, j := range readTags {
+			tagAssignment := make(map[string]interface{})
+			tagAssignment["id"] = j.Id
+			tagAssignment["name"] = j.Name
+			if j.Value != nil {
+				tagAssignment["value"] = *j.Value
+			}
+			tagAssignment["is_billing_tag"] = j.IsBillingTag
+			if j.CreatedBy != nil {
+				tagAssignment["created_by"] = *j.CreatedBy
+			}
+			tagsMake[i] = tagAssignment
+		}
+		return tagsMake
+	}
+	return make([]interface{}, 0)
 }

@@ -69,8 +69,16 @@ The following arguments are supported:
 * `network_type` - The type of network configuration for this server. Currently this field should be set to PUBLIC_AND_PRIVATE or PRIVATE_ONLY.
 * `rdp_allowed_ips` - List of IPs allowed for RDP access to Windows OS. Supported in single IP, CIDR and range format. When undefined, RDP is disabled. To allow RDP access from any IP use 0.0.0.0/0. Must contain at least 1 item.
 * `management_access_allowed_ips` - Define list of IPs allowed to access the Management UI. Supported in single IP, CIDR and range format. When undefined, Management UI is disabled.Must contain at least 1 item.
+* `tags` - Tags to set to server, if any.
 * `network_configuration` - Entire network details of bare metal server. Structure is documented below.
 * `action` - Action to perform on server. Allowed actions are: reboot, reset, powered-on, powered-off, shutdown.
+
+
+The `tags` block has field `tag_assignment`.
+The `tag_assignment` block has 2 fields:
+
+* `name` - (Required) The name of the tag.
+* `value` - The value of the tag assigned to the IP Block.
 
 
 The `network_configuration` block has 4 fields: `gateway_address`, `private_network_configuration`, `ip_blocks_configuration` and `public_network_configuration`.
@@ -139,8 +147,14 @@ The following attributes are exported:
 * `management_ui_url` - The URL of the management UI which will only be returned in response to provisioning a server.
 * `root_password` - Password set for user root on an ESXi server which will only be returned in response to provisioning a server.
 * `management_access_allowed_ips` - A list of IPs allowed to access the Management UI. Supported in single IP, CIDR and range format. When undefined, Management UI is disabled.
+* `tags` - The tags assigned if any.
 * `network_configuration` - Entire network details of bare metal server.
 * `provisioned_on` - Date and time when server was provisioned.
 
-
- 
+The `tags` block has field `tag_assignment`.
+The `tag_assignment` block has 5 fields:
+* `id` - The unique id of the tag.
+* `name` - The name of the tag.
+* `value` - The value of the tag assigned to the server.
+* `is_billing_tag` - Whether or not to show the tag as part of billing and invoices.
+* `created_by` - Who the tag was created by.
