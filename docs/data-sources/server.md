@@ -52,7 +52,9 @@ The following attributes are exported:
 * `private_ip_addresses` - Private IP Addresses assigned to server. Must contain at least 1 item. 
 * `public_ip_addresses` - Public IP Addresses assigned to server. Must contain at least 1 item.
 * `primary_ip_address` - First usable public IP Addresses.
-
-
-
- 
+* `tags` - The tags assigned to the server.
+    * `id` - The unique id of the tag.
+    * `name` - The name of the tag.
+    * `value` - The value of the tag assigned to the server.
+    * `is_billing_tag` - Whether or not to show the tag as part of billing and invoices.
+    * `created_by` - Who the tag was created by.
