@@ -33,7 +33,7 @@ output "server_id" {
 
 The following arguments are supported:
 
-* `hostname` - (Required) Server hostname.
+* `hostname` - Server hostname.
 * `id` - The unique identifier of the server.
 
 
