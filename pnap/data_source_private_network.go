@@ -15,10 +15,17 @@ func dataSourcePrivateNetwork() *schema.Resource {
 		Read: dataSourcePrivateNetworkRead,
 
 		Schema: map[string]*schema.Schema{
-
+			"id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"name"},
+			},
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"id"},
 			},
 			"location": {
 				Type:     schema.TypeString,
@@ -79,7 +86,7 @@ func dataSourcePrivateNetworkRead(d *schema.ResourceData, m interface{}) error {
 
 	numOfNets := 0
 	for _, instance := range resp {
-		if instance.Name == d.Get("name").(string) {
+		if instance.Name == d.Get("name").(string) || instance.Id == d.Get("id").(string) {
 			numOfNets++
 			d.SetId(instance.Id)
 			d.Set("location", instance.Location)

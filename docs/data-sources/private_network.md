@@ -32,7 +32,8 @@ output "servers" {
 
 The following arguments are supported:
 
-* `name` - (Required) The friendly name of this private network.
+* `name` - The friendly name of this private network.
+* `id` - The private network identifier.
 
 ## Attributes Reference
 

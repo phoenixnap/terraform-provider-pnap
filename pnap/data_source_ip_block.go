@@ -22,9 +22,17 @@ func dataSourceIpBlock() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"cidr"},
+			},
 			"cidr": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"id"},
 			},
 			"status": {
 				Type:     schema.TypeString,
@@ -90,10 +98,10 @@ func dataSourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	numOfKeys := 0
+	numOfBlocks := 0
 	for _, instance := range resp {
-		if instance.Cidr == d.Get("cidr").(string) {
-			numOfKeys++
+		if instance.Cidr == d.Get("cidr").(string) || instance.Id == d.Get("id").(string) {
+			numOfBlocks++
 			d.SetId(instance.Id)
 			d.Set("location", instance.Location)
 			d.Set("cidr_block_size", instance.CidrBlockSize)
@@ -124,8 +132,8 @@ func dataSourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 			}
 		}
 	}
-	if numOfKeys > 1 {
-		return fmt.Errorf("too many IP Blocks with CIDR %s (found %d, expected 1)", d.Get("cidr").(string), numOfKeys)
+	if numOfBlocks > 1 {
+		return fmt.Errorf("too many IP Blocks with CIDR %s (found %d, expected 1)", d.Get("cidr").(string), numOfBlocks)
 	}
 
 	return nil

@@ -32,7 +32,8 @@ output "IP-Blocks" {
 
 The following arguments are supported:
 
-* `name` - (Required) The friendly name of this public network.
+* `name` - The friendly name of this public network.
+* `id` - The public network identifier.
 
 ## Attributes Reference
 
