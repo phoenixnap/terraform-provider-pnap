@@ -163,7 +163,45 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-
+			"tags": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"tag_assignment": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Computed: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"name": {
+										Type:     schema.TypeString,
+										Required: true,
+									},
+									"value": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Default:  nil,
+									},
+									"is_billing_tag": {
+										Type:     schema.TypeBool,
+										Computed: true,
+									},
+									"created_by": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"network_configuration": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -398,6 +436,25 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		}
 		request.OsConfiguration = &dtoOsConfiguration
 	}
+	tags := d.Get("tags").([]interface{})
+	if len(tags) > 0 {
+		tagsObject := make([]bmcapiclient.TagAssignmentRequest, len(tags))
+		for i, j := range tags {
+			tarObject := bmcapiclient.TagAssignmentRequest{}
+			tagsItem := j.(map[string]interface{})
+
+			tagAssign := tagsItem["tag_assignment"].([]interface{})[0]
+			tagAssignItem := tagAssign.(map[string]interface{})
+
+			tarObject.Name = tagAssignItem["name"].(string)
+			value := tagAssignItem["value"].(string)
+			if len(value) > 0 {
+				tarObject.Value = &value
+			}
+			tagsObject[i] = tarObject
+		}
+		request.Tags = &tagsObject
+	}
 
 	// network block
 	if d.Get("network_configuration") != nil && len(d.Get("network_configuration").([]interface{})) > 0 {
@@ -626,6 +683,14 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("provisioned_on", resp.ProvisionedOn.String())
 	}
 
+	if resp.Tags != nil && len(*resp.Tags) > 0 {
+		var tagsInput = d.Get("tags").([]interface{})
+		tags := flattenServerTags(resp.Tags, tagsInput)
+		if err := d.Set("tags", tags); err != nil {
+			return err
+		}
+	}
+
 	var ncInput = d.Get("network_configuration").([]interface{})
 	networkConfiguration := flattenNetworkConfiguration(&resp.NetworkConfiguration, ncInput)
 
@@ -782,7 +847,36 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		if err != nil {
 			return err
 		}
+	} else if d.HasChange("tags") {
+		tags := d.Get("tags").([]interface{})
+		client := m.(receiver.BMCSDK)
+		serverID := d.Id()
 
+		var request []bmcapiclient.TagAssignmentRequest
+
+		if len(tags) > 0 {
+			request = make([]bmcapiclient.TagAssignmentRequest, len(tags))
+
+			for i, j := range tags {
+				tarObject := bmcapiclient.TagAssignmentRequest{}
+				tagsItem := j.(map[string]interface{})
+
+				tagAssign := tagsItem["tag_assignment"].([]interface{})[0]
+				tagAssignItem := tagAssign.(map[string]interface{})
+
+				tarObject.Name = tagAssignItem["name"].(string)
+				value := tagAssignItem["value"].(string)
+				if len(value) > 0 {
+					tarObject.Value = &value
+				}
+				request[i] = tarObject
+			}
+		}
+		requestCommand := server.NewSetServerTagsCommand(client, serverID, request)
+		_, err := requestCommand.Execute()
+		if err != nil {
+			return err
+		}
 	} else {
 		return fmt.Errorf("unsupported action")
 	}
@@ -1067,4 +1161,32 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 		}
 	}
 	return ncInput
+}
+
+func flattenServerTags(tagsRead *[]bmcapiclient.TagAssignment, tagsInput []interface{}) []interface{} {
+	if len(tagsInput) == 0 {
+		tagsInput = make([]interface{}, 1)
+		tagsInputItem := make(map[string]interface{})
+		tagsInput[0] = tagsInputItem
+	}
+	if len(tagsInput) > 0 {
+		tags := *tagsRead
+		for _, j := range tagsInput {
+			tagsInputItem := j.(map[string]interface{})
+			if tagsInputItem["tag_assignment"] != nil && len(tagsInputItem["tag_assignment"].([]interface{})) > 0 {
+				tagAssign := tagsInputItem["tag_assignment"].([]interface{})[0]
+				tagAssignItem := tagAssign.(map[string]interface{})
+				nameInput := tagAssignItem["name"].(string)
+				for _, l := range tags {
+					if nameInput == l.Name {
+						tagAssignItem["id"] = l.Id
+						tagAssignItem["value"] = l.Value
+						tagAssignItem["is_billing_tag"] = l.IsBillingTag
+						tagAssignItem["created_by"] = l.CreatedBy
+					}
+				}
+			}
+		}
+	}
+	return tagsInput
 }

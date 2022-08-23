@@ -32,7 +32,8 @@ output "ip-block" {
 
 The following arguments are supported:
 
-* `cidr` - (Required) The IP Block in CIDR notation.
+* `cidr` - The IP Block in CIDR notation.
+* `id` - The IP Block identifier.
 
 
 ## Attributes Reference
