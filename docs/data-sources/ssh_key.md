@@ -32,13 +32,15 @@ output "key" {
 
 The following arguments are supported:
 
-* `name` - (Required) Friendly SSH key name to represent an SSH key.
+* `name` - Friendly SSH key name to represent an SSH key.
+* `id` - The unique identifier of the SSH Key.
 
 
 ## Attributes Reference
 
 The following attributes are exported:
 
+* `id` - The unique identifier of the SSH Key.
 * `default` - Keys marked as default are always included on server creation and reset unless toggled off in creation/reset request.
 * `name` - Friendly SSH key name to represent an SSH key.
 * `key` - SSH Key value.

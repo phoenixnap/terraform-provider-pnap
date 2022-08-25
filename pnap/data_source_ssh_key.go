@@ -17,9 +17,17 @@ func dataSourceSshKey() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
+			"id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"name"},
+			},
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"id"},
 			},
 			"key": {
 				Type:     schema.TypeString,
@@ -47,7 +55,7 @@ func dataSourceSshKeyRead(d *schema.ResourceData, m interface{}) error {
 
 	numOfKeys := 0
 	for _, instance := range resp {
-		if instance.Name == d.Get("name").(string) {
+		if instance.Name == d.Get("name").(string) || instance.Id == d.Get("id").(string) {
 			numOfKeys++
 			d.SetId(instance.Id)
 			d.Set("default", instance.Default)
