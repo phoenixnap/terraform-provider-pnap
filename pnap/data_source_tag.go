@@ -13,9 +13,17 @@ func dataSourceTag() *schema.Resource {
 		Read: dataSourceTagRead,
 
 		Schema: map[string]*schema.Schema{
+			"id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"name"},
+			},
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"id"},
 			},
 			"values": {
 				Type:     schema.TypeSet,
@@ -63,7 +71,7 @@ func dataSourceTagRead(d *schema.ResourceData, m interface{}) error {
 	}
 	numOfTags := 0
 	for _, instance := range resp {
-		if instance.Name == d.Get("name").(string) {
+		if instance.Name == d.Get("name").(string) || instance.Id == d.Get("id").(string) {
 			numOfTags++
 			d.SetId(instance.Id)
 			d.Set("name", instance.Name)
