@@ -32,7 +32,8 @@ output "details" {
 
 The following arguments are supported:
 
-* `name` - (Required) The unique name of the tag.
+* `name` - The unique name of the tag.
+* `id` - The unique identifier of the tag.
 
 
 ## Attributes Reference
