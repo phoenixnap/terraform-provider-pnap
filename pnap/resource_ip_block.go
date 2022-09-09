@@ -2,12 +2,19 @@ package pnap
 
 import (
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/PNAP/go-sdk-helper-bmc/command/ipapi/ipblock"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	ipapiclient "github.com/phoenixnap/go-sdk-bmc/ipapi"
+)
+
+const (
+	pnapIpBlockRetryDelay = 15 * time.Second
 )
 
 func resourceIpBlock() *schema.Resource {
@@ -242,6 +249,11 @@ func resourceIpBlockDelete(d *schema.ResourceData, m interface{}) error {
 
 	ipBlockID := d.Id()
 
+	waitResultError := ipBlockWaitForUnassign(ipBlockID, &client)
+	if waitResultError != nil {
+		return waitResultError
+	}
+
 	requestCommand := ipblock.NewDeleteIpBlockCommand(client, ipBlockID)
 	_, err := requestCommand.Execute()
 	if err != nil {
@@ -277,4 +289,38 @@ func flattenTags(tagsRead *[]ipapiclient.TagAssignment, tagsInput []interface{})
 		}
 	}
 	return tagsInput
+}
+
+func ipBlockWaitForUnassign(id string, client *receiver.BMCSDK) error {
+	log.Printf("Waiting for ip block %s to be unassigned...", id)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"unassigning", "assigning"},
+		Target:     []string{"unassigned", "assigned"},
+		Refresh:    refreshForIpBlockStatus(client, id),
+		Timeout:    pnapRetryTimeout,
+		Delay:      pnapIpBlockRetryDelay,
+		MinTimeout: pnapRetryMinTimeout,
+	}
+
+	_, err := stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf("error waiting for ip block (%s) to be unassigned: %v", id, err)
+	}
+
+	return nil
+}
+
+func refreshForIpBlockStatus(client *receiver.BMCSDK, id string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+
+		requestCommand := ipblock.NewGetIpBlockCommand(*client, id)
+
+		resp, err := requestCommand.Execute()
+		if err != nil {
+			return 0, "", err
+		} else {
+			return 0, resp.Status, nil
+		}
+	}
 }
