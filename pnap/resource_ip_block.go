@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	pnapIpBlockRetryDelay = 15 * time.Second
+	pnapIpBlockRetryDelay   = 15 * time.Second
+	pnapIpBlockRetryTimeout = 15 * time.Minute
 )
 
 func resourceIpBlock() *schema.Resource {
@@ -298,7 +299,7 @@ func ipBlockWaitForUnassign(id string, client *receiver.BMCSDK) error {
 		Pending:    []string{"unassigning", "assigning"},
 		Target:     []string{"unassigned", "assigned"},
 		Refresh:    refreshForIpBlockStatus(client, id),
-		Timeout:    pnapRetryTimeout,
+		Timeout:    pnapIpBlockRetryTimeout,
 		Delay:      pnapIpBlockRetryDelay,
 		MinTimeout: pnapRetryMinTimeout,
 	}
