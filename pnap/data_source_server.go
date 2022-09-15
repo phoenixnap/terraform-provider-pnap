@@ -87,6 +87,112 @@ func dataSourceServer() *schema.Resource {
 					},
 				},
 			},
+			"network_configuration": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"gateway_address": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"private_network_configuration": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"configuration_type": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"private_networks": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"id": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"ips": {
+													Type:     schema.TypeSet,
+													Computed: true,
+													Elem:     &schema.Schema{Type: schema.TypeString},
+												},
+												"dhcp": {
+													Type:     schema.TypeBool,
+													Computed: true,
+												},
+												"status_description": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"ip_blocks_configuration": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"configuration_type": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"ip_blocks": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"id": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"vlan_id": {
+													Type:     schema.TypeInt,
+													Computed: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"public_network_configuration": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"public_networks": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"id": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"ips": {
+													Type:     schema.TypeSet,
+													Computed: true,
+													Elem:     &schema.Schema{Type: schema.TypeString},
+												},
+												"status_description": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -137,6 +243,10 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 			if err := d.Set("tags", tags); err != nil {
 				return err
 			}
+			netConf := flattenServerDataNetworkConfiguration(instance.NetworkConfiguration)
+			if err := d.Set("network_configuration", netConf); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -168,4 +278,97 @@ func flattenServerDataTags(tags *[]bmcapi.TagAssignment) []interface{} {
 		return tagsMake
 	}
 	return make([]interface{}, 0)
+}
+
+// Returns entire network details
+func flattenServerDataNetworkConfiguration(networkConfiguration bmcapi.NetworkConfiguration) []interface{} {
+	netConf := make([]interface{}, 1)
+	nc := make(map[string]interface{})
+
+	if networkConfiguration.GatewayAddress != nil {
+		nc["gateway_address"] = *networkConfiguration.GatewayAddress
+	}
+	if networkConfiguration.PrivateNetworkConfiguration != nil {
+		privateNetworkConfiguration := *networkConfiguration.PrivateNetworkConfiguration
+		prNetConf := make([]interface{}, 1)
+		prnc := make(map[string]interface{})
+		if privateNetworkConfiguration.ConfigurationType != nil {
+			prnc["configuration_type"] = *privateNetworkConfiguration.ConfigurationType
+		}
+		if privateNetworkConfiguration.PrivateNetworks != nil {
+			privateNetworks := *privateNetworkConfiguration.PrivateNetworks
+			prNet := make([]interface{}, len(privateNetworks))
+			for i, j := range privateNetworks {
+				spn := make(map[string]interface{})
+				spn["id"] = j.Id
+				if j.Ips != nil {
+					ips := make([]interface{}, len(*j.Ips))
+					for k, l := range *j.Ips {
+						ips[k] = l
+					}
+					spn["ips"] = ips
+				}
+				if j.Dhcp != nil {
+					spn["dhcp"] = *j.Dhcp
+				}
+				if j.StatusDescription != nil {
+					spn["status_description"] = *j.StatusDescription
+				}
+				prNet[i] = spn
+			}
+			prnc["private_networks"] = prNet
+		}
+		prNetConf[0] = prnc
+		nc["private_network_configuration"] = prNetConf
+	}
+	if networkConfiguration.IpBlocksConfiguration != nil {
+		ipBlocksConfiguration := *networkConfiguration.IpBlocksConfiguration
+		ipBlocksConf := make([]interface{}, 1)
+		ibc := make(map[string]interface{})
+		if ipBlocksConfiguration.ConfigurationType != nil {
+			ibc["configuration_type"] = *ipBlocksConfiguration.ConfigurationType
+		}
+		if ipBlocksConfiguration.IpBlocks != nil {
+			ipBlocks := *ipBlocksConfiguration.IpBlocks
+			ib := make([]interface{}, len(ipBlocks))
+			for i, j := range ipBlocks {
+				sib := make(map[string]interface{})
+				sib["id"] = j.Id
+				if j.VlanId != nil {
+					sib["vlan_id"] = int(*j.VlanId)
+				}
+				ib[i] = sib
+			}
+			ibc["ip_blocks"] = ib
+		}
+		ipBlocksConf[0] = ibc
+		nc["ip_blocks_configuration"] = ipBlocksConf
+	}
+	if networkConfiguration.PublicNetworkConfiguration != nil {
+		publicNetworkConfiguration := *networkConfiguration.PublicNetworkConfiguration
+		puNetConf := make([]interface{}, 1)
+		punc := make(map[string]interface{})
+		if publicNetworkConfiguration.PublicNetworks != nil {
+			publicNetworks := *publicNetworkConfiguration.PublicNetworks
+			puNet := make([]interface{}, len(publicNetworks))
+			for i, j := range publicNetworks {
+				spn := make(map[string]interface{})
+				spn["id"] = j.Id
+				ips := make([]interface{}, len(j.Ips))
+				for k, l := range j.Ips {
+					ips[k] = l
+				}
+				spn["ips"] = ips
+				if j.StatusDescription != nil {
+					spn["status_description"] = *j.StatusDescription
+				}
+				puNet[i] = spn
+			}
+			punc["public_networks"] = puNet
+		}
+		puNetConf[0] = punc
+		nc["public_network_configuration"] = puNetConf
+	}
+	netConf[0] = nc
+	return netConf
 }

@@ -58,3 +58,22 @@ The following attributes are exported:
     * `value` - The value of the tag assigned to the server.
     * `is_billing_tag` - Whether or not to show the tag as part of billing and invoices.
     * `created_by` - Who the tag was created by.
+* `network_configuration` - Entire network details of bare metal server.
+    * `gateway_address` - The address of the gateway assigned to the server.
+    * `private_network_configuration` - Private network details of bare metal server.
+        * `configuration_type` - Determines the approach for configuring private network(s) for the server being provisioned.
+        * `private_networks` - The list of private networks this server is member of.
+            * `id` - The network identifier.
+            * `ips` - IPs configured on the server.
+            * `dhcp` - Determines whether DHCP is enabled for this server.
+            * `status_description` - The status of the network.
+    * `ip_blocks_configuration` - IP block details of bare metal server.
+        * `configuration_type` - Determines the approach for configuring IP blocks for the server being provisioned.
+        * `ip_blocks` - The IP blocks assigned to this server.
+            * `id` - The IP block's ID.
+            * `ips` - The VLAN on which this IP block has been configured within the network switch.
+    * `public_network_configuration` - Public network details of bare metal server.
+        * `public_networks` - The list of public networks this server is member of.
+            * `id` - The network identifier.
+            * `ips` - IPs configured on the server.
+            * `status_description` - The status of the assignment to the network.
