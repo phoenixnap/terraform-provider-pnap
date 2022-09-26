@@ -76,7 +76,7 @@ func dataSourceTagRead(d *schema.ResourceData, m interface{}) error {
 			d.SetId(instance.Id)
 			d.Set("name", instance.Name)
 			if instance.Values != nil {
-				readValues := *instance.Values
+				readValues := instance.Values
 				var values []interface{}
 				for _, v := range readValues {
 					values = append(values, v)
@@ -88,7 +88,7 @@ func dataSourceTagRead(d *schema.ResourceData, m interface{}) error {
 			}
 			d.Set("is_billing_tag", instance.IsBillingTag)
 			if instance.ResourceAssignments != nil {
-				readAssigns := *instance.ResourceAssignments
+				readAssigns := instance.ResourceAssignments
 				assigns := make([]interface{}, len(readAssigns))
 				for i, a := range readAssigns {
 					assign := make(map[string]interface{})

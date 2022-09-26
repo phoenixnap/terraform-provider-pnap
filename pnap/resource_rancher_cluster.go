@@ -9,7 +9,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	rancherapiclient "github.com/phoenixnap/go-sdk-bmc/ranchersolutionapi"
+	rancherapiclient "github.com/phoenixnap/go-sdk-bmc/ranchersolutionapi/v2"
 )
 
 func resourceRancherCluster() *schema.Resource {
@@ -253,7 +253,7 @@ func resourceRancherClusterCreate(d *schema.ResourceData, m interface{}) error {
 		}
 
 		if nodePoolItem["ssh_config"] != nil && len(nodePoolItem["ssh_config"].([]interface{})) > 0 {
-			sshConfigObject := rancherapiclient.SshConfig{}
+			sshConfigObject := rancherapiclient.NodePoolSshConfig{}
 			nodePoolObject.SshConfig = &sshConfigObject
 
 			sshConfig := nodePoolItem["ssh_config"].([]interface{})[0]
@@ -268,7 +268,7 @@ func resourceRancherClusterCreate(d *schema.ResourceData, m interface{}) error {
 				keys[i] = fmt.Sprint(v)
 			}
 			if len(keys) > 0 {
-				sshConfigObject.Keys = &keys
+				sshConfigObject.Keys = keys
 			}
 
 			tempKeyIds := sshConfigItem["key_ids"].(*schema.Set).List()
@@ -277,18 +277,18 @@ func resourceRancherClusterCreate(d *schema.ResourceData, m interface{}) error {
 				keyIds[i] = fmt.Sprint(v)
 			}
 			if len(keyIds) > 0 {
-				sshConfigObject.KeyIds = &keyIds
+				sshConfigObject.KeyIds = keyIds
 			}
 		}
 		pools[0] = nodePoolObject
-		request.NodePools = &pools
+		request.NodePools = pools
 	}
 	// end of node_pools block
 	if d.Get("configuration") != nil && len(d.Get("configuration").([]interface{})) > 0 {
 		configuration := d.Get("configuration").([]interface{})[0]
 		configurationItem := configuration.(map[string]interface{})
 
-		configurationObject := rancherapiclient.RancherClusterConfig{}
+		configurationObject := rancherapiclient.ClusterConfiguration{}
 
 		token := configurationItem["token"].(string)
 		if len(token) > 0 {
@@ -321,7 +321,7 @@ func resourceRancherClusterCreate(d *schema.ResourceData, m interface{}) error {
 			certKey := certificatesItem["certificate_key"].(string)
 
 			if len(caCert) > 0 || len(cert) > 0 || len(certKey) > 0 {
-				certificatesObject := rancherapiclient.RancherClusterCertificates{}
+				certificatesObject := rancherapiclient.RancherClusterConfigCertificates{}
 				configurationObject.Certificates = &certificatesObject
 
 				if len(caCert) > 0 {
@@ -342,7 +342,7 @@ func resourceRancherClusterCreate(d *schema.ResourceData, m interface{}) error {
 		wConfiguration := d.Get("workload_configuration").([]interface{})[0]
 		wConfigurationItem := wConfiguration.(map[string]interface{})
 
-		wConfigurationObject := rancherapiclient.WorkloadClusterConfig{}
+		wConfigurationObject := rancherapiclient.ClusterWorkloadConfiguration{}
 
 		name := wConfigurationItem["name"].(string)
 		if len(name) > 0 {
@@ -415,9 +415,9 @@ func resourceRancherClusterRead(d *schema.ResourceData, m interface{}) error {
 	if resp.InitialClusterVersion != nil {
 		d.Set("initial_cluster_version", *resp.InitialClusterVersion)
 	}
-	if resp.NodePools != nil && len(*resp.NodePools) > 0 {
+	if resp.NodePools != nil && len(resp.NodePools) > 0 {
 		var np = d.Get("node_pools").([]interface{})
-		flatPools := flattenNodePools(*resp.NodePools, np)
+		flatPools := flattenNodePools(resp.NodePools, np)
 		if err := d.Set("node_pools", flatPools); err != nil {
 			return err
 		}
@@ -467,7 +467,7 @@ func flattenNodePools(nodePools []rancherapiclient.NodePool, np []interface{}) [
 			n["server_type"] = *nodePools[0].ServerType
 		}
 		if nodePools[0].Nodes != nil {
-			vNo := *nodePools[0].Nodes
+			vNo := nodePools[0].Nodes
 			nodes := make([]interface{}, len(vNo))
 			for j, k := range vNo {
 				node := make(map[string]interface{})

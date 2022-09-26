@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/phoenixnap/go-sdk-bmc/bmcapi"
+	"github.com/phoenixnap/go-sdk-bmc/bmcapi/v2"
 
 	"github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/server"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
@@ -258,9 +258,9 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 }
 
 // Returns list of assigned tags
-func flattenServerDataTags(tags *[]bmcapi.TagAssignment) []interface{} {
+func flattenServerDataTags(tags []bmcapi.TagAssignment) []interface{} {
 	if tags != nil {
-		readTags := *tags
+		readTags := tags
 		tagsMake := make([]interface{}, len(readTags))
 		for i, j := range readTags {
 			tagAssignment := make(map[string]interface{})
@@ -296,14 +296,14 @@ func flattenServerDataNetworkConfiguration(networkConfiguration bmcapi.NetworkCo
 			prnc["configuration_type"] = *privateNetworkConfiguration.ConfigurationType
 		}
 		if privateNetworkConfiguration.PrivateNetworks != nil {
-			privateNetworks := *privateNetworkConfiguration.PrivateNetworks
+			privateNetworks := privateNetworkConfiguration.PrivateNetworks
 			prNet := make([]interface{}, len(privateNetworks))
 			for i, j := range privateNetworks {
 				spn := make(map[string]interface{})
 				spn["id"] = j.Id
 				if j.Ips != nil {
-					ips := make([]interface{}, len(*j.Ips))
-					for k, l := range *j.Ips {
+					ips := make([]interface{}, len(j.Ips))
+					for k, l := range j.Ips {
 						ips[k] = l
 					}
 					spn["ips"] = ips
@@ -329,7 +329,7 @@ func flattenServerDataNetworkConfiguration(networkConfiguration bmcapi.NetworkCo
 			ibc["configuration_type"] = *ipBlocksConfiguration.ConfigurationType
 		}
 		if ipBlocksConfiguration.IpBlocks != nil {
-			ipBlocks := *ipBlocksConfiguration.IpBlocks
+			ipBlocks := ipBlocksConfiguration.IpBlocks
 			ib := make([]interface{}, len(ipBlocks))
 			for i, j := range ipBlocks {
 				sib := make(map[string]interface{})
@@ -349,7 +349,7 @@ func flattenServerDataNetworkConfiguration(networkConfiguration bmcapi.NetworkCo
 		puNetConf := make([]interface{}, 1)
 		punc := make(map[string]interface{})
 		if publicNetworkConfiguration.PublicNetworks != nil {
-			publicNetworks := *publicNetworkConfiguration.PublicNetworks
+			publicNetworks := publicNetworkConfiguration.PublicNetworks
 			puNet := make([]interface{}, len(publicNetworks))
 			for i, j := range publicNetworks {
 				spn := make(map[string]interface{})

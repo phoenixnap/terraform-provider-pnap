@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	ipapiclient "github.com/phoenixnap/go-sdk-bmc/ipapi"
+	ipapiclient "github.com/phoenixnap/go-sdk-bmc/ipapi/v2"
 )
 
 const (
@@ -139,7 +139,7 @@ func resourceIpBlockCreate(d *schema.ResourceData, m interface{}) error {
 			}
 			tagsObject[i] = tarObject
 		}
-		request.Tags = &tagsObject
+		request.Tags = tagsObject
 	}
 
 	requestCommand := ipblock.NewCreateIpBlockCommand(client, *request)
@@ -181,7 +181,7 @@ func resourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 	} else {
 		d.Set("description", "")
 	}
-	if resp.Tags != nil && len(*resp.Tags) > 0 {
+	if resp.Tags != nil && len(resp.Tags) > 0 {
 		var tagsInput = d.Get("tags").([]interface{})
 		tags := flattenTags(resp.Tags, tagsInput)
 		if err := d.Set("tags", tags); err != nil {
@@ -264,14 +264,14 @@ func resourceIpBlockDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func flattenTags(tagsRead *[]ipapiclient.TagAssignment, tagsInput []interface{}) []interface{} {
+func flattenTags(tagsRead []ipapiclient.TagAssignment, tagsInput []interface{}) []interface{} {
 	if len(tagsInput) == 0 {
 		tagsInput = make([]interface{}, 1)
 		tagsInputItem := make(map[string]interface{})
 		tagsInput[0] = tagsInputItem
 	}
 	if len(tagsInput) > 0 {
-		tags := *tagsRead
+		tags := tagsRead
 		for _, j := range tagsInput {
 			tagsInputItem := j.(map[string]interface{})
 			if tagsInputItem["tag_assignment"] != nil && len(tagsInputItem["tag_assignment"].([]interface{})) > 0 {
