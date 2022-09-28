@@ -63,7 +63,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	configFilePath := d.Get("config_file_path").(string)
 
 	configuration := dto.Configuration{}
-	configuration.UserAgent = "terraform-provider-pnap/0.13.0"
+	configuration.UserAgent = "terraform-provider-pnap/0.16.2"
 	if (clientId != "") && (clientSecret != "") {
 		configuration.ClientID = clientId
 		configuration.ClientSecret = clientSecret
