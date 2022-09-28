@@ -118,7 +118,7 @@ func dataSourceRancherClusterRead(d *schema.ResourceData, m interface{}) error {
 						}
 						if instance.NodePools != nil {
 							np := make([]interface{}, 0)
-							nodePools := flattenNodePools(*instance.NodePools, np)
+							nodePools := flattenNodePools(instance.NodePools, np)
 							if err := d.Set("node_pools", nodePools); err != nil {
 								return err
 							}
@@ -161,7 +161,7 @@ func dataSourceRancherClusterRead(d *schema.ResourceData, m interface{}) error {
 						}
 						if instance.NodePools != nil {
 							np := make([]interface{}, 0)
-							nodePools := flattenNodePools(*instance.NodePools, np)
+							nodePools := flattenNodePools(instance.NodePools, np)
 							if err := d.Set("node_pools", nodePools); err != nil {
 								return err
 							}
@@ -211,7 +211,7 @@ func dataSourceRancherClusterRead(d *schema.ResourceData, m interface{}) error {
 		}
 		if resp.NodePools != nil {
 			np := make([]interface{}, 0)
-			nodePools := flattenNodePools(*resp.NodePools, np)
+			nodePools := flattenNodePools(resp.NodePools, np)
 			if err := d.Set("node_pools", nodePools); err != nil {
 				return err
 			}
