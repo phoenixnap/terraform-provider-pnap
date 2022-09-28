@@ -8,7 +8,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/command/networkapi/publicnetwork"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 
-	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi"
+	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v2"
 )
 
 func resourcePublicNetwork() *schema.Resource {
@@ -117,7 +117,7 @@ func resourcePublicNetworkCreate(d *schema.ResourceData, m interface{}) error {
 			pnibObject.Id = pnibItem["id"].(string)
 			ipBlocksObject[i] = pnibObject
 		}
-		request.IpBlocks = &ipBlocksObject
+		request.IpBlocks = ipBlocksObject
 	}
 	requestCommand := publicnetwork.NewCreatePublicNetworkCommand(client, *request)
 
@@ -200,7 +200,7 @@ func resourcePublicNetworkDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func flattenMemberships(memberships []networkapiclient.PublicNetworkMembership) []interface{} {
+func flattenMemberships(memberships []networkapiclient.NetworkMembership) []interface{} {
 	if memberships != nil {
 		mems := make([]interface{}, len(memberships))
 		for i, v := range memberships {

@@ -6,7 +6,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/command/ipapi/ipblock"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/phoenixnap/go-sdk-bmc/ipapi"
+	"github.com/phoenixnap/go-sdk-bmc/ipapi/v2"
 )
 
 func dataSourceIpBlock() *schema.Resource {
@@ -140,9 +140,9 @@ func dataSourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 }
 
 // Returns list of assigned tags
-func flattenDataTags(tags *[]ipapi.TagAssignment) []interface{} {
+func flattenDataTags(tags []ipapi.TagAssignment) []interface{} {
 	if tags != nil {
-		readTags := *tags
+		readTags := tags
 		tagsMake := make([]interface{}, len(readTags))
 		for i, j := range readTags {
 			tagAssignment := make(map[string]interface{})

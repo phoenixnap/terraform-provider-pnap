@@ -7,7 +7,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	tagapiclient "github.com/phoenixnap/go-sdk-bmc/tagapi"
+	tagapiclient "github.com/phoenixnap/go-sdk-bmc/tagapi/v2"
 )
 
 func resourceTag() *schema.Resource {
@@ -99,7 +99,7 @@ func resourceTagRead(d *schema.ResourceData, m interface{}) error {
 	d.SetId(resp.Id)
 	d.Set("name", resp.Name)
 	if resp.Values != nil {
-		readValues := *resp.Values
+		readValues := resp.Values
 		var values []interface{}
 		for _, v := range readValues {
 			values = append(values, v)
@@ -111,7 +111,7 @@ func resourceTagRead(d *schema.ResourceData, m interface{}) error {
 	}
 	d.Set("is_billing_tag", resp.IsBillingTag)
 	if resp.ResourceAssignments != nil {
-		resAssigns := *resp.ResourceAssignments
+		resAssigns := resp.ResourceAssignments
 		assigns := make([]interface{}, len(resAssigns))
 		for i, v := range resAssigns {
 			a := make(map[string]interface{})

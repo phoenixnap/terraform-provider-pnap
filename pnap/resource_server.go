@@ -13,7 +13,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/server"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 
-	bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi"
+	bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi/v2"
 )
 
 const (
@@ -403,7 +403,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		keys[i] = fmt.Sprint(v)
 	}
 	//todo
-	request.SshKeys = &keys
+	request.SshKeys = keys
 
 	temp1 := d.Get("ssh_key_ids").(*schema.Set).List()
 	keyIds := make([]string, len(temp1))
@@ -411,7 +411,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		keyIds[i] = fmt.Sprint(v)
 	}
 	//todo
-	request.SshKeyIds = &keyIds
+	request.SshKeyIds = keyIds
 
 	temp2 := d.Get("rdp_allowed_ips").(*schema.Set).List()
 	allowedIps := make([]string, len(temp2))
@@ -428,11 +428,11 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
 		if len(temp2) > 0 {
 			dtoWindows := bmcapiclient.OsConfigurationWindows{}
-			dtoWindows.RdpAllowedIps = &allowedIps
+			dtoWindows.RdpAllowedIps = allowedIps
 			dtoOsConfiguration.Windows = &dtoWindows
 		}
 		if len(temp3) > 0 {
-			dtoOsConfiguration.ManagementAccessAllowedIps = &managementAccessAllowedIps
+			dtoOsConfiguration.ManagementAccessAllowedIps = managementAccessAllowedIps
 		}
 		request.OsConfiguration = &dtoOsConfiguration
 	}
@@ -453,7 +453,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 			}
 			tagsObject[i] = tarObject
 		}
-		request.Tags = &tagsObject
+		request.Tags = tagsObject
 	}
 
 	// network block
@@ -511,14 +511,14 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 							serverPrivateNetworkObject.Id = id
 						}
 						if (len(NetIps)) > 0 {
-							serverPrivateNetworkObject.Ips = &NetIps
+							serverPrivateNetworkObject.Ips = NetIps
 						}
 
 						serverPrivateNetworkObject.Dhcp = &dhcp
 						serPrivateNets[k] = serverPrivateNetworkObject
 
 					}
-					privateNetworkConfigurationObject.PrivateNetworks = &serPrivateNets
+					privateNetworkConfigurationObject.PrivateNetworks = serPrivateNets
 				}
 			}
 		}
@@ -557,7 +557,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 						serverIpBlockObject.VlanId = &vlanId
 						serIpBlocks[k] = serverIpBlockObject
 					}
-					ipBlocksConfigurationObject.IpBlocks = &serIpBlocks
+					ipBlocksConfigurationObject.IpBlocks = serIpBlocks
 				}
 			}
 		}
@@ -594,7 +594,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 					}
 					serPublicNets[k] = serverPublicNetworkObject
 				}
-				publicNetworkConfigurationObject.PublicNetworks = &serPublicNets
+				publicNetworkConfigurationObject.PublicNetworks = serPublicNets
 			}
 		}
 		request.NetworkConfiguration = &networkConfigurationObject
@@ -665,7 +665,7 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("cluster_id", resp.ClusterId)
 	if resp.OsConfiguration != nil && resp.OsConfiguration.ManagementAccessAllowedIps != nil {
 		var mgmntAccessAllowedIps []interface{}
-		for _, k := range *resp.OsConfiguration.ManagementAccessAllowedIps {
+		for _, k := range resp.OsConfiguration.ManagementAccessAllowedIps {
 			mgmntAccessAllowedIps = append(mgmntAccessAllowedIps, k)
 		}
 		d.Set("management_access_allowed_ips", mgmntAccessAllowedIps)
@@ -673,7 +673,7 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 
 	if resp.OsConfiguration != nil && resp.OsConfiguration.Windows != nil && resp.OsConfiguration.Windows.RdpAllowedIps != nil {
 		var rdpAllowedIps []interface{}
-		for _, k := range *resp.OsConfiguration.Windows.RdpAllowedIps {
+		for _, k := range resp.OsConfiguration.Windows.RdpAllowedIps {
 			rdpAllowedIps = append(rdpAllowedIps, k)
 		}
 		d.Set("rdp_allowed_ips", rdpAllowedIps)
@@ -683,7 +683,7 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("provisioned_on", resp.ProvisionedOn.String())
 	}
 
-	if resp.Tags != nil && len(*resp.Tags) > 0 {
+	if resp.Tags != nil && len(resp.Tags) > 0 {
 		var tagsInput = d.Get("tags").([]interface{})
 		tags := flattenServerTags(resp.Tags, tagsInput)
 		if err := d.Set("tags", tags); err != nil {
@@ -756,7 +756,7 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			for i, v := range temp {
 				keys[i] = fmt.Sprint(v)
 			}
-			request.SshKeys = &keys
+			request.SshKeys = keys
 			request.InstallDefaultSshKeys = d.Get("install_default_ssh_keys").(*bool)
 
 			temp1 := d.Get("ssh_key_ids").(*schema.Set).List()
@@ -764,7 +764,7 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			for i, v := range temp1 {
 				keyIds[i] = fmt.Sprint(v)
 			}
-			request.SshKeyIds = &keyIds
+			request.SshKeyIds = keyIds
 
 			dtoOsConfiguration := bmcapiclient.OsConfigurationMap{}
 			isWindows := strings.Contains(d.Get("os").(string), "windows")
@@ -779,7 +779,7 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 					allowedIps[i] = fmt.Sprint(v)
 				}
 
-				dtoWindows.RdpAllowedIps = &allowedIps
+				dtoWindows.RdpAllowedIps = allowedIps
 				dtoOsConfiguration.Windows = &dtoWindows
 				dtoOsConfiguration.Esxi = nil
 				request.OsConfiguration = &dtoOsConfiguration
@@ -793,7 +793,7 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 				for i, v := range temp3 {
 					managementAccessAllowedIps[i] = fmt.Sprint(v)
 				}
-				dtoEsxi.ManagementAccessAllowedIps = &managementAccessAllowedIps
+				dtoEsxi.ManagementAccessAllowedIps = managementAccessAllowedIps
 				dtoOsConfiguration.Esxi = &dtoEsxi
 				dtoOsConfiguration.Windows = nil
 				request.OsConfiguration = &dtoOsConfiguration
@@ -1031,7 +1031,7 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 					pncItem["configuration_type"] = *prNetConf.ConfigurationType
 				}
 				if prNetConf.PrivateNetworks != nil {
-					prNet := *prNetConf.PrivateNetworks
+					prNet := prNetConf.PrivateNetworks
 					//pn := make([]interface{}, len(prNet))
 					var pn []interface{}
 					var pnetworksExists = false
@@ -1066,8 +1066,8 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 
 								spnItem["id"] = j.Id
 								if j.Ips != nil {
-									ips := make([]interface{}, len(*j.Ips))
-									for k, l := range *j.Ips {
+									ips := make([]interface{}, len(j.Ips))
+									for k, l := range j.Ips {
 										ips[k] = l
 									}
 									spnItem["ips"] = ips
@@ -1107,7 +1107,7 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 					ibci := ibc.([]interface{})[0]
 					ibcInput := ibci.(map[string]interface{})
 
-					ipBlocks := *ipBlocksConf.IpBlocks
+					ipBlocks := ipBlocksConf.IpBlocks
 					ib := make([]interface{}, len(ipBlocks))
 					for i, j := range ipBlocks {
 						ibItem := make(map[string]interface{})
@@ -1138,7 +1138,7 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 					pubnci := pubnc.([]interface{})[0]
 					pubncInput := pubnci.(map[string]interface{})
 
-					pubNets := *pubNetConf.PublicNetworks
+					pubNets := pubNetConf.PublicNetworks
 					if pubncInput["public_networks"] != nil && len(pubncInput["public_networks"].([]interface{})) > 0 {
 						pubNetInput := pubncInput["public_networks"].([]interface{})
 						for _, j := range pubNetInput {
@@ -1163,14 +1163,14 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 	return ncInput
 }
 
-func flattenServerTags(tagsRead *[]bmcapiclient.TagAssignment, tagsInput []interface{}) []interface{} {
+func flattenServerTags(tagsRead []bmcapiclient.TagAssignment, tagsInput []interface{}) []interface{} {
 	if len(tagsInput) == 0 {
 		tagsInput = make([]interface{}, 1)
 		tagsInputItem := make(map[string]interface{})
 		tagsInput[0] = tagsInputItem
 	}
 	if len(tagsInput) > 0 {
-		tags := *tagsRead
+		tags := tagsRead
 		for _, j := range tagsInput {
 			tagsInputItem := j.(map[string]interface{})
 			if tagsInputItem["tag_assignment"] != nil && len(tagsInputItem["tag_assignment"].([]interface{})) > 0 {

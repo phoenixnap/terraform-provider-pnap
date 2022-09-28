@@ -8,7 +8,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/command/networkapi/privatenetwork"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 
-	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi"
+	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v2"
 )
 
 func resourcePrivateNetwork() *schema.Resource {
