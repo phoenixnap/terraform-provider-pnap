@@ -76,9 +76,13 @@ The following attributes are exported:
 * `location_default` - Identifies network as the default private network for the specified location. Default value is `false`.
 * `cidr` - IP range associated with this private network in CIDR notation.
 * `vlan_id `- The VLAN of this private network.
-* `servers ` - List of server details linked to the private network.
-
-The Server Details block has 2 fields:
-
-* `id` - (Required) The server identifier.
-* `ips` - List of private IPs associated to the server.
+* `type` - The type of the private network.
+* `servers ` - (Deprecated) List of server details linked to the private network.
+    * `id` - The server identifier.
+    * `ips` - List of private IPs associated to the server.
+* `memberships` - A list of resources that are members of this private network.
+    * `resource_id` - The resource identifier.
+    * `resource_type` - The resource's type.
+    * `ips` - List of public IPs associated to the resource.
+* `status` - The status of the private network.
+* `created_on` - Date and time when this private network was created.
