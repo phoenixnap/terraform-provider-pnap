@@ -90,6 +90,10 @@ func resourcePublicNetwork() *schema.Resource {
 					},
 				},
 			},
+			"status": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -163,6 +167,8 @@ func resourcePublicNetworkRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("memberships", memberships); err != nil {
 		return err
 	}
+	d.Set("status", resp.Status)
+
 	return nil
 }
 

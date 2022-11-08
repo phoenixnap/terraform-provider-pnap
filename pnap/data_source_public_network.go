@@ -77,6 +77,10 @@ func dataSourcePublicNetwork() *schema.Resource {
 					},
 				},
 			},
+			"status": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -114,6 +118,7 @@ func dataSourcePublicNetworkRead(d *schema.ResourceData, m interface{}) error {
 			if err := d.Set("memberships", memberships); err != nil {
 				return err
 			}
+			d.Set("status", instance.Status)
 		}
 	}
 	if numOfNets > 1 {
