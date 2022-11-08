@@ -159,6 +159,25 @@ func resourceServer() *schema.Resource {
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
+			"install_os_to_ram": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
+			"cloud_init": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"user_data": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
+			},
 			"provisioned_on": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -423,7 +442,16 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	for i, v := range temp3 {
 		managementAccessAllowedIps[i] = fmt.Sprint(v)
 	}
-	if len(temp2) > 0 || len(temp3) > 0 {
+	installOsToRam := d.Get("install_os_to_ram").(bool)
+
+	var userData string
+	if d.Get("cloud_init") != nil && len(d.Get("cloud_init").([]interface{})) > 0 {
+		cloudInit := d.Get("cloud_init").([]interface{})[0]
+		cloudInitItem := cloudInit.(map[string]interface{})
+		userData = cloudInitItem["user_data"].(string)
+	}
+
+	if len(temp2) > 0 || len(temp3) > 0 || installOsToRam || len(userData) > 0 {
 		dtoOsConfiguration := bmcapiclient.OsConfiguration{}
 
 		if len(temp2) > 0 {
@@ -434,8 +462,17 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		if len(temp3) > 0 {
 			dtoOsConfiguration.ManagementAccessAllowedIps = managementAccessAllowedIps
 		}
+		if installOsToRam {
+			dtoOsConfiguration.InstallOsToRam = &installOsToRam
+		}
+		if len(userData) > 0 {
+			cloudInitObject := bmcapiclient.OsConfigurationCloudInit{}
+			cloudInitObject.UserData = &userData
+			dtoOsConfiguration.CloudInit = &cloudInitObject
+		}
 		request.OsConfiguration = &dtoOsConfiguration
 	}
+
 	tags := d.Get("tags").([]interface{})
 	if len(tags) > 0 {
 		tagsObject := make([]bmcapiclient.TagAssignmentRequest, len(tags))
@@ -679,6 +716,17 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("rdp_allowed_ips", rdpAllowedIps)
 	}
 
+	if resp.OsConfiguration != nil {
+		d.Set("install_os_to_ram", resp.OsConfiguration.InstallOsToRam)
+		if resp.OsConfiguration.CloudInit != nil && resp.OsConfiguration.CloudInit.UserData != nil {
+			cloudInit := make([]interface{}, 1)
+			cloudInitItem := make(map[string]interface{})
+			cloudInitItem["user_data"] = *resp.OsConfiguration.CloudInit.UserData
+			cloudInit[0] = cloudInitItem
+			d.Set("cloud_init", cloudInit)
+		}
+	}
+
 	if resp.ProvisionedOn != nil {
 		d.Set("provisioned_on", resp.ProvisionedOn.String())
 	}
@@ -748,7 +796,7 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			if waitResultError != nil {
 				return waitResultError
 			}
-		case "reset":
+		case "reset": //Deprecated
 			//reset
 			request := &bmcapiclient.ServerReset{}
 			temp := d.Get("ssh_keys").(*schema.Set).List()
@@ -757,7 +805,8 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 				keys[i] = fmt.Sprint(v)
 			}
 			request.SshKeys = keys
-			request.InstallDefaultSshKeys = d.Get("install_default_ssh_keys").(*bool)
+			var installDefault = d.Get("install_default_ssh_keys").(bool)
+			request.InstallDefaultSshKeys = &installDefault
 
 			temp1 := d.Get("ssh_key_ids").(*schema.Set).List()
 			keyIds := make([]string, len(temp1))
@@ -873,6 +922,19 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			}
 		}
 		requestCommand := server.NewSetServerTagsCommand(client, serverID, request)
+		_, err := requestCommand.Execute()
+		if err != nil {
+			return err
+		}
+	} else if d.HasChange("hostname") || d.HasChange("description") {
+		client := m.(receiver.BMCSDK)
+		serverID := d.Id()
+		request := &bmcapiclient.ServerPatch{}
+		var hostname = d.Get("hostname").(string)
+		request.Hostname = &hostname
+		var desc = d.Get("description").(string)
+		request.Description = &desc
+		requestCommand := server.NewPatchServerCommand(client, serverID, *request)
 		_, err := requestCommand.Execute()
 		if err != nil {
 			return err
