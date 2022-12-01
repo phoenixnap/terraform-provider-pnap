@@ -41,13 +41,14 @@ The following attributes are exported:
 
 * `id` - The public network identifier.
 * `vlan_id `- The VLAN of this public network.
-* `memberships` - A list of resources that are members in this public network.
+* `memberships` - A list of resources that are members of this public network.
     * `resource_id` - The resource identifier.
     * `resource_type` - The resource's type.
     * `ips` - List of public IPs associated to the resource.
 * `name` - The friendly name of this public network.
 * `location` - The location of this public network.
 * `description` - The description of this public network.
+* `status` - The status of the public network.
 * `created_on` - Date and time when this public network was created.
 * `ip_blocks` - A list of IP Blocks that are associated with this public network.
     * `id` - The IP Block identifier.

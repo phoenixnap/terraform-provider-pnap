@@ -69,9 +69,15 @@ The following arguments are supported:
 * `network_type` - The type of network configuration for this server. Currently this field should be set to PUBLIC_AND_PRIVATE or PRIVATE_ONLY.
 * `rdp_allowed_ips` - List of IPs allowed for RDP access to Windows OS. Supported in single IP, CIDR and range format. When undefined, RDP is disabled. To allow RDP access from any IP use 0.0.0.0/0. Must contain at least 1 item.
 * `management_access_allowed_ips` - Define list of IPs allowed to access the Management UI. Supported in single IP, CIDR and range format. When undefined, Management UI is disabled.Must contain at least 1 item.
+* `install_os_to_ram` - If true, OS will be installed to and booted from the server's RAM. On restart RAM OS will be lost and the server will not be reachable unless a custom bootable OS has been deployed. Only supported for ubuntu/focal. Default value is `false`.
+* `cloud_init` - Cloud-init configuration details.
 * `tags` - Tags to set to server, if any.
 * `network_configuration` - Entire network details of bare metal server. Structure is documented below.
-* `action` - Action to perform on server. Allowed actions are: reboot, reset, powered-on, powered-off, shutdown.
+* `action` - Action to perform on server. Allowed actions are: reboot, reset (deprecated), powered-on, powered-off, shutdown.
+
+The `cloud_init` block has one field:
+
+* `user_data` - User data for the [cloud-init](https://cloudinit.readthedocs.io/en/latest/) configuration in base64 encoding. NoCloud format is supported. Follow the [instructions](https://phoenixnap.com/kb/bmc-cloud-init) on how to provision a server using cloud-init. Only ubuntu/bionic and ubuntu/focal are supported.
 
 
 The `tags` block has field `tag_assignment`.
@@ -147,9 +153,14 @@ The following attributes are exported:
 * `management_ui_url` - The URL of the management UI which will only be returned in response to provisioning a server.
 * `root_password` - Password set for user root on an ESXi server which will only be returned in response to provisioning a server.
 * `management_access_allowed_ips` - A list of IPs allowed to access the Management UI. Supported in single IP, CIDR and range format. When undefined, Management UI is disabled.
+* `install_os_to_ram` - If true, OS will be installed to and booted from the server's RAM. On restart RAM OS will be lost and the server will not be reachable unless a custom bootable OS has been deployed. Only supported for ubuntu/focal. Default value is `false`.
+* `cloud_init` - Cloud-init configuration details.
 * `tags` - The tags assigned if any.
 * `network_configuration` - Entire network details of bare metal server.
 * `provisioned_on` - Date and time when server was provisioned.
+
+The `cloud_init` block has one field:
+* `user_data` - User data for the cloud-init configuration in base64 encoding.
 
 The `tags` block has field `tag_assignment`.
 The `tag_assignment` block has 5 fields:

@@ -41,7 +41,7 @@ func resourcePrivateNetwork() *schema.Resource {
 			"location_default": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  false,
+				Computed: true,
 			},
 			"cidr": {
 				Type:     schema.TypeString,
@@ -55,7 +55,7 @@ func resourcePrivateNetwork() *schema.Resource {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"servers": {
+			"servers": { // Deprecated
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
@@ -71,6 +71,31 @@ func resourcePrivateNetwork() *schema.Resource {
 						},
 					},
 				},
+			},
+			"memberships": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"resource_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"resource_type": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"ips": {
+							Type:     schema.TypeSet,
+							Computed: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
+					},
+				},
+			},
+			"status": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"created_on": {
 				Type:     schema.TypeString,
@@ -129,10 +154,15 @@ func resourcePrivateNetworkRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("vlan_id", resp.VlanId)
 
 	servers := flattenServers(resp.Servers)
-
 	if err := d.Set("servers", servers); err != nil {
 		return err
 	}
+	memberships := flattenMemberships(resp.Memberships)
+	if err := d.Set("memberships", memberships); err != nil {
+		return err
+	}
+	d.Set("status", resp.Status)
+
 	if len(resp.CreatedOn.String()) > 0 {
 		d.Set("created_on", resp.CreatedOn.String())
 	}
