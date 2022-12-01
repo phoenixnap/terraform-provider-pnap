@@ -47,7 +47,12 @@ The following attributes are exported:
 * `cidr` - IP range associated with this private network in CIDR notation.
 * `vlan_id `- The VLAN of this private network.
 * `type` - The type of the private network.
-* `servers ` - List of servers' details linked to the private network.
+* `servers ` - (Deprecated) List of servers' details linked to the private network.
     * `id` - The server identifier.
     * `ips` - List of private IPs associated to the server.
+* `memberships` - A list of resources that are members of this private network.
+    * `resource_id` - The resource identifier.
+    * `resource_type` - The resource's type.
+    * `ips` - List of public IPs associated to the resource.
+* `status` - The status of the private network.
 * `created_on` - Date and time when this private network was created.
