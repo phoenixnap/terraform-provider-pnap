@@ -67,6 +67,7 @@ func resourcePublicNetwork() *schema.Resource {
 			},
 			"vlan_id": {
 				Type:     schema.TypeInt,
+				Optional: true,
 				Computed: true,
 			},
 			"memberships": {
@@ -108,6 +109,11 @@ func resourcePublicNetworkCreate(d *schema.ResourceData, m interface{}) error {
 	var desc = d.Get("description").(string)
 	if len(desc) > 0 {
 		request.Description = &desc
+	}
+	var vlanId = d.Get("vlan_id").(int)
+	if vlanId > 0 {
+		vlanId32 := int32(vlanId)
+		request.VlanId = &vlanId32
 	}
 	ipBlocks := d.Get("ip_blocks").([]interface{})
 	if len(ipBlocks) > 0 {
