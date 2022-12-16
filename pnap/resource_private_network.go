@@ -53,6 +53,7 @@ func resourcePrivateNetwork() *schema.Resource {
 			},
 			"vlan_id": {
 				Type:     schema.TypeInt,
+				Optional: true,
 				Computed: true,
 			},
 			"servers": { // Deprecated
@@ -122,6 +123,11 @@ func resourcePrivateNetworkCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	request.Cidr = d.Get("cidr").(string)
+	var vlanId = d.Get("vlan_id").(int)
+	if vlanId > 0 {
+		vlanId32 := int32(vlanId)
+		request.VlanId = &vlanId32
+	}
 
 	requestCommand := privatenetwork.NewCreatePrivateNetworkCommand(client, *request)
 

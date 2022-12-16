@@ -41,6 +41,7 @@ The following arguments are supported:
 * `name` - (Required) The friendly name of this public network. This name should be unique.
 * `description` - The description of this public network.
 * `location` - (Required) The location of this public network. Supported values are `PHX`, `ASH`, `SGP`, `NLD`, `CHI`, `SEA` and `AUS`.
+* `vlan_id `- The VLAN that will be assigned to this network.
 * `ip_blocks` - A list of IP Blocks that will be associated with this public network (10 items at most).
     * `public_network_ip_block` - The assigned IP Block to the public network.
         * `id` - The IP Block identifier.

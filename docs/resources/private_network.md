@@ -63,6 +63,7 @@ The following arguments are supported:
 * `description` - The description of this private network.
 * `location` - (Required) The location of this private network. Supported values are `PHX`, `ASH`, `SGP`, `NLD`, `CHI`, `SEA` and `AUS`.
 * `location_default` - Identifies network as the default private network for the specified location. Default value is `false`.
+* `vlan_id `- The VLAN that will be assigned to this network.
 * `cidr` - (Required) IP range associated with this private network in CIDR notation.
 
 ## Attributes Reference
