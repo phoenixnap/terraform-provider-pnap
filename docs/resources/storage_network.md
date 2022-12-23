@@ -64,6 +64,7 @@ The following attributes are exported:
         * `path` - Volume's full path. It is in form of `/{volumeId}/pathSuffix`.
         * `path_suffix` - Last part of volume's path.
         * `capacity_in_gb` - Maximum capacity in GB.
+        * `used_capacity_in_gb` - Used capacity in GB, updated periodically.
         * `protocol` - File system protocol.
         * `status` - Volume's status.
         * `created_on` - Date and time when this volume was created.
