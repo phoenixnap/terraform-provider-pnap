@@ -78,6 +78,10 @@ func dataSourceStorageNetwork() *schema.Resource {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
+						"used_capacity_in_gb": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
 						"path": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -173,8 +177,9 @@ func dataSourceStorageNetworkRead(d *schema.ResourceData, m interface{}) error {
 				ips = append(ips, v)
 			}
 			d.Set("ips", ips)
-			if len(instance.CreatedOn.String()) > 0 {
-				d.Set("created_on", instance.CreatedOn.String())
+			if instance.CreatedOn != nil {
+				createdOn := *instance.CreatedOn
+				d.Set("created_on", createdOn.String())
 			}
 			volumes := flattenDataVolumes(instance.Volumes)
 
@@ -212,14 +217,18 @@ func flattenDataVolumes(volumes []networkstorageapiclient.Volume) []interface{} 
 			if v.CapacityInGb != nil {
 				vol["capacity_in_gb"] = int(*v.CapacityInGb)
 			}
+			if v.UsedCapacityInGb != nil {
+				vol["used_capacity_in_gb"] = int(*v.UsedCapacityInGb)
+			}
 			if v.Protocol != nil {
 				vol["protocol"] = *v.Protocol
 			}
 			if v.Status != nil {
 				vol["status"] = *v.Status
 			}
-			if v.CreatedOn != nil && len(v.CreatedOn.String()) > 0 {
-				vol["created_on"] = v.CreatedOn.String()
+			if v.CreatedOn != nil {
+				createdOn := *v.CreatedOn
+				vol["created_on"] = createdOn.String()
 			}
 			if v.Permissions != nil {
 				perms := make([]interface{}, 1)

@@ -2,7 +2,9 @@ package pnap
 
 import (
 	"fmt"
+	"log"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/PNAP/go-sdk-helper-bmc/command/networkstorageapi/storagenetwork"
@@ -85,6 +87,10 @@ func resourceStorageNetwork() *schema.Resource {
 									"capacity_in_gb": {
 										Type:     schema.TypeInt,
 										Required: true,
+									},
+									"used_capacity_in_gb": {
+										Type:     schema.TypeInt,
+										Computed: true,
 									},
 									"path": {
 										Type:     schema.TypeString,
@@ -198,6 +204,10 @@ func resourceStorageNetworkCreate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("unknown storage network identifier")
 	} else {
 		d.SetId(*resp.Id)
+		waitResultError := storageWaitForCreate(*resp.Id, &client)
+		if waitResultError != nil {
+			return waitResultError
+		}
 	}
 
 	return resourceStorageNetworkRead(d, m)
@@ -235,8 +245,9 @@ func resourceStorageNetworkRead(d *schema.ResourceData, m interface{}) error {
 		ips = append(ips, v)
 	}
 	d.Set("ips", ips)
-	if len(resp.CreatedOn.String()) > 0 {
-		d.Set("created_on", resp.CreatedOn.String())
+	if resp.CreatedOn != nil {
+		createdOn := *resp.CreatedOn
+		d.Set("created_on", createdOn.String())
 	}
 	volumes := flattenVolumes(resp.Volumes)
 
@@ -305,14 +316,18 @@ func flattenVolumes(volumes []networkstorageapiclient.Volume) []interface{} {
 			if v.CapacityInGb != nil {
 				volItem["capacity_in_gb"] = int(*v.CapacityInGb)
 			}
+			if v.UsedCapacityInGb != nil {
+				volItem["used_capacity_in_gb"] = int(*v.UsedCapacityInGb)
+			}
 			if v.Protocol != nil {
 				volItem["protocol"] = *v.Protocol
 			}
 			if v.Status != nil {
 				volItem["status"] = *v.Status
 			}
-			if v.CreatedOn != nil && len(v.CreatedOn.String()) > 0 {
-				volItem["created_on"] = v.CreatedOn.String()
+			if v.CreatedOn != nil {
+				createdOn := *v.CreatedOn
+				volItem["created_on"] = createdOn.String()
 			}
 			if v.Permissions != nil {
 				perms := make([]interface{}, 1)
@@ -356,4 +371,39 @@ func flattenVolumes(volumes []networkstorageapiclient.Volume) []interface{} {
 		return vols
 	}
 	return make([]interface{}, 0)
+}
+
+func storageWaitForCreate(id string, client *receiver.BMCSDK) error {
+	log.Printf("Waiting for storage network %s to be created...", id)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"BUSY"},
+		Target:     []string{"READY"},
+		Refresh:    storageRefreshForCreate(client, id),
+		Timeout:    pnapRetryTimeout,
+		Delay:      pnapRetryDelay,
+		MinTimeout: pnapRetryMinTimeout,
+	}
+
+	_, err := stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf("error waiting for storage network (%s) to switch to target state: %v", id, err)
+	}
+
+	return nil
+}
+
+func storageRefreshForCreate(client *receiver.BMCSDK, id string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+
+		requestCommand := storagenetwork.NewGetStorageNetworkCommand(*client, id)
+
+		resp, err := requestCommand.Execute()
+		if err != nil {
+			return 0, "", err
+		} else {
+			status := string(*resp.Status)
+			return 0, status, nil
+		}
+	}
 }
