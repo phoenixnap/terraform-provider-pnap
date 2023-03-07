@@ -77,6 +77,7 @@ The following arguments are supported:
 * `tags` - Tags to set to server, if any.
 * `network_configuration` - Entire network details of bare metal server. Structure is documented below.
 * `action` - Action to perform on server. Allowed actions are: reboot, reset (deprecated), powered-on, powered-off, shutdown.
+* `force` - Query parameter controlling advanced features availability. Currently applicable for networking. It is advised to use with caution since it might lead to unhealthy setups.
 
 The `cloud_init` block has one field:
 
