@@ -2,6 +2,7 @@ package pnap
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/PNAP/go-sdk-helper-bmc/command/billingapi/reservation"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
@@ -75,6 +76,10 @@ func dataSourceReservation() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"next_billing_date": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -89,24 +94,41 @@ func dataSourceReservationRead(d *schema.ResourceData, m interface{}) error {
 	if len(d.Get("id").(string)) > 0 && len(d.Get("sku").(string)) > 0 {
 		numOfKeys := 0
 		for _, instance := range resp {
-			if instance.ID == d.Get("id").(string) && instance.SKU == d.Get("sku").(string) {
+			if instance.Id == d.Get("id").(string) && instance.Sku == d.Get("sku").(string) {
 				numOfKeys++
-				d.SetId(instance.ID)
-				d.Set("id", instance.ID)
+				d.SetId(instance.Id)
+				d.Set("id", instance.Id)
 				d.Set("product_code", instance.ProductCode)
 				d.Set("product_category", instance.ProductCategory)
 				d.Set("location", instance.Location)
 				d.Set("reservation_model", instance.ReservationModel)
-				d.Set("initial_invoice_model", instance.InitialInvoiceModel)
+				if instance.InitialInvoiceModel != nil {
+					d.Set("initial_invoice_model", *instance.InitialInvoiceModel)
+				}
 				d.Set("start_date_time", instance.StartDateTime.String())
-				d.Set("end_date_time", instance.EndDateTime.String())
-				d.Set("last_renewal_date_time", instance.LastRenewalDateTime.String())
-				d.Set("next_renewal_date_time", instance.NextRenewalDateTime.String())
+				if instance.EndDateTime != nil {
+					endDateTime := *instance.EndDateTime
+					d.Set("end_date_time", endDateTime.String())
+				}
+				if instance.LastRenewalDateTime != nil {
+					lastRenewalDateTime := *instance.LastRenewalDateTime
+					d.Set("last_renewal_date_time", lastRenewalDateTime.String())
+				}
+				if instance.NextRenewalDateTime != nil {
+					nextRenewalDateTime := *instance.NextRenewalDateTime
+					d.Set("next_renewal_date_time", nextRenewalDateTime.String())
+				}
 				d.Set("auto_renew", instance.AutoRenew)
-				d.Set("sku", instance.SKU)
-				d.Set("price", instance.Price)
+				d.Set("sku", instance.Sku)
+				price := math.Round(float64(instance.Price)*100000) / 100000
+				d.Set("price", price)
 				d.Set("price_unit", instance.PriceUnit)
-				d.Set("assigned_resource_id", instance.AssignedResourceID)
+				if instance.AssignedResourceId != nil {
+					d.Set("assigned_resource_id", *instance.AssignedResourceId)
+				}
+				if instance.NextBillingDate != nil {
+					d.Set("next_billing_date", *instance.NextBillingDate)
+				}
 			}
 		}
 		if numOfKeys > 1 {
@@ -115,24 +137,41 @@ func dataSourceReservationRead(d *schema.ResourceData, m interface{}) error {
 	} else if len(d.Get("sku").(string)) > 0 {
 		numOfKeys := 0
 		for _, instance := range resp {
-			if instance.SKU == d.Get("sku").(string) {
+			if instance.Sku == d.Get("sku").(string) {
 				numOfKeys++
-				d.SetId(instance.ID)
-				d.Set("id", instance.ID)
+				d.SetId(instance.Id)
+				d.Set("id", instance.Id)
 				d.Set("product_code", instance.ProductCode)
 				d.Set("product_category", instance.ProductCategory)
 				d.Set("location", instance.Location)
 				d.Set("reservation_model", instance.ReservationModel)
-				d.Set("initial_invoice_model", instance.InitialInvoiceModel)
+				if instance.InitialInvoiceModel != nil {
+					d.Set("initial_invoice_model", *instance.InitialInvoiceModel)
+				}
 				d.Set("start_date_time", instance.StartDateTime.String())
-				d.Set("end_date_time", instance.EndDateTime.String())
-				d.Set("last_renewal_date_time", instance.LastRenewalDateTime.String())
-				d.Set("next_renewal_date_time", instance.NextRenewalDateTime.String())
+				if instance.EndDateTime != nil {
+					endDateTime := *instance.EndDateTime
+					d.Set("end_date_time", endDateTime.String())
+				}
+				if instance.LastRenewalDateTime != nil {
+					lastRenewalDateTime := *instance.LastRenewalDateTime
+					d.Set("last_renewal_date_time", lastRenewalDateTime.String())
+				}
+				if instance.NextRenewalDateTime != nil {
+					nextRenewalDateTime := *instance.NextRenewalDateTime
+					d.Set("next_renewal_date_time", nextRenewalDateTime.String())
+				}
 				d.Set("auto_renew", instance.AutoRenew)
-				d.Set("sku", instance.SKU)
-				d.Set("price", instance.Price)
+				d.Set("sku", instance.Sku)
+				price := math.Round(float64(instance.Price)*100000) / 100000
+				d.Set("price", price)
 				d.Set("price_unit", instance.PriceUnit)
-				d.Set("assigned_resource_id", instance.AssignedResourceID)
+				if instance.AssignedResourceId != nil {
+					d.Set("assigned_resource_id", *instance.AssignedResourceId)
+				}
+				if instance.NextBillingDate != nil {
+					d.Set("next_billing_date", *instance.NextBillingDate)
+				}
 			}
 		}
 		if numOfKeys > 1 {
@@ -141,24 +180,41 @@ func dataSourceReservationRead(d *schema.ResourceData, m interface{}) error {
 	} else {
 		numOfKeys := 0
 		for _, instance := range resp {
-			if instance.ID == d.Get("id").(string) {
+			if instance.Id == d.Get("id").(string) {
 				numOfKeys++
-				d.SetId(instance.ID)
-				d.Set("id", instance.ID)
+				d.SetId(instance.Id)
+				d.Set("id", instance.Id)
 				d.Set("product_code", instance.ProductCode)
 				d.Set("product_category", instance.ProductCategory)
 				d.Set("location", instance.Location)
 				d.Set("reservation_model", instance.ReservationModel)
-				d.Set("initial_invoice_model", instance.InitialInvoiceModel)
+				if instance.InitialInvoiceModel != nil {
+					d.Set("initial_invoice_model", *instance.InitialInvoiceModel)
+				}
 				d.Set("start_date_time", instance.StartDateTime.String())
-				d.Set("end_date_time", instance.EndDateTime.String())
-				d.Set("last_renewal_date_time", instance.LastRenewalDateTime.String())
-				d.Set("next_renewal_date_time", instance.NextRenewalDateTime.String())
+				if instance.EndDateTime != nil {
+					endDateTime := *instance.EndDateTime
+					d.Set("end_date_time", endDateTime.String())
+				}
+				if instance.LastRenewalDateTime != nil {
+					lastRenewalDateTime := *instance.LastRenewalDateTime
+					d.Set("last_renewal_date_time", lastRenewalDateTime.String())
+				}
+				if instance.NextRenewalDateTime != nil {
+					nextRenewalDateTime := *instance.NextRenewalDateTime
+					d.Set("next_renewal_date_time", nextRenewalDateTime.String())
+				}
 				d.Set("auto_renew", instance.AutoRenew)
-				d.Set("sku", instance.SKU)
-				d.Set("price", instance.Price)
+				d.Set("sku", instance.Sku)
+				price := math.Round(float64(instance.Price)*100000) / 100000
+				d.Set("price", price)
 				d.Set("price_unit", instance.PriceUnit)
-				d.Set("assigned_resource_id", instance.AssignedResourceID)
+				if instance.AssignedResourceId != nil {
+					d.Set("assigned_resource_id", *instance.AssignedResourceId)
+				}
+				if instance.NextBillingDate != nil {
+					d.Set("next_billing_date", *instance.NextBillingDate)
+				}
 			}
 		}
 		if numOfKeys > 1 {

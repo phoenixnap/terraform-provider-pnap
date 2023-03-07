@@ -56,3 +56,4 @@ The following attributes are exported:
 * `price` - Reservation price.
 * `price_unit` - The unit to which the price applies.
 * `assigned_resource_id` - The resource ID currently being assigned to reservation.
+* `next_billing_date` - Next billing date for reservation.
