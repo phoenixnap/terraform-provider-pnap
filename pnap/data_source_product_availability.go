@@ -44,8 +44,9 @@ func dataSourceProductAvailability() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"min_quantity": {
-				Type:     schema.TypeInt,
+				Type:     schema.TypeFloat,
 				Optional: true,
+				Default:  1,
 			},
 			"product_availabilities": {
 				Type:     schema.TypeList,
@@ -105,30 +106,30 @@ func dataSourceProductAvailabilityRead(d *schema.ResourceData, m interface{}) er
 	for i, v := range proCatTemp {
 		proCat[i] = fmt.Sprint(v)
 	}
-	query.ProductCategory = &proCat
+	query.ProductCategory = proCat
 	proCodTemp := d.Get("product_code").(*schema.Set).List()
 	proCod := make([]string, len(proCodTemp))
 	for i, v := range proCodTemp {
 		proCod[i] = fmt.Sprint(v)
 	}
-	query.ProductCode = &proCod
+	query.ProductCode = proCod
 	somqa := d.Get("show_only_min_quantity_available").(bool)
-	query.ShowOnlyMinQuantityAvailable = &somqa
+	query.ShowOnlyMinQuantityAvailable = somqa
 	locationTemp := d.Get("location").(*schema.Set).List()
 	location := make([]string, len(locationTemp))
 	for i, v := range locationTemp {
 		location[i] = fmt.Sprint(v)
 	}
-	query.Location = &location
+	query.Location = location
 	solutionTemp := d.Get("solution").(*schema.Set).List()
 	solution := make([]string, len(solutionTemp))
 	for i, v := range solutionTemp {
 		solution[i] = fmt.Sprint(v)
 	}
-	query.Solution = &solution
-	minQua := int32(d.Get("min_quantity").(int))
+	query.Solution = solution
+	minQua := d.Get("min_quantity").(float64)
 	if minQua > 0 {
-		query.MinQuantity = &minQua
+		query.MinQuantity = float32(minQua)
 	}
 	queryA := &query
 	b, _ := json.MarshalIndent(queryA, "", "  ")

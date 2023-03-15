@@ -237,7 +237,9 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 				publicIPs = append(publicIPs, k)
 			}
 			d.Set("public_ip_addresses", publicIPs)
-			d.Set("primary_ip_address", instance.PublicIpAddresses[0])
+			if len(instance.PublicIpAddresses) > 0 {
+				d.Set("primary_ip_address", instance.PublicIpAddresses[0])
+			}
 
 			tags := flattenServerDataTags(instance.Tags)
 			if err := d.Set("tags", tags); err != nil {
