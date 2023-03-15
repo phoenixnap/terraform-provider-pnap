@@ -16,7 +16,7 @@ import (
 
 const (
 	pnapPrivateNetworkRetryDelay   = 10 * time.Second
-	pnapPrivateNetworkRetryTimeout = 20 * time.Minute
+	pnapPrivateNetworkRetryTimeout = 7 * time.Minute
 )
 
 func resourcePrivateNetwork() *schema.Resource {
