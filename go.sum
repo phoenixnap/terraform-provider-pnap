@@ -38,8 +38,8 @@ github.com/Microsoft/go-winio v0.4.14/go.mod h1:qXqCSQ3Xa7+6tgxaGTIe4Kpcdsi+P8jB
 github.com/Microsoft/go-winio v0.4.16 h1:FtSW/jqD+l4ba5iPBj9CODVtgfYAD8w2wS923g/cFDk=
 github.com/Microsoft/go-winio v0.4.16/go.mod h1:XB6nPKklQyQ7GC9LdcBEcBl8PF76WugXOPRXwdLnMv0=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
-github.com/PNAP/go-sdk-helper-bmc v0.8.0 h1:hBUsaLiFPU969a55yBz9UEdQ5YAE//scP08p/+mx+h4=
-github.com/PNAP/go-sdk-helper-bmc v0.8.0/go.mod h1:8PwwqoJfsTqCKIGC9XBlMeqP0Ez4MhKoRxiRcOcKlSU=
+github.com/PNAP/go-sdk-helper-bmc v0.10.0 h1:q+PeO3rDo0DqXw/76MbjsB/PlLgasaOkGbpdHxPIk2I=
+github.com/PNAP/go-sdk-helper-bmc v0.10.0/go.mod h1:lgwYXBdh2i2xAOwnm75dCc+LkFb2k6PKylRbIyrhlz0=
 github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 h1:YoJbenK9C67SkzkDfmQuVln04ygHj3vjZfd9FL+GmQQ=
 github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7/go.mod h1:z4/9nQmJSSwwds7ejkxaJwO37dru3geImFUdJlaLzQo=
 github.com/acomagu/bufpipe v1.0.3 h1:fxAGrHZTgQ9w5QqVItgzwj235/uYZYgbXitB+dLupOk=
@@ -312,8 +312,10 @@ github.com/pelletier/go-toml v1.2.0 h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/phoenixnap/go-sdk-bmc/auditapi/v2 v2.0.3 h1:WZvmHz1QJsych/TNbSnZvABNSgpQ5WkYq9nlqUARDiw=
 github.com/phoenixnap/go-sdk-bmc/auditapi/v2 v2.0.3/go.mod h1:9oH0AwfDV2y8g+ED4LB+4llQAuelJvWpR2uvxhSXmGs=
-github.com/phoenixnap/go-sdk-bmc/bmcapi/v2 v2.1.1 h1:UoeiURSMCRjYci3Z5NNNfpfEkx5lAJANqd7hAKzGNQI=
-github.com/phoenixnap/go-sdk-bmc/bmcapi/v2 v2.1.1/go.mod h1:EB1RQ+yhFslZ+rNMnAbi7DyOqca1UJkvAgxnytLRiNY=
+github.com/phoenixnap/go-sdk-bmc/billingapi v1.2.0 h1:YGw/czttCQ0hSCJajSlVZAuARkwMhlg0G3ti7NUSJjg=
+github.com/phoenixnap/go-sdk-bmc/billingapi v1.2.0/go.mod h1:1DSv+VDVnySg+8nqpATrGY0XV8iaJJ9AZyYP4sBUWKo=
+github.com/phoenixnap/go-sdk-bmc/bmcapi/v2 v2.0.2-0.20230130122232-8e72b638714c h1:mN6HGzSRQEUskJZVMQ+qzjoleYNcSvLCWzyHg3u8joA=
+github.com/phoenixnap/go-sdk-bmc/bmcapi/v2 v2.0.2-0.20230130122232-8e72b638714c/go.mod h1:EB1RQ+yhFslZ+rNMnAbi7DyOqca1UJkvAgxnytLRiNY=
 github.com/phoenixnap/go-sdk-bmc/ipapi/v2 v2.0.2 h1:X0RQkH11zZLe8T8NkUmHRlNR4juu49OQjhAZV6rBnZc=
 github.com/phoenixnap/go-sdk-bmc/ipapi/v2 v2.0.2/go.mod h1:6ZPDjGdWiJQ3v4Qo7djX3lVPqNEjZprzcKmaeTi98nQ=
 github.com/phoenixnap/go-sdk-bmc/networkapi/v2 v2.1.0 h1:cZgMJuJs9y0grjZjAuLS9l2ptRTWJGVZBmJZw2gnjDA=

@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/server"
+	"github.com/PNAP/go-sdk-helper-bmc/dto"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 
 	bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi/v2"
@@ -181,6 +182,10 @@ func resourceServer() *schema.Resource {
 			"provisioned_on": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+			"force": {
+				Type:     schema.TypeBool,
+				Optional: true,
 			},
 			"tags": {
 				Type:     schema.TypeList,
@@ -493,6 +498,10 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		request.Tags = tagsObject
 	}
 
+	createServerQuery := &dto.CreateServerQuery{}
+	var force = d.Get("force").(bool)
+	createServerQuery.Force = force
+
 	// network block
 	if d.Get("network_configuration") != nil && len(d.Get("network_configuration").([]interface{})) > 0 {
 
@@ -640,7 +649,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	// end of network block
-	requestCommand := server.NewCreateServerCommand(client, *request)
+	requestCommand := server.NewCreateServerCommand(client, *request, *createServerQuery)
 
 	resp, err := requestCommand.Execute()
 	if err != nil {

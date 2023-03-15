@@ -2,13 +2,21 @@ package pnap
 
 import (
 	"fmt"
+	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/PNAP/go-sdk-helper-bmc/command/networkapi/privatenetwork"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 
 	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v2"
+)
+
+const (
+	pnapPrivateNetworkRetryDelay   = 10 * time.Second
+	pnapPrivateNetworkRetryTimeout = 7 * time.Minute
 )
 
 func resourcePrivateNetwork() *schema.Resource {
@@ -206,6 +214,11 @@ func resourcePrivateNetworkDelete(d *schema.ResourceData, m interface{}) error {
 
 	networkID := d.Id()
 
+	waitResultError := privateNetworkWaitForUnassign(networkID, &client)
+	if waitResultError != nil {
+		return waitResultError
+	}
+
 	requestCommand := privatenetwork.NewDeletePrivateNetworkCommand(client, networkID)
 	err := requestCommand.Execute()
 	if err != nil {
@@ -232,4 +245,40 @@ func flattenServers(servers []networkapiclient.PrivateNetworkServer) []interface
 		return ss
 	}
 	return make([]interface{}, 0)
+}
+
+func privateNetworkWaitForUnassign(id string, client *receiver.BMCSDK) error {
+	log.Printf("Waiting for private network %s to be unassigned...", id)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"assigned"},
+		Target:     []string{"unassigned"},
+		Refresh:    refreshForPrivateNetworkMembershipStatus(client, id),
+		Timeout:    pnapPrivateNetworkRetryTimeout,
+		Delay:      pnapPrivateNetworkRetryDelay,
+		MinTimeout: pnapRetryMinTimeout,
+	}
+
+	_, err := stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf("error waiting for private network (%s) to be unassigned: %v", id, err)
+	}
+
+	return nil
+}
+
+func refreshForPrivateNetworkMembershipStatus(client *receiver.BMCSDK, id string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+
+		requestCommand := privatenetwork.NewGetPrivateNetworkCommand(*client, id)
+
+		resp, err := requestCommand.Execute()
+		if err != nil {
+			return 0, "", err
+		} else if len(resp.Memberships) > 0 {
+			return 0, "assigned", nil
+		} else {
+			return 0, "unassigned", nil
+		}
+	}
 }
