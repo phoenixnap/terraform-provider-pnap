@@ -56,6 +56,10 @@ func resourceStorageNetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"client_vlan": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 			"volumes": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -170,14 +174,21 @@ func resourceStorageNetworkCreate(d *schema.ResourceData, m interface{}) error {
 	if len(desc) > 0 {
 		request.Description = &desc
 	}
+	var clientVlan = d.Get("client_vlan").(int)
+	if clientVlan > 0 {
+		clientVlan32 := int32(clientVlan)
+		request.ClientVlan = &clientVlan32
+	}
+
 	var volumes = d.Get("volumes").([]interface{})
+
 	if len(volumes) > 0 {
-		volumesObject := make([]networkstorageapiclient.VolumeCreate, len(volumes))
+		volumesObject := make([]networkstorageapiclient.StorageNetworkVolumeCreate, len(volumes))
 		for i, j := range volumes {
 			volumesItem := j.(map[string]interface{})
 			volume := volumesItem["volume"].([]interface{})[0]
 			volumeItem := volume.(map[string]interface{})
-			volumeObject := networkstorageapiclient.VolumeCreate{}
+			volumeObject := networkstorageapiclient.StorageNetworkVolumeCreate{}
 
 			volumeObject.Name = volumeItem["name"].(string)
 			var volDesc = volumeItem["description"].(string)
