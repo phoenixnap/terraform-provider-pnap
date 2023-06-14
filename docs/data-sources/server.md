@@ -52,6 +52,10 @@ The following attributes are exported:
 * `private_ip_addresses` - Private IP Addresses assigned to server. Must contain at least 1 item. 
 * `public_ip_addresses` - Public IP Addresses assigned to server. Must contain at least 1 item.
 * `primary_ip_address` - First usable public IP Addresses.
+* `netris_controller` - Netris Controller configuration properties.
+    * `host_os` - Host OS on which the Netris Controller is installed.
+* `netris_softgate` - Netris Softgate configuration properties.
+    * `host_os` - Host OS on which the Netris Softgate is installed.
 * `tags` - The tags assigned to the server.
     * `id` - The unique id of the tag.
     * `name` - The name of the tag.
@@ -77,3 +81,7 @@ The following attributes are exported:
             * `id` - The network identifier.
             * `ips` - IPs configured on the server.
             * `status_description` - The status of the assignment to the network.
+* `storage_configuration` - Storage configuration.
+    * `root_partition` - Root partition configuration.
+        * `raid` - Software RAID configuration.
+        * `size` - The size of the root partition in GB.

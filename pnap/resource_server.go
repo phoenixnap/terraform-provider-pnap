@@ -179,6 +179,52 @@ func resourceServer() *schema.Resource {
 					},
 				},
 			},
+			"netris_controller": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"host_os": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"netris_web_console_url": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"netris_user_password": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
+			"netris_softgate": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"host_os": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"controller_address": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"controller_version": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"controller_auth_key": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
+			},
 			"provisioned_on": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -386,6 +432,36 @@ func resourceServer() *schema.Resource {
 					},
 				},
 			},
+			"storage_configuration": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"root_partition": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Computed: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"raid": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Computed: true,
+									},
+									"size": {
+										Type:     schema.TypeInt,
+										Optional: true,
+										Computed: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -456,7 +532,18 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		userData = cloudInitItem["user_data"].(string)
 	}
 
-	if len(temp2) > 0 || len(temp3) > 0 || installOsToRam || len(userData) > 0 {
+	var controllerAddress, controllerVersion, controllerAuthKey string
+	var netris bool
+	if d.Get("netris_softgate") != nil && len(d.Get("netris_softgate").([]interface{})) > 0 {
+		netrisSoftgate := d.Get("netris_softgate").([]interface{})[0]
+		netrisSoftgateItem := netrisSoftgate.(map[string]interface{})
+		controllerAddress = netrisSoftgateItem["controller_address"].(string)
+		controllerVersion = netrisSoftgateItem["controller_version"].(string)
+		controllerAuthKey = netrisSoftgateItem["controller_auth_key"].(string)
+		netris = true
+	}
+
+	if len(temp2) > 0 || len(temp3) > 0 || installOsToRam || len(userData) > 0 || netris {
 		dtoOsConfiguration := bmcapiclient.OsConfiguration{}
 
 		if len(temp2) > 0 {
@@ -474,6 +561,13 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 			cloudInitObject := bmcapiclient.OsConfigurationCloudInit{}
 			cloudInitObject.UserData = &userData
 			dtoOsConfiguration.CloudInit = &cloudInitObject
+		}
+		if netris {
+			netrisSoftgateObject := bmcapiclient.OsConfigurationNetrisSoftgate{}
+			netrisSoftgateObject.ControllerAddress = &controllerAddress
+			netrisSoftgateObject.ControllerVersion = &controllerVersion
+			netrisSoftgateObject.ControllerAuthKey = &controllerAuthKey
+			dtoOsConfiguration.NetrisSoftgate = &netrisSoftgateObject
 		}
 		request.OsConfiguration = &dtoOsConfiguration
 	}
@@ -498,9 +592,9 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		request.Tags = tagsObject
 	}
 
-	createServerQuery := &dto.CreateServerQuery{}
+	query := &dto.Query{}
 	var force = d.Get("force").(bool)
-	createServerQuery.Force = force
+	query.Force = force
 
 	// network block
 	if d.Get("network_configuration") != nil && len(d.Get("network_configuration").([]interface{})) > 0 {
@@ -644,12 +738,41 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 			}
 		}
 		request.NetworkConfiguration = &networkConfigurationObject
-		b, _ := json.MarshalIndent(request, "", "  ")
-		log.Printf("request object is" + string(b))
+		// b, _ := json.MarshalIndent(request, "", "  ")
+		// log.Printf("request object is" + string(b))
 	}
-
 	// end of network block
-	requestCommand := server.NewCreateServerCommand(client, *request, *createServerQuery)
+
+	// storage block
+	if d.Get("storage_configuration") != nil && len(d.Get("storage_configuration").([]interface{})) > 0 {
+		storageConfiguration := d.Get("storage_configuration").([]interface{})[0]
+		storageConfigurationItem := storageConfiguration.(map[string]interface{})
+
+		storageConfigurationObject := bmcapiclient.StorageConfiguration{}
+
+		if storageConfigurationItem["root_partition"] != nil && len(storageConfigurationItem["root_partition"].([]interface{})) > 0 {
+			rootPartition := storageConfigurationItem["root_partition"].([]interface{})[0]
+			rootPartitionItem := rootPartition.(map[string]interface{})
+
+			rootPartitionObject := bmcapiclient.StorageConfigurationRootPartition{}
+
+			raid := rootPartitionItem["raid"].(string)
+			if len(raid) > 0 {
+				rootPartitionObject.Raid = &raid
+			}
+			size := rootPartitionItem["size"].(int)
+			if size != 0 {
+				size32 := int32(size)
+				rootPartitionObject.Size = &size32
+			}
+
+			storageConfigurationObject.RootPartition = &rootPartitionObject
+		}
+		request.StorageConfiguration = &storageConfigurationObject
+	}
+	// end of storage block
+
+	requestCommand := server.NewCreateServerCommand(client, *request, *query)
 
 	resp, err := requestCommand.Execute()
 	if err != nil {
@@ -661,6 +784,21 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		if resp.OsConfiguration != nil {
 			d.Set("root_password", resp.OsConfiguration.RootPassword)
 			d.Set("management_ui_url", resp.OsConfiguration.ManagementUiUrl)
+			netrisController := make([]interface{}, 1)
+			netrisControllerItem := make(map[string]interface{})
+			if resp.OsConfiguration.NetrisController != nil {
+				if resp.OsConfiguration.NetrisController.HostOs != nil {
+					netrisControllerItem["host_os"] = *resp.OsConfiguration.NetrisController.HostOs
+				}
+				if resp.OsConfiguration.NetrisController.NetrisWebConsoleUrl != nil {
+					netrisControllerItem["netris_web_console_url"] = *resp.OsConfiguration.NetrisController.NetrisWebConsoleUrl
+				}
+				if resp.OsConfiguration.NetrisController.NetrisUserPassword != nil {
+					netrisControllerItem["netris_user_password"] = *resp.OsConfiguration.NetrisController.NetrisUserPassword
+				}
+			}
+			netrisController[0] = netrisControllerItem
+			d.Set("netris_controller", netrisController)
 		}
 
 		waitResultError := resourceWaitForCreate(resp.Id, &client)
@@ -734,6 +872,22 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 			cloudInit[0] = cloudInitItem
 			d.Set("cloud_init", cloudInit)
 		}
+		if resp.OsConfiguration.NetrisSoftgate != nil {
+			netrisSoftgate := make([]interface{}, 1)
+			netrisSoftgateItem := make(map[string]interface{})
+			if resp.OsConfiguration.NetrisSoftgate.HostOs != nil {
+				netrisSoftgateItem["host_os"] = *resp.OsConfiguration.NetrisSoftgate.HostOs
+			}
+			if d.Get("netris_softgate") != nil && len(d.Get("netris_softgate").([]interface{})) > 0 {
+				netrisSoftgateInput := d.Get("netris_softgate").([]interface{})[0]
+				netrisSoftgateInputItem := netrisSoftgateInput.(map[string]interface{})
+				netrisSoftgateItem["controller_address"] = netrisSoftgateInputItem["controller_address"].(string)
+				netrisSoftgateItem["controller_version"] = netrisSoftgateInputItem["controller_version"].(string)
+				netrisSoftgateItem["controller_auth_key"] = netrisSoftgateInputItem["controller_auth_key"].(string)
+			}
+			netrisSoftgate[0] = netrisSoftgateItem
+			d.Set("netris_softgate", netrisSoftgate)
+		}
 	}
 
 	if resp.ProvisionedOn != nil {
@@ -753,6 +907,23 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 
 	if err := d.Set("network_configuration", networkConfiguration); err != nil {
 		return err
+	}
+
+	if resp.StorageConfiguration.RootPartition != nil {
+		storageConfiguration := make([]interface{}, 1)
+		storageConfigurationItem := make(map[string]interface{})
+		rootPartition := make([]interface{}, 1)
+		rootPartitionItem := make(map[string]interface{})
+		if resp.StorageConfiguration.RootPartition.Raid != nil {
+			rootPartitionItem["raid"] = *resp.StorageConfiguration.RootPartition.Raid
+		}
+		if resp.StorageConfiguration.RootPartition.Size != nil {
+			rootPartitionItem["size"] = int(*resp.StorageConfiguration.RootPartition.Size)
+		}
+		rootPartition[0] = rootPartitionItem
+		storageConfigurationItem["root_partition"] = rootPartition
+		storageConfiguration[0] = storageConfigurationItem
+		d.Set("storage_configuration", storageConfiguration)
 	}
 
 	return nil
@@ -1096,7 +1267,7 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 					pncItem = make(map[string]interface{})
 				}
 				if prNetConf.GatewayAddress != nil {
-					pncItem["gateway_adress"] = *prNetConf.GatewayAddress
+					pncItem["gateway_address"] = *prNetConf.GatewayAddress
 				}
 				if prNetConf.ConfigurationType != nil && len(*prNetConf.ConfigurationType) > 0 {
 					pncItem["configuration_type"] = *prNetConf.ConfigurationType

@@ -73,15 +73,25 @@ The following arguments are supported:
 * `rdp_allowed_ips` - List of IPs allowed for RDP access to Windows OS. Supported in single IP, CIDR and range format. When undefined, RDP is disabled. To allow RDP access from any IP use 0.0.0.0/0. Must contain at least 1 item.
 * `management_access_allowed_ips` - Define list of IPs allowed to access the Management UI. Supported in single IP, CIDR and range format. When undefined, Management UI is disabled.Must contain at least 1 item.
 * `install_os_to_ram` - If true, OS will be installed to and booted from the server's RAM. On restart RAM OS will be lost and the server will not be reachable unless a custom bootable OS has been deployed. Only supported for ubuntu/focal. Default value is `false`.
-* `cloud_init` - Cloud-init configuration details.
-* `tags` - Tags to set to server, if any.
+* `cloud_init` - Cloud-init configuration details. Structure is documented below.
+* `netris_softgate` - Netris Softgate configuration properties. Follow [instructions](https://phoenixnap.com/kb/netris-bare-metal-cloud#deploy-netris-softgate) for retrieving the required details. Structure is documented below.
+* `tags` - Tags to set to server, if any. Structure is documented below.
 * `network_configuration` - Entire network details of bare metal server. Structure is documented below.
+* `storage_configuration` - Storage configuration. Structure is documented below.
 * `action` - Action to perform on server. Allowed actions are: reboot, reset (deprecated), powered-on, powered-off, shutdown.
 * `force` - Query parameter controlling advanced features availability. Currently applicable for networking. It is advised to use with caution since it might lead to unhealthy setups.
 
+
 The `cloud_init` block has one field:
 
-* `user_data` - User data for the [cloud-init](https://cloudinit.readthedocs.io/en/latest/) configuration in base64 encoding. NoCloud format is supported. Follow the [instructions](https://phoenixnap.com/kb/bmc-cloud-init) on how to provision a server using cloud-init. Only ubuntu/bionic and ubuntu/focal are supported.
+* `user_data` - User data for the [cloud-init](https://cloudinit.readthedocs.io/en/latest/) configuration in base64 encoding. NoCloud format is supported. Follow the [instructions](https://phoenixnap.com/kb/bmc-cloud-init) on how to provision a server using cloud-init. Only ubuntu/bionic and ubuntu/focal and ubuntu/jammy are supported.
+
+
+The `netris_softgate` block has three fields:
+
+* `controller_address` - IP address or hostname through which to reach the Netris Controller.
+* `controller_version` - The version of the Netris Controller to connect to.
+* `controller_auth_key` - The authentication key of the Netris Controller to connect to. Required for the softgate agent to be able to interact with the Netris Controller.
 
 
 The `tags` block has field `tag_assignment`.
@@ -130,6 +140,13 @@ The `server_public_network` block has 2 fields:
 * `id` - (Required) The network identifier.
 * `ips` - (Required) IPs to configure on the server. IPs must be within the network's range. Must contain at least 1 item.
 
+
+The `storage_configuration` block has field `root_partition`.
+The `root_partition` block has two fields:
+
+* `raid` - Software RAID configuration. The following RAID options are available: `NO_RAID`, `RAID_0`, `RAID_1`.
+* `size` - The size of the root partition in GB. `-1` to use all available space.
+
 ## Attributes Reference
 
 The following attributes are exported:
@@ -159,12 +176,22 @@ The following attributes are exported:
 * `management_access_allowed_ips` - A list of IPs allowed to access the Management UI. Supported in single IP, CIDR and range format. When undefined, Management UI is disabled.
 * `install_os_to_ram` - If true, OS will be installed to and booted from the server's RAM. On restart RAM OS will be lost and the server will not be reachable unless a custom bootable OS has been deployed. Only supported for ubuntu/focal. Default value is `false`.
 * `cloud_init` - Cloud-init configuration details.
+* `netris_controller` - Netris Controller configuration properties. Knowledge base article to help you can be found [here](https://phoenixnap.com/kb/netris-bare-metal-cloud#deploy-netris-controller).
+* `netris_softgate` - Netris Softgate configuration properties. Follow [instructions](https://phoenixnap.com/kb/netris-bare-metal-cloud#deploy-netris-softgate) for retrieving the required details.
 * `tags` - The tags assigned if any.
 * `network_configuration` - Entire network details of bare metal server.
 * `provisioned_on` - Date and time when server was provisioned.
 
 The `cloud_init` block has one field:
 * `user_data` - User data for the cloud-init configuration in base64 encoding.
+
+The `netris_controller` block has three fields:
+* `host_os` - Host OS on which the Netris Controller is installed.
+* `netris_web_console_url` - The URL for the Netris Controller web console.
+* `netris_user_password` - Auto-generated password set for user 'netris' in the web console.
+
+The `netris_softgate` block has one field:
+* `host_os` - Host OS on which the Netris Softgate is installed.
 
 The `tags` block has field `tag_assignment`.
 The `tag_assignment` block has 5 fields:
@@ -173,3 +200,8 @@ The `tag_assignment` block has 5 fields:
 * `value` - The value of the tag assigned to the server.
 * `is_billing_tag` - Whether or not to show the tag as part of billing and invoices.
 * `created_by` - Who the tag was created by.
+
+The `storage_configuration` block has field `root_partition`.
+The `root_partition` block has two fields:
+* `raid` - Software RAID configuration.
+* `size` - The size of the root partition in GB.
