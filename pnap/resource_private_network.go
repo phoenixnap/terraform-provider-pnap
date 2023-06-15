@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/PNAP/go-sdk-helper-bmc/command/networkapi/privatenetwork"
+	"github.com/PNAP/go-sdk-helper-bmc/dto"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 
 	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v2"
@@ -53,7 +54,8 @@ func resourcePrivateNetwork() *schema.Resource {
 			},
 			"cidr": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Computed: true,
 			},
 			"type": {
 				Type:     schema.TypeString,
@@ -63,6 +65,10 @@ func resourcePrivateNetwork() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Computed: true,
+			},
+			"force": {
+				Type:     schema.TypeBool,
+				Optional: true,
 			},
 			"servers": { // Deprecated
 				Type:     schema.TypeList,
@@ -130,14 +136,18 @@ func resourcePrivateNetworkCreate(d *schema.ResourceData, m interface{}) error {
 		request.Description = &desc
 	}
 
-	request.Cidr = d.Get("cidr").(string)
+	cidr := d.Get("cidr").(string)
+	request.Cidr = &cidr
 	var vlanId = d.Get("vlan_id").(int)
 	if vlanId > 0 {
 		vlanId32 := int32(vlanId)
 		request.VlanId = &vlanId32
 	}
 
-	requestCommand := privatenetwork.NewCreatePrivateNetworkCommand(client, *request)
+	query := &dto.Query{}
+	query.Force = d.Get("force").(bool)
+
+	requestCommand := privatenetwork.NewCreatePrivateNetworkCommand(client, *request, *query)
 
 	resp, err := requestCommand.Execute()
 	if err != nil {
