@@ -59,6 +59,30 @@ func dataSourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"netris_controller": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"host_os": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
+			"netris_softgate": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"host_os": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 			"tags": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -193,6 +217,30 @@ func dataSourceServer() *schema.Resource {
 					},
 				},
 			},
+			"storage_configuration": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"root_partition": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"raid": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"size": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -241,6 +289,27 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 				d.Set("primary_ip_address", instance.PublicIpAddresses[0])
 			}
 
+			if instance.OsConfiguration != nil {
+				if instance.OsConfiguration.NetrisController != nil {
+					netrisController := make([]interface{}, 1)
+					netrisControllerItem := make(map[string]interface{})
+					if instance.OsConfiguration.NetrisController.HostOs != nil {
+						netrisControllerItem["host_os"] = *instance.OsConfiguration.NetrisController.HostOs
+					}
+					netrisController[0] = netrisControllerItem
+					d.Set("netris_controller", netrisController)
+				}
+				if instance.OsConfiguration.NetrisSoftgate != nil {
+					netrisSoftgate := make([]interface{}, 1)
+					netrisSoftgateItem := make(map[string]interface{})
+					if instance.OsConfiguration.NetrisSoftgate.HostOs != nil {
+						netrisSoftgateItem["host_os"] = *instance.OsConfiguration.NetrisSoftgate.HostOs
+					}
+					netrisSoftgate[0] = netrisSoftgateItem
+					d.Set("netris_softgate", netrisSoftgate)
+				}
+			}
+
 			tags := flattenServerDataTags(instance.Tags)
 			if err := d.Set("tags", tags); err != nil {
 				return err
@@ -248,6 +317,22 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 			netConf := flattenServerDataNetworkConfiguration(instance.NetworkConfiguration)
 			if err := d.Set("network_configuration", netConf); err != nil {
 				return err
+			}
+			if instance.StorageConfiguration.RootPartition != nil {
+				storageConfiguration := make([]interface{}, 1)
+				storageConfigurationItem := make(map[string]interface{})
+				rootPartition := make([]interface{}, 1)
+				rootPartitionItem := make(map[string]interface{})
+				if instance.StorageConfiguration.RootPartition.Raid != nil {
+					rootPartitionItem["raid"] = *instance.StorageConfiguration.RootPartition.Raid
+				}
+				if instance.StorageConfiguration.RootPartition.Size != nil {
+					rootPartitionItem["size"] = int(*instance.StorageConfiguration.RootPartition.Size)
+				}
+				rootPartition[0] = rootPartitionItem
+				storageConfigurationItem["root_partition"] = rootPartition
+				storageConfiguration[0] = storageConfigurationItem
+				d.Set("storage_configuration", storageConfiguration)
 			}
 		}
 	}

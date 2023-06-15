@@ -36,7 +36,8 @@ The following arguments are supported:
 
 * `name` - (Required) The friendly name of this storage network. This name should be unique.
 * `description` - The description of this storage network.
-* `location` - (Required) The location of this storage network. Currently this field should be set to `PHX`.
+* `location` - (Required) The location of this storage network. Currently this field should be set to `PHX` or `ASH`.
+* `client_vlan` - Custom Client VLAN that the Storage Network will be set to.
 * `volumes` - (Required) Volumes to be created alongside storage. Currently only 1 volume is supported (must contain exactly one item).
     * `volume` - (Required) Volume to be created alongside storage.
         * `name` - (Required) Volume friendly name.
