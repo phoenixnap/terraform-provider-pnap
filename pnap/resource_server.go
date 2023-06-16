@@ -435,26 +435,24 @@ func resourceServer() *schema.Resource {
 			"storage_configuration": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Computed: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"root_partition": {
 							Type:     schema.TypeList,
 							Optional: true,
-							Computed: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"raid": {
 										Type:     schema.TypeString,
 										Optional: true,
-										Computed: true,
+										Default:  "NO_RAID",
 									},
 									"size": {
 										Type:     schema.TypeInt,
 										Optional: true,
-										Computed: true,
+										Default:  -1,
 									},
 								},
 							},
@@ -761,10 +759,8 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 				rootPartitionObject.Raid = &raid
 			}
 			size := rootPartitionItem["size"].(int)
-			if size != 0 {
-				size32 := int32(size)
-				rootPartitionObject.Size = &size32
-			}
+			size32 := int32(size)
+			rootPartitionObject.Size = &size32
 
 			storageConfigurationObject.RootPartition = &rootPartitionObject
 		}
@@ -907,23 +903,6 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 
 	if err := d.Set("network_configuration", networkConfiguration); err != nil {
 		return err
-	}
-
-	if resp.StorageConfiguration.RootPartition != nil {
-		storageConfiguration := make([]interface{}, 1)
-		storageConfigurationItem := make(map[string]interface{})
-		rootPartition := make([]interface{}, 1)
-		rootPartitionItem := make(map[string]interface{})
-		if resp.StorageConfiguration.RootPartition.Raid != nil {
-			rootPartitionItem["raid"] = *resp.StorageConfiguration.RootPartition.Raid
-		}
-		if resp.StorageConfiguration.RootPartition.Size != nil {
-			rootPartitionItem["size"] = int(*resp.StorageConfiguration.RootPartition.Size)
-		}
-		rootPartition[0] = rootPartitionItem
-		storageConfigurationItem["root_partition"] = rootPartition
-		storageConfiguration[0] = storageConfigurationItem
-		d.Set("storage_configuration", storageConfiguration)
 	}
 
 	return nil

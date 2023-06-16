@@ -138,8 +138,10 @@ func resourcePrivateNetworkCreate(d *schema.ResourceData, m interface{}) error {
 
 	cidr := d.Get("cidr").(string)
 	request.Cidr = &cidr
+
 	var vlanId = d.Get("vlan_id").(int)
-	if vlanId > 0 {
+	_, vlanIdExists := d.GetOkExists("vlan_id")
+	if vlanIdExists {
 		vlanId32 := int32(vlanId)
 		request.VlanId = &vlanId32
 	}
