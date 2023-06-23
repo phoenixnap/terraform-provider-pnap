@@ -153,6 +153,45 @@ func resourceStorageNetwork() *schema.Resource {
 											},
 										},
 									},
+									"tags": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"tag_assignment": {
+													Type:     schema.TypeList,
+													Optional: true,
+													Computed: true,
+													MaxItems: 1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"id": {
+																Type:     schema.TypeString,
+																Computed: true,
+															},
+															"name": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+															"value": {
+																Type:     schema.TypeString,
+																Optional: true,
+																Default:  nil,
+															},
+															"is_billing_tag": {
+																Type:     schema.TypeBool,
+																Computed: true,
+															},
+															"created_by": {
+																Type:     schema.TypeString,
+																Computed: true,
+															},
+														},
+													},
+												},
+											},
+										},
+									},
 								},
 							},
 						},
@@ -175,7 +214,8 @@ func resourceStorageNetworkCreate(d *schema.ResourceData, m interface{}) error {
 		request.Description = &desc
 	}
 	var clientVlan = d.Get("client_vlan").(int)
-	if clientVlan > 0 {
+	_, clientVlanExists := d.GetOkExists("client_vlan")
+	if clientVlanExists {
 		clientVlan32 := int32(clientVlan)
 		request.ClientVlan = &clientVlan32
 	}
@@ -186,21 +226,43 @@ func resourceStorageNetworkCreate(d *schema.ResourceData, m interface{}) error {
 		volumesObject := make([]networkstorageapiclient.StorageNetworkVolumeCreate, len(volumes))
 		for i, j := range volumes {
 			volumesItem := j.(map[string]interface{})
-			volume := volumesItem["volume"].([]interface{})[0]
-			volumeItem := volume.(map[string]interface{})
 			volumeObject := networkstorageapiclient.StorageNetworkVolumeCreate{}
+			if volumesItem["volume"] != nil && len(volumesItem["volume"].([]interface{})) > 0 {
+				volume := volumesItem["volume"].([]interface{})[0]
+				volumeItem := volume.(map[string]interface{})
 
-			volumeObject.Name = volumeItem["name"].(string)
-			var volDesc = volumeItem["description"].(string)
-			if len(volDesc) > 0 {
-				volumeObject.Description = &volDesc
-			}
-			var pathSuffix = volumeItem["path_suffix"].(string)
-			if len(pathSuffix) > 0 {
-				volumeObject.PathSuffix = &pathSuffix
-			}
-			volumeObject.CapacityInGb = int32(volumeItem["capacity_in_gb"].(int))
+				volumeObject.Name = volumeItem["name"].(string)
+				var volDesc = volumeItem["description"].(string)
+				if len(volDesc) > 0 {
+					volumeObject.Description = &volDesc
+				}
+				var pathSuffix = volumeItem["path_suffix"].(string)
+				if len(pathSuffix) > 0 {
+					volumeObject.PathSuffix = &pathSuffix
+				}
+				volumeObject.CapacityInGb = int32(volumeItem["capacity_in_gb"].(int))
 
+				tags := volumeItem["tags"].([]interface{})
+				if len(tags) > 0 {
+					tagsObject := make([]networkstorageapiclient.TagAssignmentRequest, len(tags))
+					for i, j := range tags {
+						tarObject := networkstorageapiclient.TagAssignmentRequest{}
+						tagsItem := j.(map[string]interface{})
+						if tagsItem["tag_assignment"] != nil && len(tagsItem["tag_assignment"].([]interface{})) > 0 {
+							tagAssign := tagsItem["tag_assignment"].([]interface{})[0]
+							tagAssignItem := tagAssign.(map[string]interface{})
+
+							tarObject.Name = tagAssignItem["name"].(string)
+							value := tagAssignItem["value"].(string)
+							if len(value) > 0 {
+								tarObject.Value = &value
+							}
+							tagsObject[i] = tarObject
+						}
+					}
+					volumeObject.Tags = tagsObject
+				}
+			}
 			volumesObject[i] = volumeObject
 		}
 
@@ -260,7 +322,8 @@ func resourceStorageNetworkRead(d *schema.ResourceData, m interface{}) error {
 		createdOn := *resp.CreatedOn
 		d.Set("created_on", createdOn.String())
 	}
-	volumes := flattenVolumes(resp.Volumes)
+	var volumesInput = d.Get("volumes").([]interface{})
+	volumes := flattenVolumes(resp.Volumes, volumesInput)
 
 	if err := d.Set("volumes", volumes); err != nil {
 		return err
@@ -302,7 +365,7 @@ func resourceStorageNetworkDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func flattenVolumes(volumes []networkstorageapiclient.Volume) []interface{} {
+func flattenVolumes(volumes []networkstorageapiclient.Volume, volumesInput []interface{}) []interface{} {
 	if volumes != nil {
 		vols := make([]interface{}, len(volumes))
 		for i, v := range volumes {
@@ -374,6 +437,41 @@ func flattenVolumes(volumes []networkstorageapiclient.Volume) []interface{} {
 				}
 				perms[0] = permsItem
 				volItem["permissions"] = perms
+			}
+			if v.Tags != nil && len(v.Tags) > 0 {
+				tagsInput := make([]interface{}, 1)
+				tagsInputItem := make(map[string]interface{})
+				tagsInput[0] = tagsInputItem
+				if len(volumesInput) > 0 {
+					for _, j := range volumesInput {
+						volumesItem := j.(map[string]interface{})
+						if volumesItem["volume"] != nil && len(volumesItem["volume"].([]interface{})) > 0 {
+							volume := volumesItem["volume"].([]interface{})[0]
+							volumeItem := volume.(map[string]interface{})
+
+							tagsInput = volumeItem["tags"].([]interface{})
+							if len(tagsInput) > 0 {
+								for _, j := range tagsInput {
+									tagsInputItem = j.(map[string]interface{})
+									if tagsInputItem["tag_assignment"] != nil && len(tagsInputItem["tag_assignment"].([]interface{})) > 0 {
+										tagAssign := tagsInputItem["tag_assignment"].([]interface{})[0]
+										tagAssignItem := tagAssign.(map[string]interface{})
+										nameInput := tagAssignItem["name"].(string)
+										for _, l := range v.Tags {
+											if nameInput == l.Name {
+												tagAssignItem["id"] = l.Id
+												tagAssignItem["value"] = l.Value
+												tagAssignItem["is_billing_tag"] = l.IsBillingTag
+												tagAssignItem["created_by"] = l.CreatedBy
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				volItem["tags"] = tagsInput
 			}
 			vol[0] = volItem
 			volsItem["volume"] = vol

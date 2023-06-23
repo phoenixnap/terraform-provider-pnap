@@ -139,6 +139,34 @@ func dataSourceStorageNetwork() *schema.Resource {
 								},
 							},
 						},
+						"tags": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"name": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"value": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"is_billing_tag": {
+										Type:     schema.TypeBool,
+										Computed: true,
+									},
+									"created_by": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -264,6 +292,23 @@ func flattenDataVolumes(volumes []networkstorageapiclient.Volume) []interface{} 
 				}
 				perms[0] = permsItem
 				vol["permissions"] = perms
+			}
+			if v.Tags != nil && len(v.Tags) > 0 {
+				tags := make([]interface{}, len(v.Tags))
+				for i, j := range v.Tags {
+					tagAssignment := make(map[string]interface{})
+					tagAssignment["id"] = j.Id
+					tagAssignment["name"] = j.Name
+					if j.Value != nil {
+						tagAssignment["value"] = *j.Value
+					}
+					tagAssignment["is_billing_tag"] = j.IsBillingTag
+					if j.CreatedBy != nil {
+						tagAssignment["created_by"] = *j.CreatedBy
+					}
+					tags[i] = tagAssignment
+				}
+				vol["tags"] = tags
 			}
 			vols[i] = vol
 		}
