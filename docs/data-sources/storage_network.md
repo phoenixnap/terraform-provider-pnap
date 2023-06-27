@@ -65,3 +65,9 @@ The following attributes are exported:
             * `root_squash` - Root squash permission.
             * `no_squash` - No squash permission.
             * `all_squash` - All squash permission.
+    * `tags` - The tags assigned to the volume.
+        * `id` - The unique id of the tag.
+        * `name` - The name of the tag.
+        * `value` - The value of the tag assigned to the volume.
+        * `is_billing_tag` - Whether or not to show the tag as part of billing and invoices.
+        * `created_by` - Who the tag was created by.

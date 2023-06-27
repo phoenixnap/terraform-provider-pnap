@@ -25,6 +25,17 @@ resource "pnap_storage_network" "Storage-Network-1" {
             name = "Volume-1"
             path_suffix = "/shared-docs"
             capacity_in_gb = 1000
+            tags {
+                tag_assignment {
+                    name = "tag-1"
+                    value = "PROD"
+                }
+            }
+            tags {
+                tag_assignment {
+                    name = "tag-2"
+                }
+            }
         }
     }
 }
@@ -44,6 +55,10 @@ The following arguments are supported:
         * `description` - Volume description.
         * `path_suffix` - Last part of volume's path.
         * `capacity_in_gb` - (Required) Capacity of volume in GB. Currently only whole numbers and multiples of 1000 GB are supported.
+        * `tags` - Tags to set to the volume.
+            * `tag_assignment` - Tag to set to the volume.
+                * `name` - (Required) The name of the tag.
+                * `value` - The value of the tag assigned to the volume.
 
 ## Attributes Reference
 
@@ -76,3 +91,10 @@ The following attributes are exported:
                 * `root_squash` - Root squash permission.
                 * `no_squash` - No squash permission.
                 * `all_squash` - All squash permission.
+        * `tags` - The tags assigned to the volume.
+            * `tag_assignment` - Tag assigned to the volume.
+                * `id` - The unique id of the tag.
+                * `name` - The name of the tag.
+                * `value` - The value of the tag assigned to the volume.
+                * `is_billing_tag` - Whether or not to show the tag as part of billing and invoices.
+                * `created_by` - Who the tag was created by.
