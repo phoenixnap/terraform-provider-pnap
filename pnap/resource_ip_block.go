@@ -16,6 +16,7 @@ import (
 const (
 	pnapIpBlockRetryDelay   = 15 * time.Second
 	pnapIpBlockRetryTimeout = 15 * time.Minute
+	pnapTagCreateDelay      = 10 * time.Second
 )
 
 func resourceIpBlock() *schema.Resource {
@@ -127,6 +128,8 @@ func resourceIpBlockCreate(d *schema.ResourceData, m interface{}) error {
 	}
 	tags := d.Get("tags").([]interface{})
 	if len(tags) > 0 {
+		time.Sleep(pnapTagCreateDelay)
+
 		tagsObject := make([]ipapiclient.TagAssignmentRequest, len(tags))
 		for i, j := range tags {
 			tarObject := ipapiclient.TagAssignmentRequest{}

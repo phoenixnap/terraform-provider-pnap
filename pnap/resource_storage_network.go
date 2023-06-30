@@ -3,6 +3,7 @@ package pnap
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -244,6 +245,8 @@ func resourceStorageNetworkCreate(d *schema.ResourceData, m interface{}) error {
 
 				tags := volumeItem["tags"].([]interface{})
 				if len(tags) > 0 {
+					time.Sleep(pnapTagCreateDelay)
+
 					tagsObject := make([]networkstorageapiclient.TagAssignmentRequest, len(tags))
 					for i, j := range tags {
 						tarObject := networkstorageapiclient.TagAssignmentRequest{}

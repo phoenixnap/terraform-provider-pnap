@@ -572,6 +572,8 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
 	tags := d.Get("tags").([]interface{})
 	if len(tags) > 0 {
+		time.Sleep(pnapTagCreateDelay)
+
 		tagsObject := make([]bmcapiclient.TagAssignmentRequest, len(tags))
 		for i, j := range tags {
 			tarObject := bmcapiclient.TagAssignmentRequest{}
