@@ -108,7 +108,7 @@ func resourceServer() *schema.Resource {
 			"network_type": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
+				Default:  "PUBLIC_AND_PRIVATE",
 			},
 			"install_default_ssh_keys": {
 				Type:     schema.TypeBool,
@@ -827,7 +827,6 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("cpu_frequency_in_ghz", resp.CpuFrequency)
 	d.Set("ram", resp.Ram)
 	d.Set("storage", resp.Storage)
-	d.Set("network_type", resp.NetworkType)
 	d.Set("action", "")
 	var privateIPs []interface{}
 	for _, v := range resp.PrivateIpAddresses {
