@@ -109,7 +109,7 @@ The `private_network_configuration` is the second field of the `network_configur
 The `private_network_configuration` block has 3 fields:
 
 * `gateway_address` - (Deprecated) The address of the gateway assigned / to assign to the server. When used as part of request body, it has to match one of the IP addresses used in the existing assigned private networks for the relevant location. Deprecated in favour of a common gateway address across all networks available under `network_configuration`.
-* `configuration_type` - Determines the approach for configuring IP blocks for the server being provisioned. Currently this field should be set to `USE_OR_CREATE_DEFAULT`, `USER_DEFINED` or `NONE`. Default value is `USE_OR_CREATE_DEFAULT`.
+* `configuration_type` - Determines the approach for configuring private network(s) for the server being provisioned. Currently this field should be set to `USE_OR_CREATE_DEFAULT`, `USER_DEFINED` or `NONE`. Default value is `USE_OR_CREATE_DEFAULT`.
 * `private_networks` - The list of private networks this server is member of. When this field is part of request body, it'll be used to specify the private networks to assign to this server upon provisioning. Used alongside the `USER_DEFINED` configuration type.
 
 The `private_networks` block has field `server_private_network`.
