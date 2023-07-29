@@ -106,9 +106,11 @@ func resourceServer() *schema.Resource {
 				Optional: true,
 			},
 			"network_type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "PUBLIC_AND_PRIVATE",
+				Type:                  schema.TypeString,
+				Optional:              true,
+				Computed:              true,
+				DiffSuppressFunc:      supressUserDefinedNetworkType,
+				DiffSuppressOnRefresh: true,
 			},
 			"install_default_ssh_keys": {
 				Type:     schema.TypeBool,
@@ -827,6 +829,7 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("cpu_frequency_in_ghz", resp.CpuFrequency)
 	d.Set("ram", resp.Ram)
 	d.Set("storage", resp.Storage)
+	d.Set("network_type", resp.NetworkType)
 	d.Set("action", "")
 	var privateIPs []interface{}
 	for _, v := range resp.PrivateIpAddresses {
@@ -1409,4 +1412,12 @@ func flattenServerTags(tagsRead []bmcapiclient.TagAssignment, tagsInput []interf
 		}
 	}
 	return tagsInput
+}
+
+func supressUserDefinedNetworkType(k, oldValue, newValue string, d *schema.ResourceData) bool {
+	if len(oldValue) > 0 && newValue == "USER_DEFINED" {
+		return true
+	} else {
+		return false
+	}
 }
