@@ -69,7 +69,7 @@ The following arguments are supported:
 * `ssh_key_ids` - A list of SSH key IDs that will be installed on the server in addition to any SSH keys specified in this request.
 * `reservation_id` - Server reservation ID.
 * `pricing_model` - Server pricing model. Currently this field should be set to HOURLY, ONE_MONTH_RESERVATION, TWELVE_MONTHS_RESERVATION, TWENTY_FOUR_MONTHS_RESERVATION or THIRTY_SIX_MONTHS_RESERVATION.
-* `network_type` - The type of network configuration for this server. Currently this field should be set to PUBLIC_AND_PRIVATE or PRIVATE_ONLY.
+* `network_type` - The type of network configuration for this server. Currently this field should be set to PUBLIC_AND_PRIVATE, PRIVATE_ONLY, PUBLIC_ONLY or USER_DEFINED. Setting the force query parameter to `true` allows you to configure network configuration type as NONE.
 * `rdp_allowed_ips` - List of IPs allowed for RDP access to Windows OS. Supported in single IP, CIDR and range format. When undefined, RDP is disabled. To allow RDP access from any IP use 0.0.0.0/0. Must contain at least 1 item.
 * `management_access_allowed_ips` - Define list of IPs allowed to access the Management UI. Supported in single IP, CIDR and range format. When undefined, Management UI is disabled.Must contain at least 1 item.
 * `install_os_to_ram` - If true, OS will be installed to and booted from the server's RAM. On restart RAM OS will be lost and the server will not be reachable unless a custom bootable OS has been deployed. Only supported for ubuntu/focal. Default value is `false`.
@@ -103,14 +103,14 @@ The `tag_assignment` block has 2 fields:
 
 The `network_configuration` block has 4 fields: `gateway_address`, `private_network_configuration`, `ip_blocks_configuration` and `public_network_configuration`.
 
-* `gateway_address` -The address of the gateway assigned / to assign to the server. When used as part of request body, IP address has to be part of private/public network assigned to this server.
+* `gateway_address` -The address of the gateway assigned / to assign to the server. When used as part of request body, IP address has to be part of private/public network assigned to this server.Gateway address also has to be assigned on an already deployed resource unless the address matches the BMC gateway address in a public network/IP block or the `force` query parameter is true.
 
 The `private_network_configuration` is the second field of the `network_configuration` block. 
 The `private_network_configuration` block has 3 fields:
 
 * `gateway_address` - (Deprecated) The address of the gateway assigned / to assign to the server. When used as part of request body, it has to match one of the IP addresses used in the existing assigned private networks for the relevant location. Deprecated in favour of a common gateway address across all networks available under `network_configuration`.
-* `configuration_type` - Determines the approach for configuring IP blocks for the server being provisioned. Currently this field should be set to `USE_OR_CREATE_DEFAULT` or `USER_DEFINED`. Default value is `USE_OR_CREATE_DEFAULT`.
-* `private_networks` - The list of private networks this server is member of. When this field is part of request body, it'll be used to specify the private networks to assign to this server upon provisioning. Used alongside the `USER_DEFINED` configurationType.
+* `configuration_type` - Determines the approach for configuring private network(s) for the server being provisioned. Currently this field should be set to `USE_OR_CREATE_DEFAULT`, `USER_DEFINED` or `NONE`. Default value is `USE_OR_CREATE_DEFAULT`.
+* `private_networks` - The list of private networks this server is member of. When this field is part of request body, it'll be used to specify the private networks to assign to this server upon provisioning. Used alongside the `USER_DEFINED` configuration type.
 
 The `private_networks` block has field `server_private_network`.
 The `server_private_network` block has 3 fields:

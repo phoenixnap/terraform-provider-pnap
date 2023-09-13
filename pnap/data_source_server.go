@@ -59,6 +59,10 @@ func dataSourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"network_type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"netris_controller": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -274,6 +278,7 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 			d.Set("os", instance.Os)
 			d.Set("type", instance.Type)
 			d.Set("location", instance.Location)
+			d.Set("network_type", instance.NetworkType)
 
 			var privateIPs []interface{}
 			for _, v := range instance.PrivateIpAddresses {
