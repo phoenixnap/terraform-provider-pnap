@@ -106,9 +106,11 @@ func resourceServer() *schema.Resource {
 				Optional: true,
 			},
 			"network_type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:                  schema.TypeString,
+				Optional:              true,
+				Computed:              true,
+				DiffSuppressFunc:      supressUserDefinedNetworkType,
+				DiffSuppressOnRefresh: true,
 			},
 			"install_default_ssh_keys": {
 				Type:     schema.TypeBool,
@@ -1410,4 +1412,12 @@ func flattenServerTags(tagsRead []bmcapiclient.TagAssignment, tagsInput []interf
 		}
 	}
 	return tagsInput
+}
+
+func supressUserDefinedNetworkType(k, oldValue, newValue string, d *schema.ResourceData) bool {
+	if len(oldValue) > 0 && newValue == "USER_DEFINED" {
+		return true
+	} else {
+		return false
+	}
 }
