@@ -181,6 +181,8 @@ The following attributes are exported:
 * `tags` - The tags assigned if any.
 * `network_configuration` - Entire network details of bare metal server.
 * `provisioned_on` - Date and time when server was provisioned.
+* `superseded_by` - Unique identifier of the server to which the reservation has been transferred.
+* `supersedes` - Unique identifier of the server from which the reservation has been transferred.
 
 The `cloud_init` block has one field:
 * `user_data` - User data for the cloud-init configuration in base64 encoding.

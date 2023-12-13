@@ -86,3 +86,5 @@ The following attributes are exported:
     * `root_partition` - Root partition configuration.
         * `raid` - Software RAID configuration.
         * `size` - The size of the root partition in GB.
+* `superseded_by` - Unique identifier of the server to which the reservation has been transferred.
+* `supersedes` - Unique identifier of the server from which the reservation has been transferred.

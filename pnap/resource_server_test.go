@@ -189,15 +189,15 @@ func testAccCreateServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-    os = "ubuntu/bionic"
-    type = "s1.c1.medium"
-    location = "PHX"
-    ssh_keys = [
-        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
-    
-    ]
-    #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
-    #action = "powered-on"
+	os = "ubuntu/bionic"
+	type = "s1.c1.medium"
+	location = "PHX"
+	ssh_keys = [
+		"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
+		
+	]
+	#allowed actions are: reboot, reset, powered-on, powered-off, shutdown
+	#action = "powered-on"
 }`, rName, rName)
 }
 
@@ -205,75 +205,75 @@ func testAccRebootServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-    os = "ubuntu/bionic"
-    type = "s1.c1.medium"
-    location = "PHX"
-    ssh_keys = [
-        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
-    
-    ]
-    #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
-    action = "reboot"
+	os = "ubuntu/bionic"
+	type = "s1.c1.medium"
+	location = "PHX"
+	ssh_keys = [
+		"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
+		
+	]
+	#allowed actions are: reboot, reset, powered-on, powered-off, shutdown
+	action = "reboot"
 }`, rName, rName)
 }
 func testAccResetServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-    os = "ubuntu/bionic"
-    type = "s1.c1.medium"
-    location = "PHX"
-    ssh_keys = [
-        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
-    
-    ]
-    #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
-    action = "reset"
+	os = "ubuntu/bionic"
+	type = "s1.c1.medium"
+	location = "PHX"
+	ssh_keys = [
+		"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
+		
+	]
+	#allowed actions are: reboot, reset, powered-on, powered-off, shutdown
+	action = "reset"
 }`, rName, rName)
 }
 func testAccPowerOnServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-    os = "ubuntu/bionic"
-    type = "s1.c1.medium"
-    location = "PHX"
-    ssh_keys = [
-        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
-    
-    ]
-    #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
-    action = "powered-on"
+	os = "ubuntu/bionic"
+	type = "s1.c1.medium"
+	location = "PHX"
+	ssh_keys = [
+		"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
+		
+	]
+	#allowed actions are: reboot, reset, powered-on, powered-off, shutdown
+	action = "powered-on"
 }`, rName, rName)
 }
 func testAccPowerOffServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-    os = "ubuntu/bionic"
-    type = "s1.c1.medium"
-    location = "PHX"
-    ssh_keys = [
-        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
-    
-    ]
-    #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
-    action = "powered-off"
+	os = "ubuntu/bionic"
+	type = "s1.c1.medium"
+	location = "PHX"
+	ssh_keys = [
+		"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
+		
+	]
+	#allowed actions are: reboot, reset, powered-on, powered-off, shutdown
+	action = "powered-off"
 }`, rName, rName)
 }
 func testAccShutDownServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-    os = "ubuntu/bionic"
-    type = "s1.c1.medium"
-    location = "PHX"
-    ssh_keys = [
-        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
-    
-    ]
-    #allowed actions are: reboot, reset, powered-on, powered-off, shutdown
-    action = "shutdown"
+	os = "ubuntu/bionic"
+	type = "s1.c1.medium"
+	location = "PHX"
+	ssh_keys = [
+		"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@172.16.1.106"
+		
+	]
+	#allowed actions are: reboot, reset, powered-on, powered-off, shutdown
+	action = "shutdown"
 }`, rName, rName)
 }
 
@@ -330,7 +330,11 @@ func testAccCheckServerAttributes(resourceName string, server *bmcapiclient.Serv
 			return fmt.Errorf("hostname not set to %s name is %s", resourceName, server.Hostname)
 		}
 
-		if server.Os != "ubuntu/bionic" {
+		if server.Os != nil {
+			if *server.Os != "ubuntu/bionic" {
+				return fmt.Errorf("OS is not set")
+			}
+		} else {
 			return fmt.Errorf("OS is not set")
 		}
 		if server.Type != "s1.c1.medium" {

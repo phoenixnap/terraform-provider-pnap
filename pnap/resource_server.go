@@ -462,6 +462,14 @@ func resourceServer() *schema.Resource {
 					},
 				},
 			},
+			"superseded_by": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"supersedes": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -906,6 +914,9 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("network_configuration", networkConfiguration); err != nil {
 		return err
 	}
+
+	d.Set("superseded_by", resp.SupersededBy)
+	d.Set("supersedes", resp.Supersedes)
 
 	return nil
 }
