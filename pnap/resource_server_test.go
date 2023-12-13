@@ -330,7 +330,7 @@ func testAccCheckServerAttributes(resourceName string, server *bmcapiclient.Serv
 			return fmt.Errorf("hostname not set to %s name is %s", resourceName, server.Hostname)
 		}
 
-		if server.Os != "ubuntu/bionic" {
+		if server.Os != nil && *server.Os != "ubuntu/bionic" {
 			return fmt.Errorf("OS is not set")
 		}
 		if server.Type != "s1.c1.medium" {

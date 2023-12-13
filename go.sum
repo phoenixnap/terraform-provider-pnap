@@ -38,8 +38,8 @@ github.com/Microsoft/go-winio v0.4.14/go.mod h1:qXqCSQ3Xa7+6tgxaGTIe4Kpcdsi+P8jB
 github.com/Microsoft/go-winio v0.4.16 h1:FtSW/jqD+l4ba5iPBj9CODVtgfYAD8w2wS923g/cFDk=
 github.com/Microsoft/go-winio v0.4.16/go.mod h1:XB6nPKklQyQ7GC9LdcBEcBl8PF76WugXOPRXwdLnMv0=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
-github.com/PNAP/go-sdk-helper-bmc v0.14.0 h1:vSe31lMIjmay7vVzbMWwAOf8hQgriysg5hl/rzpubzA=
-github.com/PNAP/go-sdk-helper-bmc v0.14.0/go.mod h1:+lyhRXlGGKeolSI/OIA7e74k54JEktMPz7lrQ7ZH2GQ=
+github.com/PNAP/go-sdk-helper-bmc v0.15.0 h1:4kk2CT2ltkQ+3aSev388Axf4WTjLZefL71nAmZukurU=
+github.com/PNAP/go-sdk-helper-bmc v0.15.0/go.mod h1:8K3cHbBOwncLbIXc8y4szFJybIuqWedBEO90oOyW9wc=
 github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 h1:YoJbenK9C67SkzkDfmQuVln04ygHj3vjZfd9FL+GmQQ=
 github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7/go.mod h1:z4/9nQmJSSwwds7ejkxaJwO37dru3geImFUdJlaLzQo=
 github.com/acomagu/bufpipe v1.0.3 h1:fxAGrHZTgQ9w5QqVItgzwj235/uYZYgbXitB+dLupOk=
@@ -314,8 +314,8 @@ github.com/phoenixnap/go-sdk-bmc/auditapi/v2 v2.0.6 h1:PncmobXGiwSOWqqEUzPDvy3Js
 github.com/phoenixnap/go-sdk-bmc/auditapi/v2 v2.0.6/go.mod h1:9oH0AwfDV2y8g+ED4LB+4llQAuelJvWpR2uvxhSXmGs=
 github.com/phoenixnap/go-sdk-bmc/billingapi v1.3.2 h1:P1S/F4P2hNsx20EwhqI/2mN+cnQTxsvse+SWcBx6kfQ=
 github.com/phoenixnap/go-sdk-bmc/billingapi v1.3.2/go.mod h1:1DSv+VDVnySg+8nqpATrGY0XV8iaJJ9AZyYP4sBUWKo=
-github.com/phoenixnap/go-sdk-bmc/bmcapi/v2 v2.4.0 h1:0Pv+J8vEI7kF5QUigi8scChzhs+MUXPWAZ/edO9Kgqg=
-github.com/phoenixnap/go-sdk-bmc/bmcapi/v2 v2.4.0/go.mod h1:EB1RQ+yhFslZ+rNMnAbi7DyOqca1UJkvAgxnytLRiNY=
+github.com/phoenixnap/go-sdk-bmc/bmcapi/v2 v2.3.1-0.20231010082231-b3a9e39e365a h1:02HkmoHbAai9iTuyHSULp52uGNwOFOG1uYXZBFwO7z8=
+github.com/phoenixnap/go-sdk-bmc/bmcapi/v2 v2.3.1-0.20231010082231-b3a9e39e365a/go.mod h1:EB1RQ+yhFslZ+rNMnAbi7DyOqca1UJkvAgxnytLRiNY=
 github.com/phoenixnap/go-sdk-bmc/ipapi/v2 v2.0.5 h1:6iHlPAQDs+0qE3F0smG+OS6nfpQGk2L3dYvhI0Mk3JQ=
 github.com/phoenixnap/go-sdk-bmc/ipapi/v2 v2.0.5/go.mod h1:6ZPDjGdWiJQ3v4Qo7djX3lVPqNEjZprzcKmaeTi98nQ=
 github.com/phoenixnap/go-sdk-bmc/locationapi v1.0.0 h1:7zWZCUE09iZ8Bp0oXz6H+d4F4TCPFI4zvc++9Z0Bj2U=
