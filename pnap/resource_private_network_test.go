@@ -151,7 +151,7 @@ func testAccCreatePrivateNetworkResource_basic(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_private_network" "%s" {
 	name = "%s"
-    location = "PHX"
+	location = "PHX"
 	description = "acctest"
 	cidr = "10.0.1.0/31"
 }`, rName, rName)
@@ -161,7 +161,7 @@ func testAccUpdatePrivateNetworkResource_basic(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_private_network" "%s" {
 	name = "%s-basic"
-    location = "PHX"
+	location = "PHX"
 	description = "acctest-basic"
 	cidr = "10.0.1.0/31"
 }`, rName, rName)
@@ -171,7 +171,7 @@ func testAccCreatePrivateNetworkResource_force(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_private_network" "%s" {
 	name = "%s"
-    location = "PHX"
+	location = "PHX"
 	description = "acctest"
 	location_default = false
 	force = true
@@ -182,7 +182,7 @@ func testAccUpdatePrivateNetworkResource_force(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_private_network" "%s" {
 	name = "%s-force"
-    location = "PHX"
+	location = "PHX"
 	description = "acctest-force"
 	location_default = false
 	force = true

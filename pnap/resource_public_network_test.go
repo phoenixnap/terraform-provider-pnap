@@ -93,7 +93,7 @@ func testAccCreatePublicNetworkResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_public_network" "%s" {
 	name = "%s"
-    location = "PHX"
+	location = "PHX"
 	description = "acctest"
 }`, rName, rName)
 }
@@ -102,7 +102,7 @@ func testAccUpdatePublicNetworkResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_public_network" "%s" {
 	name = "%s-basic"
-    location = "PHX"
+	location = "PHX"
 	description = "acctest-basic"
 }`, rName, rName)
 }
