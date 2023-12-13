@@ -245,6 +245,14 @@ func dataSourceServer() *schema.Resource {
 					},
 				},
 			},
+			"superseded_by": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"supersedes": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -339,6 +347,9 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 				storageConfiguration[0] = storageConfigurationItem
 				d.Set("storage_configuration", storageConfiguration)
 			}
+
+			d.Set("superseded_by", instance.SupersededBy)
+			d.Set("supersedes", instance.Supersedes)
 		}
 	}
 
