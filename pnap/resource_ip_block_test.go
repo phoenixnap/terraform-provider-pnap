@@ -11,7 +11,7 @@ import (
 
 	helperipblock "github.com/PNAP/go-sdk-helper-bmc/command/ipapi/ipblock"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
-	ipapiclient "github.com/phoenixnap/go-sdk-bmc/ipapi/v2"
+	ipapiclient "github.com/phoenixnap/go-sdk-bmc/ipapi/v3"
 )
 
 func TestAccPnapIpBlock_basic(t *testing.T) {

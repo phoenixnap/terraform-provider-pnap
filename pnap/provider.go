@@ -54,6 +54,7 @@ func Provider() *schema.Provider {
 			"pnap_storage_network":      dataSourceStorageNetwork(),
 			"pnap_quota":                dataSourceQuota(),
 			"pnap_locations":            dataSourceLocations(),
+			"pnap_invoices":             dataSourceInvoices(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
