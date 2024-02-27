@@ -10,7 +10,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/command/networkstorageapi/storagenetwork"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 
-	networkstorageapiclient "github.com/phoenixnap/go-sdk-bmc/networkstorageapi"
+	networkstorageapiclient "github.com/phoenixnap/go-sdk-bmc/networkstorageapi/v2"
 )
 
 func resourceStorageNetwork() *schema.Resource {
@@ -53,6 +53,10 @@ func resourceStorageNetwork() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"created_on": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"delete_requested_on": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -109,6 +113,10 @@ func resourceStorageNetwork() *schema.Resource {
 										Computed: true,
 									},
 									"created_on": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"delete_requested_on": {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
@@ -322,6 +330,10 @@ func resourceStorageNetworkRead(d *schema.ResourceData, m interface{}) error {
 		createdOn := *resp.CreatedOn
 		d.Set("created_on", createdOn.String())
 	}
+	if resp.DeleteRequestedOn != nil {
+		delReqOn := *resp.DeleteRequestedOn
+		d.Set("delete_requested_on", delReqOn.String())
+	}
 	var volumesInput = d.Get("volumes").([]interface{})
 	volumes := flattenVolumes(resp.Volumes, volumesInput)
 
@@ -402,6 +414,10 @@ func flattenVolumes(volumes []networkstorageapiclient.Volume, volumesInput []int
 			if v.CreatedOn != nil {
 				createdOn := *v.CreatedOn
 				volItem["created_on"] = createdOn.String()
+			}
+			if v.DeleteRequestedOn != nil {
+				delReqOn := *v.DeleteRequestedOn
+				volItem["delete_requested_on"] = delReqOn.String()
 			}
 			if v.Permissions != nil {
 				perms := make([]interface{}, 1)

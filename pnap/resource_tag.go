@@ -7,7 +7,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	tagapiclient "github.com/phoenixnap/go-sdk-bmc/tagapi/v2"
+	tagapiclient "github.com/phoenixnap/go-sdk-bmc/tagapi/v3"
 )
 
 func resourceTag() *schema.Resource {

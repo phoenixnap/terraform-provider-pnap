@@ -7,7 +7,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/command/billingapi/reservation"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	billingapiclient "github.com/phoenixnap/go-sdk-bmc/billingapi"
+	billingapiclient "github.com/phoenixnap/go-sdk-bmc/billingapi/v2"
 )
 
 func resourceReservation() *schema.Resource {

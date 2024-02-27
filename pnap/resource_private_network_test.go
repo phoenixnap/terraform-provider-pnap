@@ -11,7 +11,7 @@ import (
 
 	helperprivatenetwork "github.com/PNAP/go-sdk-helper-bmc/command/networkapi/privatenetwork"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
-	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v2"
+	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v3"
 )
 
 func TestAccPnapPrivateNetwork_basic(t *testing.T) {

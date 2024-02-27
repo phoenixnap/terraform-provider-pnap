@@ -6,7 +6,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/command/ipapi/ipblock"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/phoenixnap/go-sdk-bmc/ipapi/v2"
+	"github.com/phoenixnap/go-sdk-bmc/ipapi/v3"
 )
 
 func dataSourceIpBlock() *schema.Resource {
