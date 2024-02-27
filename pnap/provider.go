@@ -54,6 +54,7 @@ func Provider() *schema.Provider {
 			"pnap_storage_network":      dataSourceStorageNetwork(),
 			"pnap_quota":                dataSourceQuota(),
 			"pnap_locations":            dataSourceLocations(),
+			"pnap_invoices":             dataSourceInvoices(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
@@ -65,8 +66,8 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	configFilePath := d.Get("config_file_path").(string)
 
 	configuration := dto.Configuration{}
-	configuration.UserAgent = "terraform-provider-pnap/0.23.0"
-	configuration.PoweredBy = "terraform-provider-pnap/0.23.0"
+	configuration.UserAgent = "terraform-provider-pnap/0.24.0"
+	configuration.PoweredBy = "terraform-provider-pnap/0.24.0"
 	if (clientId != "") && (clientSecret != "") {
 		configuration.ClientID = clientId
 		configuration.ClientSecret = clientSecret

@@ -9,7 +9,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	rancherapiclient "github.com/phoenixnap/go-sdk-bmc/ranchersolutionapi/v2"
+	rancherapiclient "github.com/phoenixnap/go-sdk-bmc/ranchersolutionapi/v3"
 )
 
 func resourceRancherCluster() *schema.Resource {
@@ -253,7 +253,7 @@ func resourceRancherClusterCreate(d *schema.ResourceData, m interface{}) error {
 		}
 
 		if nodePoolItem["ssh_config"] != nil && len(nodePoolItem["ssh_config"].([]interface{})) > 0 {
-			sshConfigObject := rancherapiclient.NodePoolSshConfig{}
+			sshConfigObject := rancherapiclient.SshConfig{}
 			nodePoolObject.SshConfig = &sshConfigObject
 
 			sshConfig := nodePoolItem["ssh_config"].([]interface{})[0]
@@ -288,7 +288,7 @@ func resourceRancherClusterCreate(d *schema.ResourceData, m interface{}) error {
 		configuration := d.Get("configuration").([]interface{})[0]
 		configurationItem := configuration.(map[string]interface{})
 
-		configurationObject := rancherapiclient.ClusterConfiguration{}
+		configurationObject := rancherapiclient.RancherClusterConfig{}
 
 		token := configurationItem["token"].(string)
 		if len(token) > 0 {
@@ -321,7 +321,7 @@ func resourceRancherClusterCreate(d *schema.ResourceData, m interface{}) error {
 			certKey := certificatesItem["certificate_key"].(string)
 
 			if len(caCert) > 0 || len(cert) > 0 || len(certKey) > 0 {
-				certificatesObject := rancherapiclient.RancherClusterConfigCertificates{}
+				certificatesObject := rancherapiclient.RancherClusterCertificates{}
 				configurationObject.Certificates = &certificatesObject
 
 				if len(caCert) > 0 {
@@ -342,7 +342,7 @@ func resourceRancherClusterCreate(d *schema.ResourceData, m interface{}) error {
 		wConfiguration := d.Get("workload_configuration").([]interface{})[0]
 		wConfigurationItem := wConfiguration.(map[string]interface{})
 
-		wConfigurationObject := rancherapiclient.ClusterWorkloadConfiguration{}
+		wConfigurationObject := rancherapiclient.WorkloadClusterConfig{}
 
 		name := wConfigurationItem["name"].(string)
 		if len(name) > 0 {

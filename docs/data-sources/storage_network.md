@@ -47,6 +47,7 @@ The following attributes are exported:
 * `network_id `- ID of network the storage belongs to.
 * `ips` - IP of the storage network
 * `created_on` - Date and time when this storage network was created.
+* `delete_requested_on` - Date and time of the initial request for storage network deletion.
 * `volumes` - Volume for the storage network.
     * `id` - Volume ID.
     * `name` - Volume friendly name.
@@ -58,6 +59,7 @@ The following attributes are exported:
     * `protocol` - File system protocol.
     * `status` - Volume's status.
     * `created_on` - Date and time when this volume was created.
+    * `delete_requested_on` - Date and time of the initial request for volume deletion.
     * `permissions` - Permissions for the volume.
         * `nfs` - NFS specific permissions on the volume.
             * `read_write` - Read/Write access.

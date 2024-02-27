@@ -11,7 +11,7 @@ import (
 
 	helperserver "github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/server"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
-	bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi/v2"
+	bmcapiclient "github.com/phoenixnap/go-sdk-bmc/bmcapi/v3"
 )
 
 func TestAccPnapServer_basic(t *testing.T) {
@@ -40,7 +40,7 @@ func TestAccPnapServer_basic(t *testing.T) {
 					testAccCheckServerAttributes(rName, &server),
 					// verify local values
 					resource.TestCheckResourceAttr(rLine, "hostname", rName),
-					resource.TestCheckResourceAttr(rLine, "os", "ubuntu/bionic"),
+					resource.TestCheckResourceAttr(rLine, "os", "ubuntu/jammy"),
 					resource.TestCheckResourceAttr(rLine, "type", "s1.c1.medium"),
 					resource.TestCheckResourceAttr(rLine, "location", "PHX"),
 					resource.TestCheckResourceAttrSet(rLine, "location"),
@@ -114,7 +114,7 @@ func TestAccPnapServer_shutdowntest(t *testing.T) {
 
 					// verify local values
 					resource.TestCheckResourceAttr(rLine, "hostname", rName),
-					resource.TestCheckResourceAttr(rLine, "os", "ubuntu/bionic"),
+					resource.TestCheckResourceAttr(rLine, "os", "ubuntu/jammy"),
 					resource.TestCheckResourceAttr(rLine, "type", "s1.c1.medium"),
 					resource.TestCheckResourceAttr(rLine, "location", "PHX"),
 					resource.TestCheckResourceAttrSet(rLine, "location"),
@@ -189,7 +189,7 @@ func testAccCreateServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-	os = "ubuntu/bionic"
+	os = "ubuntu/jammy"
 	type = "s1.c1.medium"
 	location = "PHX"
 	ssh_keys = [
@@ -205,7 +205,7 @@ func testAccRebootServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-	os = "ubuntu/bionic"
+	os = "ubuntu/jammy"
 	type = "s1.c1.medium"
 	location = "PHX"
 	ssh_keys = [
@@ -220,7 +220,7 @@ func testAccResetServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-	os = "ubuntu/bionic"
+	os = "ubuntu/jammy"
 	type = "s1.c1.medium"
 	location = "PHX"
 	ssh_keys = [
@@ -235,7 +235,7 @@ func testAccPowerOnServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-	os = "ubuntu/bionic"
+	os = "ubuntu/jammy"
 	type = "s1.c1.medium"
 	location = "PHX"
 	ssh_keys = [
@@ -250,7 +250,7 @@ func testAccPowerOffServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-	os = "ubuntu/bionic"
+	os = "ubuntu/jammy"
 	type = "s1.c1.medium"
 	location = "PHX"
 	ssh_keys = [
@@ -265,7 +265,7 @@ func testAccShutDownServerResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_server" "%s" {
 	hostname = "%s"
-	os = "ubuntu/bionic"
+	os = "ubuntu/jammy"
 	type = "s1.c1.medium"
 	location = "PHX"
 	ssh_keys = [
@@ -331,7 +331,7 @@ func testAccCheckServerAttributes(resourceName string, server *bmcapiclient.Serv
 		}
 
 		if server.Os != nil {
-			if *server.Os != "ubuntu/bionic" {
+			if *server.Os != "ubuntu/jammy" {
 				return fmt.Errorf("OS is not set")
 			}
 		} else {

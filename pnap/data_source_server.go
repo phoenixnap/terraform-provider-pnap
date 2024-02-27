@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/phoenixnap/go-sdk-bmc/bmcapi/v2"
+	"github.com/phoenixnap/go-sdk-bmc/bmcapi/v3"
 
 	"github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/server"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
