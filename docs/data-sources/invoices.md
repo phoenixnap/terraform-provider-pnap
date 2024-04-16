@@ -30,6 +30,21 @@ output "invoices" {
 }
 ```
 
+Fetch an invoice by id, show its details and create its pdf file in selected location.
+
+```hcl
+# Fetch invoices
+data "pnap_invoices" "Query-D" {
+  id = "5fa54d1e91867c03a0a7b4a4"
+  pdf_folder_path = "/home/ubuntu/invoices/"
+}
+
+# Show invoice
+output "invoice" {
+  value = data.pnap_invoices.Query-D.paginated_invoices
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -42,6 +57,8 @@ The following arguments are supported:
 * `offset` - The number of items to skip in the results.
 * `sort_field` - If a sort field is requested, pagination will be done after sorting. The following values are allowed: `number`, `sentOn`, `dueDate`, `amount`, `outstandingAmount`.
 * `sort_direction` - Sort given field depending on the desired direction. The following values are allowed: `ASC`, `DESC`.
+* `id` - The unique resource identifier of the invoice.
+* `pdf_folder_path` - Location of an existing folder where invoice pdf files will be stored. Invoice numbers will be used as filenames.
 
 
 ## Attributes Reference
@@ -51,7 +68,7 @@ The following attributes are exported:
 * `paginated_invoices` - The paginated list of invoices.
     * `limit` - Maximum number of items in the page (actual returned length can be less).
     * `offset` - The number of returned items skipped.
-    * `plans` - The total number of records available for retrieval.
+    * `total` - The total number of records available for retrieval.
     * `results` - The list of invoices.
         * `id` - The unique resource identifier of the invoice.
         * `number` - A user-friendly reference number assigned to the invoice.
