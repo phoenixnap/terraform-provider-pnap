@@ -53,6 +53,9 @@ The following attributes are exported:
 * `public_ip_addresses` - Public IP Addresses assigned to server. Must contain at least 1 item.
 * `primary_ip_address` - First usable public IP Address.
 * `network_type` - The type of network configuration for this server.
+* `esxi` - Esxi OS configuration.
+    * `datastore_configuration` - Esxi data storage configuration.
+        * `datastore_name` - Datastore name.
 * `netris_controller` - Netris Controller configuration properties.
     * `host_os` - Host OS on which the Netris Controller is installed.
 * `netris_softgate` - Netris Softgate configuration properties.
