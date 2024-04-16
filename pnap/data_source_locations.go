@@ -8,7 +8,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/dto"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	locationapiclient "github.com/phoenixnap/go-sdk-bmc/locationapi/v2"
+	locationapiclient "github.com/phoenixnap/go-sdk-bmc/locationapi/v3"
 )
 
 func dataSourceLocations() *schema.Resource {
