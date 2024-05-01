@@ -1,7 +1,10 @@
 package pnap
 
 import (
+	"fmt"
+	"io"
 	"math"
+	"os"
 	"strconv"
 	"time"
 
@@ -45,6 +48,14 @@ func dataSourceInvoices() *schema.Resource {
 				Optional: true,
 			},
 			"sort_direction": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"pdf_folder_path": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -153,32 +164,113 @@ func dataSourceInvoicesRead(d *schema.ResourceData, m interface{}) error {
 	paginatedResponse["offset"] = int(resp.Offset)
 	paginatedResponse["total"] = int(resp.Total)
 
-	results := make([]interface{}, len(resp.Results))
+	id := d.Get("id").(string)
+	path := d.Get("pdf_folder_path").(string)
 
-	for i, j := range resp.Results {
-		invoiceMap := make(map[string]interface{})
-		invoiceMap["id"] = j.Id
-		invoiceMap["number"] = j.Number
-		invoiceMap["currency"] = j.Currency
+	if len(id) > 0 {
+		numOfInvoices := 0
+		for _, j := range resp.Results {
+			if j.Id == id {
+				numOfInvoices++
 
-		amount := math.Round(float64(j.Amount)*100) / 100
-		invoiceMap["amount"] = amount
+				invoiceMap := make(map[string]interface{})
+				invoiceMap["id"] = j.Id
+				invoiceMap["number"] = j.Number
+				invoiceMap["currency"] = j.Currency
 
-		outstandingAmount := math.Round(float64(j.OutstandingAmount)*100) / 100
-		invoiceMap["outstanding_amount"] = outstandingAmount
+				amount := math.Round(float64(j.Amount)*100) / 100
+				invoiceMap["amount"] = amount
 
-		invoiceMap["status"] = j.Status
-		invoiceMap["sent_on"] = j.SentOn.String()
-		invoiceMap["due_date"] = j.DueDate.String()
+				outstandingAmount := math.Round(float64(j.OutstandingAmount)*100) / 100
+				invoiceMap["outstanding_amount"] = outstandingAmount
 
-		results[i] = invoiceMap
+				invoiceMap["status"] = j.Status
+				invoiceMap["sent_on"] = j.SentOn.String()
+				invoiceMap["due_date"] = j.DueDate.String()
+
+				if len(path) > 0 {
+					pdfRequestCommand := invoice.NewGenerateInvoicePdfCommand(client, id)
+					pdf, err := pdfRequestCommand.Execute()
+					if err != nil {
+						return err
+					}
+					data, err := io.ReadAll(pdf)
+					if err != nil {
+						return err
+					}
+					invoicePdf, err := os.Create(path + j.Number + ".pdf")
+					if err != nil {
+						return err
+					}
+					defer invoicePdf.Close()
+
+					if _, err := invoicePdf.Write(data); err != nil {
+						return (err)
+					}
+				}
+				result := make([]interface{}, 1)
+				result[0] = invoiceMap
+				paginatedResponse["results"] = result
+				paginatedResponse["total"] = numOfInvoices
+				paginatedInvoices[0] = paginatedResponse
+
+				d.SetId(j.Id)
+				d.Set("paginated_invoices", paginatedInvoices)
+			}
+		}
+		if numOfInvoices > 1 {
+			return fmt.Errorf("too many invoices with id %s (found %d, expected 1)", id, numOfInvoices)
+		}
+
+	} else {
+
+		results := make([]interface{}, len(resp.Results))
+
+		for i, j := range resp.Results {
+			id = j.Id
+			invoiceMap := make(map[string]interface{})
+			invoiceMap["id"] = j.Id
+			invoiceMap["number"] = j.Number
+			invoiceMap["currency"] = j.Currency
+
+			amount := math.Round(float64(j.Amount)*100) / 100
+			invoiceMap["amount"] = amount
+
+			outstandingAmount := math.Round(float64(j.OutstandingAmount)*100) / 100
+			invoiceMap["outstanding_amount"] = outstandingAmount
+
+			invoiceMap["status"] = j.Status
+			invoiceMap["sent_on"] = j.SentOn.String()
+			invoiceMap["due_date"] = j.DueDate.String()
+			if len(path) > 0 {
+				pdfRequestCommand := invoice.NewGenerateInvoicePdfCommand(client, id)
+				pdf, err := pdfRequestCommand.Execute()
+				if err != nil {
+					return err
+				}
+				data, err := io.ReadAll(pdf)
+				if err != nil {
+					return err
+				}
+				invoicePdf, err := os.Create(path + j.Number + ".pdf")
+				if err != nil {
+					return err
+				}
+				defer invoicePdf.Close()
+
+				if _, err := invoicePdf.Write(data); err != nil {
+					return (err)
+				}
+			}
+
+			results[i] = invoiceMap
+		}
+
+		paginatedResponse["results"] = results
+		paginatedInvoices[0] = paginatedResponse
+
+		d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
+		d.Set("paginated_invoices", paginatedInvoices)
 	}
-
-	paginatedResponse["results"] = results
-	paginatedInvoices[0] = paginatedResponse
-
-	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
-	d.Set("paginated_invoices", paginatedInvoices)
-
 	return nil
 }

@@ -149,7 +149,7 @@ func resourcePrivateNetworkCreate(d *schema.ResourceData, m interface{}) error {
 	query := &dto.Query{}
 	query.Force = d.Get("force").(bool)
 
-	requestCommand := privatenetwork.NewCreatePrivateNetworkCommand(client, *request, *query)
+	requestCommand := privatenetwork.NewCreatePrivateNetworkCommandWithQuery(client, *request, query)
 
 	resp, err := requestCommand.Execute()
 	if err != nil {
