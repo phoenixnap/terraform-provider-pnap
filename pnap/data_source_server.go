@@ -63,6 +63,26 @@ func dataSourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"esxi": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"datastore_configuration": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"datastore_name": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"netris_controller": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -303,6 +323,17 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 			}
 
 			if instance.OsConfiguration != nil {
+				if instance.OsConfiguration.Esxi != nil && instance.OsConfiguration.Esxi.DatastoreConfiguration != nil {
+					esxi := make([]interface{}, 1)
+					esxiItem := make(map[string]interface{})
+					datastoreConfiguration := make([]interface{}, 1)
+					datastoreConfigurationItem := make(map[string]interface{})
+					datastoreConfigurationItem["datastore_name"] = instance.OsConfiguration.Esxi.DatastoreConfiguration.DatastoreName
+					datastoreConfiguration[0] = datastoreConfigurationItem
+					esxiItem["datastore_configuration"] = datastoreConfiguration
+					esxi[0] = esxiItem
+					d.Set("esxi", esxi)
+				}
 				if instance.OsConfiguration.NetrisController != nil {
 					netrisController := make([]interface{}, 1)
 					netrisControllerItem := make(map[string]interface{})

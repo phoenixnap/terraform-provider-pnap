@@ -1,7 +1,6 @@
 package pnap
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -355,8 +354,6 @@ func resourceRancherClusterCreate(d *schema.ResourceData, m interface{}) error {
 		wConfigurationObject.Location = wConfigurationItem["location"].(string)
 
 		request.WorkloadConfiguration = &wConfigurationObject
-		b, _ := json.MarshalIndent(request, "", "  ")
-		log.Printf("request object is" + string(b))
 	}
 
 	requestCommand := cluster.NewCreateClusterCommand(client, *request)

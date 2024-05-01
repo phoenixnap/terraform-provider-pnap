@@ -1,7 +1,6 @@
 package pnap
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -166,6 +165,31 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
+			},
+			"esxi": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"datastore_configuration": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Computed: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"datastore_name": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Computed: true,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 			"cloud_init": {
 				Type:     schema.TypeList,
@@ -533,6 +557,17 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	}
 	installOsToRam := d.Get("install_os_to_ram").(bool)
 
+	var datastoreName string
+	if d.Get("esxi") != nil && len(d.Get("esxi").([]interface{})) > 0 {
+		esxi := d.Get("esxi").([]interface{})[0]
+		esxiItem := esxi.(map[string]interface{})
+		if esxiItem["datastore_configuration"] != nil && len(esxiItem["datastore_configuration"].([]interface{})) > 0 {
+			datastoreConfiguration := esxiItem["datastore_configuration"].([]interface{})[0]
+			datastoreConfigurationItem := datastoreConfiguration.(map[string]interface{})
+			datastoreName = datastoreConfigurationItem["datastore_name"].(string)
+		}
+	}
+
 	var userData string
 	if d.Get("cloud_init") != nil && len(d.Get("cloud_init").([]interface{})) > 0 {
 		cloudInit := d.Get("cloud_init").([]interface{})[0]
@@ -551,7 +586,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		netris = true
 	}
 
-	if len(temp2) > 0 || len(temp3) > 0 || installOsToRam || len(userData) > 0 || netris {
+	if len(temp2) > 0 || len(temp3) > 0 || installOsToRam || len(datastoreName) > 0 || len(userData) > 0 || netris {
 		dtoOsConfiguration := bmcapiclient.OsConfiguration{}
 
 		if len(temp2) > 0 {
@@ -564,6 +599,13 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		}
 		if installOsToRam {
 			dtoOsConfiguration.InstallOsToRam = &installOsToRam
+		}
+		if len(datastoreName) > 0 {
+			esxiObject := bmcapiclient.EsxiOsConfiguration{}
+			datastoreObject := bmcapiclient.EsxiDatastoreConfiguration{}
+			datastoreObject.DatastoreName = datastoreName
+			esxiObject.DatastoreConfiguration = &datastoreObject
+			dtoOsConfiguration.Esxi = &esxiObject
 		}
 		if len(userData) > 0 {
 			cloudInitObject := bmcapiclient.OsConfigurationCloudInit{}
@@ -778,7 +820,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	}
 	// end of storage block
 
-	requestCommand := server.NewCreateServerCommand(client, *request, *query)
+	requestCommand := server.NewCreateServerCommandWithQuery(client, *request, query)
 
 	resp, err := requestCommand.Execute()
 	if err != nil {
@@ -871,6 +913,17 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 
 	if resp.OsConfiguration != nil {
 		d.Set("install_os_to_ram", resp.OsConfiguration.InstallOsToRam)
+		if resp.OsConfiguration.Esxi != nil && resp.OsConfiguration.Esxi.DatastoreConfiguration != nil {
+			esxi := make([]interface{}, 1)
+			esxiItem := make(map[string]interface{})
+			datastoreConfiguration := make([]interface{}, 1)
+			datastoreConfigurationItem := make(map[string]interface{})
+			datastoreConfigurationItem["datastore_name"] = resp.OsConfiguration.Esxi.DatastoreConfiguration.DatastoreName
+			datastoreConfiguration[0] = datastoreConfigurationItem
+			esxiItem["datastore_configuration"] = datastoreConfiguration
+			esxi[0] = esxiItem
+			d.Set("esxi", esxi)
+		}
 		if resp.OsConfiguration.CloudInit != nil && resp.OsConfiguration.CloudInit.UserData != nil {
 			cloudInit := make([]interface{}, 1)
 			cloudInitItem := make(map[string]interface{})
@@ -1142,8 +1195,6 @@ func resourceServerDelete(d *schema.ResourceData, m interface{}) error {
 	}
 	relinquishIpBlock := bmcapiclient.RelinquishIpBlock{}
 	relinquishIpBlock.DeleteIpBlocks = &deleteIpBlocks
-	b, _ := json.MarshalIndent(relinquishIpBlock, "", "  ")
-	log.Printf("relinquishIpBlock object is" + string(b))
 	requestCommand := server.NewDeprovisionServerCommand(client, serverID, relinquishIpBlock)
 
 	_, err := requestCommand.Execute()

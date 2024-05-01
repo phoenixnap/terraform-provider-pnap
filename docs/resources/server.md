@@ -74,12 +74,19 @@ The following arguments are supported:
 * `management_access_allowed_ips` - Define list of IPs allowed to access the Management UI. Supported in single IP, CIDR and range format. When undefined, Management UI is disabled.Must contain at least 1 item.
 * `install_os_to_ram` - If true, OS will be installed to and booted from the server's RAM. On restart RAM OS will be lost and the server will not be reachable unless a custom bootable OS has been deployed. Only supported for ubuntu/focal. Default value is `false`.
 * `cloud_init` - Cloud-init configuration details. Structure is documented below.
+* `esxi` - Esxi OS configuration. Structure is documented below.
 * `netris_softgate` - Netris Softgate configuration properties. Follow [instructions](https://phoenixnap.com/kb/netris-bare-metal-cloud#deploy-netris-softgate) for retrieving the required details. Structure is documented below.
 * `tags` - Tags to set to server, if any. Structure is documented below.
 * `network_configuration` - Entire network details of bare metal server. Structure is documented below.
 * `storage_configuration` - Storage configuration. Structure is documented below.
 * `action` - Action to perform on server. Allowed actions are: reboot, reset (deprecated), powered-on, powered-off, shutdown.
 * `force` - Query parameter controlling advanced features availability. Currently applicable for networking. It is advised to use with caution since it might lead to unhealthy setups.
+
+
+The `esxi` block has field `datastore_configuration`:
+The `datastore_configuration` block has one field:
+
+* `datastore_name` - Datastore name.
 
 
 The `cloud_init` block has one field:
