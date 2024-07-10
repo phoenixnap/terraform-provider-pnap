@@ -77,11 +77,13 @@ func resourceRancherCluster() *schema.Resource {
 									"keys": {
 										Type:     schema.TypeSet,
 										Optional: true,
+										Computed: true,
 										Elem:     &schema.Schema{Type: schema.TypeString},
 									},
 									"key_ids": {
 										Type:     schema.TypeSet,
 										Optional: true,
+										Computed: true,
 										Elem:     &schema.Schema{Type: schema.TypeString},
 									},
 								},
