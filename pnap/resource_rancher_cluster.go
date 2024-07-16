@@ -428,8 +428,9 @@ func resourceRancherClusterRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceRancherClusterUpdate(d *schema.ResourceData, m interface{}) error {
-	if d.HasChange("location") || d.HasChange("name") || d.HasChange("description") {
-		return fmt.Errorf("unsuported action")
+	if d.HasChange("location") || d.HasChange("name") || d.HasChange("description") || d.HasChange("node_pools") || d.HasChange("configuration") ||
+		d.HasChange("workload_configuration") {
+		return fmt.Errorf("unsupported action")
 	}
 	return resourceRancherClusterRead(d, m)
 }
