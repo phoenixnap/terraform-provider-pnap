@@ -52,6 +52,12 @@ The following attributes are exported:
         * `pricing_model` - The pricing model.
         * `price` - Price per unit.
         * `price_unit` - The unit to which the price applies.
+        * `applicable_discounts` - Represents applicable discount details for a product, including discounted price and discount information.
+            * `discounted_price` - The price of the product after applying a discount.
+            * `discount_details` - Represents the details of a discount applied to a product or charge.
+                * `code` - A unique code associated with the discount.
+                * `type` - The discount type.
+                * `value` - The value or amount of the discount. The interpretation of this value depends on the 'type' of discount.
         * `correlated_product_code` - Product code of the correlated product.
         * `package_quantity` - Package size per month.
         * `package_unit` - Package size unit.
@@ -63,3 +69,6 @@ The following attributes are exported:
         * `cpu_frequency` - CPU frequency in GHz.
         * `network` - Server network.
         * `storage` - Server storage.
+        * `gpu_configurations` - List of GPU configurations
+            * `count` - GPU card count.
+            * `name` - GPU name.

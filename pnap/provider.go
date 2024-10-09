@@ -38,6 +38,7 @@ func Provider() *schema.Provider {
 			"pnap_tag":             resourceTag(),
 			"pnap_public_network":  resourcePublicNetwork(),
 			"pnap_storage_network": resourceStorageNetwork(),
+			"pnap_bgp_peer_group":  resourceBgpPeerGroup(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"pnap_ssh_key":              dataSourceSshKey(),
@@ -56,6 +57,7 @@ func Provider() *schema.Provider {
 			"pnap_locations":            dataSourceLocations(),
 			"pnap_invoices":             dataSourceInvoices(),
 			"pnap_transactions":         dataSourceTransactions(),
+			"pnap_bgp_peer_group":       dataSourceBgpPeerGroup(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
@@ -67,8 +69,8 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	configFilePath := d.Get("config_file_path").(string)
 
 	configuration := dto.Configuration{}
-	configuration.UserAgent = "terraform-provider-pnap/0.25.1"
-	configuration.PoweredBy = "terraform-provider-pnap/0.25.1"
+	configuration.UserAgent = "terraform-provider-pnap/0.26.0"
+	configuration.PoweredBy = "terraform-provider-pnap/0.26.0"
 	if (clientId != "") && (clientSecret != "") {
 		configuration.ClientID = clientId
 		configuration.ClientSecret = clientSecret
