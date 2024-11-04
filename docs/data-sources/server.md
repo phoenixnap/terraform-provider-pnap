@@ -89,5 +89,8 @@ The following attributes are exported:
     * `root_partition` - Root partition configuration.
         * `raid` - Software RAID configuration.
         * `size` - The size of the root partition in GB.
+* `gpu_configuration` - The GPU configuration.
+    * `long_name` - The long name of the GPU.
+    * `count` - The number of GPUs.
 * `superseded_by` - Unique identifier of the server to which the reservation has been transferred.
 * `supersedes` - Unique identifier of the server from which the reservation has been transferred.

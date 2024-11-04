@@ -188,6 +188,8 @@ The following attributes are exported:
 * `tags` - The tags assigned if any.
 * `network_configuration` - Entire network details of bare metal server.
 * `provisioned_on` - Date and time when server was provisioned.
+* `storage_configuration` - The storage configuration.
+* `gpu_configuration` - The GPU configuration.
 * `superseded_by` - Unique identifier of the server to which the reservation has been transferred.
 * `supersedes` - Unique identifier of the server from which the reservation has been transferred.
 
@@ -214,3 +216,7 @@ The `storage_configuration` block has field `root_partition`.
 The `root_partition` block has two fields:
 * `raid` - Software RAID configuration.
 * `size` - The size of the root partition in GB.
+
+The `gpu_configuration` block has two fields:
+* `long_name` - The long name of the GPU.
+* `count` - The number of GPUs.
