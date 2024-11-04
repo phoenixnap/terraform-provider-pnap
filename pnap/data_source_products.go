@@ -74,6 +74,38 @@ func dataSourceProducts() *schema.Resource {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
+									"applicable_discounts": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"discounted_price": {
+													Type:     schema.TypeFloat,
+													Computed: true,
+												},
+												"discount_details": {
+													Type:     schema.TypeList,
+													Computed: true,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"code": {
+																Type:     schema.TypeString,
+																Computed: true,
+															},
+															"type": {
+																Type:     schema.TypeString,
+																Computed: true,
+															},
+															"value": {
+																Type:     schema.TypeFloat,
+																Computed: true,
+															},
+														},
+													},
+												},
+											},
+										},
+									},
 									"correlated_product_code": {
 										Type:     schema.TypeString,
 										Computed: true,
@@ -122,6 +154,22 @@ func dataSourceProducts() *schema.Resource {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
+									"gpu_configurations": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"count": {
+													Type:     schema.TypeFloat,
+													Computed: true,
+												},
+												"name": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+											},
+										},
+									},
 								},
 							},
 						},
@@ -163,6 +211,26 @@ func dataSourceProductsRead(d *schema.ResourceData, m interface{}) error {
 				price := math.Round(float64(l.Price)*100) / 100
 				pricingPlan["price"] = price
 				pricingPlan["price_unit"] = l.PriceUnit
+				if l.ApplicableDiscounts != nil {
+					applicableDiscounts := make(map[string]interface{})
+					discountedPrice := math.Round(float64(l.ApplicableDiscounts.DiscountedPrice)*100) / 100
+					applicableDiscounts["discounted_price"] = discountedPrice
+
+					if l.ApplicableDiscounts.DiscountDetails != nil {
+						var discountDetails []interface{}
+						for o, p := range l.ApplicableDiscounts.DiscountDetails {
+							discountDetail := make(map[string]interface{})
+							discountDetail["code"] = p.Code
+							discountDetail["type"] = p.Type
+							value := math.Round(float64(p.Value)*100) / 100
+							discountDetail["value"] = value
+							discountDetails[o] = discountDetail
+						}
+						applicableDiscounts["discount_details"] = discountDetails
+					}
+					pricingPlan["applicable_discounts"] = applicableDiscounts
+				}
+
 				if l.CorrelatedProductCode != "" {
 					pricingPlan["correlated_product_code"] = l.CorrelatedProductCode
 				}
@@ -188,6 +256,17 @@ func dataSourceProductsRead(d *schema.ResourceData, m interface{}) error {
 			mdItem["cpu_frequency"] = cpuFreq
 			mdItem["network"] = metadata.Network
 			mdItem["storage"] = metadata.Storage
+			if metadata.GPUConfigurations != nil {
+				gpuConfs := make([]interface{}, len(metadata.GPUConfigurations))
+				for i, j := range metadata.GPUConfigurations {
+					gpuConfMetadata := make(map[string]interface{})
+					count := math.Round(float64(j.Count)*100) / 100
+					gpuConfMetadata["count"] = count
+					gpuConfMetadata["name"] = j.Name
+					gpuConfs[i] = gpuConfMetadata
+				}
+				mdItem["gpu_configurations"] = gpuConfs
+			}
 			md[0] = mdItem
 			product["metadata"] = md
 		}

@@ -486,6 +486,22 @@ func resourceServer() *schema.Resource {
 					},
 				},
 			},
+			"gpu_configuration": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"long_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"count": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+					},
+				},
+			},
 			"superseded_by": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -968,12 +984,18 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
+	var gpuConf bmcapiclient.GpuConfiguration
+	if resp.GpuConfiguration != nil {
+		gpuConf = *resp.GpuConfiguration
+	}
+	gpuConfiguration := flattenGpuConfiguration(gpuConf)
+	d.Set("gpu_configuration", gpuConfiguration)
+
 	d.Set("superseded_by", resp.SupersededBy)
 	d.Set("supersedes", resp.Supersedes)
 
 	return nil
 }
-
 func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 	if d.HasChange("action") {
 		client := m.(receiver.BMCSDK)

@@ -265,6 +265,22 @@ func dataSourceServer() *schema.Resource {
 					},
 				},
 			},
+			"gpu_configuration": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"long_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"count": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+					},
+				},
+			},
 			"superseded_by": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -378,6 +394,12 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 				storageConfiguration[0] = storageConfigurationItem
 				d.Set("storage_configuration", storageConfiguration)
 			}
+			var gpuConf bmcapi.GpuConfiguration
+			if instance.GpuConfiguration != nil {
+				gpuConf = *instance.GpuConfiguration
+			}
+			gpuConfiguration := flattenGpuConfiguration(gpuConf)
+			d.Set("gpu_configuration", gpuConfiguration)
 
 			d.Set("superseded_by", instance.SupersededBy)
 			d.Set("supersedes", instance.Supersedes)
@@ -505,4 +527,19 @@ func flattenServerDataNetworkConfiguration(networkConfiguration bmcapi.NetworkCo
 	}
 	netConf[0] = nc
 	return netConf
+}
+
+func flattenGpuConfiguration(gpuConf bmcapi.GpuConfiguration) []interface{} {
+	gpuConfiguration := make([]interface{}, 1)
+	gpuConfigurationItem := make(map[string]interface{})
+	if gpuConf.LongName != nil {
+		longName := *gpuConf.LongName
+		gpuConfigurationItem["long_name"] = longName
+	}
+	if gpuConf.Count != nil {
+		count := *gpuConf.Count
+		gpuConfigurationItem["count"] = int(count)
+	}
+	gpuConfiguration[0] = gpuConfigurationItem
+	return gpuConfiguration
 }
