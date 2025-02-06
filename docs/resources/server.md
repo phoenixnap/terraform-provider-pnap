@@ -32,6 +32,7 @@ resource "pnap_server" "Test-Server-1" {
     cloud_init {
         user_data = filebase64("~/terraform-provider-pnap/create-folder.txt")
     }
+    delete_ip_blocks = true
     network_configuration {
       private_network_configuration {
         configuration_type = "USER_DEFINED"
@@ -81,6 +82,7 @@ The following arguments are supported:
 * `storage_configuration` - Storage configuration. Structure is documented below.
 * `action` - Action to perform on server. Allowed actions are: reboot, reset (deprecated), powered-on, powered-off, shutdown.
 * `force` - Query parameter controlling advanced features availability. Currently applicable for networking. It is advised to use with caution since it might lead to unhealthy setups.
+* `delete_ip_blocks` - Determines whether the IP blocks assigned to the server should be deleted or not when the server is being deleted, i.e. [deprovisioned](https://developers.phoenixnap.com/docs/bmc/1/routes/servers/%7BserverId%7D/actions/deprovision/post). Default value is `false`.
 
 
 The `esxi` block has field `datastore_configuration`:
