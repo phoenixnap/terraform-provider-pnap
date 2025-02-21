@@ -259,6 +259,10 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
+			"delete_ip_blocks": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 			"tags": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -1186,6 +1190,8 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		if err != nil {
 			return err
 		}
+	} else if d.HasChange("delete_ip_blocks") || d.HasChange("force") {
+		return resourceServerRead(d, m)
 	} else {
 		return fmt.Errorf("unsupported action")
 	}
@@ -1197,26 +1203,11 @@ func resourceServerDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(receiver.BMCSDK)
 	serverID := d.Id()
 
-	var deleteIpBlocks = false
-	var ncInput = d.Get("network_configuration").([]interface{})
-	if len(ncInput) == 0 {
-		deleteIpBlocks = true
-	} else if len(ncInput) > 0 {
-		nci := ncInput[0]
-		nciMap := nci.(map[string]interface{})
-		ibc := nciMap["ip_blocks_configuration"]
-		if ibc == nil || len(ibc.([]interface{})) == 0 {
-			deleteIpBlocks = true
-		} else if ibc != nil && len(ibc.([]interface{})) > 0 {
-			ibci := ibc.([]interface{})[0]
-			ibcInput := ibci.(map[string]interface{})
-			if ibcInput["ip_blocks"] == nil || len(ibcInput["ip_blocks"].([]interface{})) == 0 {
-				deleteIpBlocks = true
-			}
-		}
-	}
+	var deleteIpBlocks = d.Get("delete_ip_blocks").(bool)
+
 	relinquishIpBlock := bmcapiclient.RelinquishIpBlock{}
 	relinquishIpBlock.DeleteIpBlocks = &deleteIpBlocks
+
 	requestCommand := server.NewDeprovisionServerCommand(client, serverID, relinquishIpBlock)
 
 	_, err := requestCommand.Execute()
