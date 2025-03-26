@@ -7,7 +7,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v3"
+	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v4"
 )
 
 func resourceBgpPeerGroup() *schema.Resource {
