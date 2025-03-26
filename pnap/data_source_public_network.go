@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v3"
+	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v4"
 
 	"github.com/PNAP/go-sdk-helper-bmc/command/networkapi/publicnetwork"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
@@ -45,6 +45,14 @@ func dataSourcePublicNetwork() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"cidr": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"used_ips_count": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -81,6 +89,10 @@ func dataSourcePublicNetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"ra_enabled": {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -94,36 +106,44 @@ func dataSourcePublicNetworkRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	numOfNets := 0
+	name := d.Get("name").(string)
+	id := d.Get("id").(string)
 	for _, instance := range resp {
-		if instance.Name == d.Get("name").(string) || instance.Id == d.Get("id").(string) {
+		if instance.Name == name || instance.Id == id {
 			numOfNets++
 			d.SetId(instance.Id)
 			d.Set("location", instance.Location)
 			d.Set("name", instance.Name)
-			desc := instance.Description
-			if desc != nil {
+			if instance.Description != nil {
 				d.Set("description", *instance.Description)
+			} else {
+				d.Set("description", "")
 			}
 			ipBlocks := flattenDataIpBlocks(instance.IpBlocks)
 			if err := d.Set("ip_blocks", ipBlocks); err != nil {
 				return err
 			}
-			if len(instance.CreatedOn.String()) > 0 {
-				d.Set("created_on", instance.CreatedOn.String())
-			}
+			d.Set("created_on", instance.CreatedOn.String())
 			d.Set("vlan_id", instance.VlanId)
 
 			memberships := flattenMemberships(instance.Memberships)
-
 			if err := d.Set("memberships", memberships); err != nil {
 				return err
 			}
 			d.Set("status", instance.Status)
+			if instance.RaEnabled != nil {
+				d.Set("ra_enabled", *instance.RaEnabled)
+			} else {
+				d.Set("ra_enabled", nil)
+			}
 		}
 	}
-	if numOfNets > 1 {
-		return fmt.Errorf("too many public networks with name %s (found %d, expected 1)", d.Get("name").(string), numOfNets)
+	if numOfNets > 1 && len(name) > 0 {
+		return fmt.Errorf("too many public networks with name %s (found %d, expected 1)", name, numOfNets)
+	} else if numOfNets > 1 && len(id) > 0 {
+		return fmt.Errorf("too many public networks with ID %s (found %d, expected 1)", id, numOfNets)
 	}
+
 	return nil
 }
 
@@ -133,6 +153,8 @@ func flattenDataIpBlocks(ipBlocks []networkapiclient.PublicNetworkIpBlock) []int
 		for i, j := range ipBlocks {
 			ibItem := make(map[string]interface{})
 			ibItem["id"] = j.Id
+			ibItem["cidr"] = j.Cidr
+			ibItem["used_ips_count"] = j.UsedIpsCount
 			ib[i] = ibItem
 		}
 		return ib

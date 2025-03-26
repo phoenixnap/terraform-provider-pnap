@@ -45,6 +45,7 @@ The following arguments are supported:
 * `ip_blocks` - A list of IP Blocks that will be associated with this public network (10 items at most).
     * `public_network_ip_block` - The assigned IP Block to the public network.
         * `id` - The IP Block identifier.
+* `ra_enabled` - Boolean indicating whether Router Advertisement is enabled. Only applicable for Network with IPv6 Blocks.
 
 ## Attributes Reference
 
@@ -64,3 +65,6 @@ The following attributes are exported:
 * `ip_blocks` - A list of IP Blocks that are associated with this public network.
     * `public_network_ip_block` - The assigned IP Block to the public network.
         * `id` - The IP Block identifier.
+        * `cidr` - The CIDR notation of the IP block.
+        * `used_ips_count` - The number of IPs used in the IP block.
+* `ra_enabled` - Boolean indicating whether Router Advertisement is enabled. Only applicable for Network with IPv6 Blocks.
