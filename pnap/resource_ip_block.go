@@ -40,6 +40,11 @@ func resourceIpBlock() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"ip_version": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -121,6 +126,10 @@ func resourceIpBlockCreate(d *schema.ResourceData, m interface{}) error {
 	request := &ipapiclient.IpBlockCreate{}
 	request.Location = d.Get("location").(string)
 	request.CidrBlockSize = d.Get("cidr_block_size").(string)
+	var ipVersion = d.Get("ip_version").(string)
+	if len(ipVersion) > 0 {
+		request.IpVersion = &ipVersion
+	}
 	var desc = d.Get("description").(string)
 	if len(desc) > 0 {
 		request.Description = &desc
@@ -151,7 +160,11 @@ func resourceIpBlockCreate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.SetId(resp.Id)
+	if resp.Id == nil {
+		return fmt.Errorf("unknown cluster identifier")
+	} else {
+		d.SetId(*resp.Id)
+	}
 
 	return resourceIpBlockRead(d, m)
 }
@@ -164,11 +177,36 @@ func resourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.SetId(resp.Id)
-	d.Set("location", resp.Location)
-	d.Set("cidr_block_size", resp.CidrBlockSize)
-	d.Set("cidr", resp.Cidr)
-	d.Set("status", resp.Status)
+	if resp.Id != nil {
+		d.SetId(*resp.Id)
+	} else {
+		d.SetId("")
+	}
+	if resp.Location != nil {
+		d.Set("location", *resp.Location)
+	} else {
+		d.Set("location", "")
+	}
+	if resp.CidrBlockSize != nil {
+		d.Set("cidr_block_size", *resp.CidrBlockSize)
+	} else {
+		d.Set("cidr_block_size", "")
+	}
+	if resp.Cidr != nil {
+		d.Set("cidr", *resp.Cidr)
+	} else {
+		d.Set("cidr", "")
+	}
+	if resp.IpVersion != nil {
+		d.Set("ip_version", *resp.IpVersion)
+	} else {
+		d.Set("ip_version", "")
+	}
+	if resp.Status != nil {
+		d.Set("status", *resp.Status)
+	} else {
+		d.Set("status", "")
+	}
 	if resp.AssignedResourceId != nil {
 		d.Set("assigned_resource_id", *resp.AssignedResourceId)
 	} else {
@@ -191,9 +229,14 @@ func resourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 	}
-	d.Set("is_bring_your_own", resp.IsBringYourOwn)
-	if len(resp.CreatedOn.String()) > 0 {
-		d.Set("created_on", resp.CreatedOn.String())
+	if resp.IsBringYourOwn != nil {
+		d.Set("is_bring_your_own", *resp.IsBringYourOwn)
+	} else {
+		d.Set("is_bring_your_own", nil)
+	}
+	if resp.CreatedOn != nil {
+		createdOn := *resp.CreatedOn
+		d.Set("created_on", createdOn.String())
 	}
 	return nil
 }
@@ -323,8 +366,10 @@ func refreshForIpBlockStatus(client *receiver.BMCSDK, id string) resource.StateR
 		resp, err := requestCommand.Execute()
 		if err != nil {
 			return 0, "", err
+		} else if resp.Status != nil {
+			return 0, *resp.Status, nil
 		} else {
-			return 0, resp.Status, nil
+			return 0, "", nil
 		}
 	}
 }

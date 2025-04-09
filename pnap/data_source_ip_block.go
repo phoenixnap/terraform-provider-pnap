@@ -34,6 +34,10 @@ func dataSourceIpBlock() *schema.Resource {
 				Computed:      true,
 				ConflictsWith: []string{"id"},
 			},
+			"ip_version": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -99,14 +103,41 @@ func dataSourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	numOfBlocks := 0
+	cidr := d.Get("cidr").(string)
+	id := d.Get("id").(string)
 	for _, instance := range resp {
-		if instance.Cidr == d.Get("cidr").(string) || instance.Id == d.Get("id").(string) {
+		if instance.Cidr != nil && *instance.Cidr == cidr || instance.Id != nil && *instance.Id == id {
 			numOfBlocks++
-			d.SetId(instance.Id)
-			d.Set("location", instance.Location)
-			d.Set("cidr_block_size", instance.CidrBlockSize)
-			d.Set("cidr", instance.Cidr)
-			d.Set("status", instance.Status)
+			if instance.Id != nil {
+				d.SetId(*instance.Id)
+			} else {
+				d.SetId("")
+			}
+			if instance.Location != nil {
+				d.Set("location", *instance.Location)
+			} else {
+				d.Set("location", "")
+			}
+			if instance.CidrBlockSize != nil {
+				d.Set("cidr_block_size", *instance.CidrBlockSize)
+			} else {
+				d.Set("cidr_block_size", "")
+			}
+			if instance.Cidr != nil {
+				d.Set("cidr", *instance.Cidr)
+			} else {
+				d.Set("cidr", "")
+			}
+			if instance.IpVersion != nil {
+				d.Set("ip_version", *instance.IpVersion)
+			} else {
+				d.Set("ip_version", "")
+			}
+			if instance.Status != nil {
+				d.Set("status", *instance.Status)
+			} else {
+				d.Set("status", "")
+			}
 			if instance.AssignedResourceId != nil {
 				d.Set("assigned_resource_id", *instance.AssignedResourceId)
 			} else {
@@ -126,14 +157,21 @@ func dataSourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 			if err := d.Set("tags", tags); err != nil {
 				return err
 			}
-			d.Set("is_bring_your_own", instance.IsBringYourOwn)
-			if len(instance.CreatedOn.String()) > 0 {
-				d.Set("created_on", instance.CreatedOn.String())
+			if instance.IsBringYourOwn != nil {
+				d.Set("is_bring_your_own", *instance.IsBringYourOwn)
+			} else {
+				d.Set("is_bring_your_own", nil)
+			}
+			if instance.CreatedOn != nil {
+				createdOn := *instance.CreatedOn
+				d.Set("created_on", createdOn.String())
 			}
 		}
 	}
-	if numOfBlocks > 1 {
-		return fmt.Errorf("too many IP Blocks with CIDR %s (found %d, expected 1)", d.Get("cidr").(string), numOfBlocks)
+	if numOfBlocks > 1 && len(cidr) > 0 {
+		return fmt.Errorf("too many IP Blocks with CIDR %s (found %d, expected 1)", cidr, numOfBlocks)
+	} else if numOfBlocks > 1 && len(id) > 0 {
+		return fmt.Errorf("too many IP Blocks with ID %s (found %d, expected 1)", id, numOfBlocks)
 	}
 
 	return nil

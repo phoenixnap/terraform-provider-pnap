@@ -44,6 +44,7 @@ The following attributes are exported:
 * `location` - IP Block location ID.
 * `cidr_block_size` - CIDR IP Block Size.
 * `cidr` - The IP Block in CIDR notation.
+* `ip_version` - The IP Version of the block.
 * `status` - The status of the IP Block.
 * `assigned_resource_id` - ID of the resource assigned to the IP Block.
 * `assigned_resource_type `- Type of the resource assigned to the IP Block.
