@@ -52,3 +52,6 @@ The following attributes are exported:
 * `created_on` - Date and time when this public network was created.
 * `ip_blocks` - A list of IP Blocks that are associated with this public network.
     * `id` - The IP Block identifier.
+    * `cidr` - The CIDR notation of the IP block.
+    * `used_ips_count` - The number of IPs used in the IP block.
+* `ra_enabled` - Boolean indicating whether Router Advertisement is enabled. Only applicable for Network with IPv6 Blocks.

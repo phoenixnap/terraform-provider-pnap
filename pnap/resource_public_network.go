@@ -11,7 +11,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/command/networkapi/publicnetwork"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 
-	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v3"
+	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v4"
 )
 
 const (
@@ -63,6 +63,14 @@ func resourcePublicNetwork() *schema.Resource {
 										Type:     schema.TypeString,
 										Required: true,
 									},
+									"cidr": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"used_ips_count": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
 								},
 							},
 						},
@@ -103,6 +111,11 @@ func resourcePublicNetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"ra_enabled": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -125,18 +138,24 @@ func resourcePublicNetworkCreate(d *schema.ResourceData, m interface{}) error {
 	}
 	ipBlocks := d.Get("ip_blocks").([]interface{})
 	if len(ipBlocks) > 0 {
-		ipBlocksObject := make([]networkapiclient.PublicNetworkIpBlock, len(ipBlocks))
+		ipBlocksObject := make([]networkapiclient.PublicNetworkIpBlockCreate, len(ipBlocks))
 		for i, j := range ipBlocks {
 			ibItem := j.(map[string]interface{})
 			pnib := ibItem["public_network_ip_block"].([]interface{})[0]
 			pnibItem := pnib.(map[string]interface{})
 
-			pnibObject := networkapiclient.PublicNetworkIpBlock{}
+			pnibObject := networkapiclient.PublicNetworkIpBlockCreate{}
 			pnibObject.Id = pnibItem["id"].(string)
 			ipBlocksObject[i] = pnibObject
 		}
 		request.IpBlocks = ipBlocksObject
 	}
+	raEnabledInterface, exists := d.GetOkExists("ra_enabled")
+	if exists {
+		raEnabled := raEnabledInterface.(bool)
+		request.RaEnabled = &raEnabled
+	}
+
 	requestCommand := publicnetwork.NewCreatePublicNetworkCommand(client, *request)
 
 	resp, err := requestCommand.Execute()
@@ -166,10 +185,11 @@ func resourcePublicNetworkRead(d *schema.ResourceData, m interface{}) error {
 	} else {
 		d.Set("description", "")
 	}
+	var ipBlocksInput = d.Get("ip_blocks").([]interface{})
+	ipBlocks := flattenIpBlocks(resp.IpBlocks, ipBlocksInput)
 
-	if len(resp.IpBlocks) > 0 {
-		var ibInput = d.Get("ip_blocks").([]interface{})
-		d.Set("ip_blocks", ibInput)
+	if err := d.Set("ip_blocks", ipBlocks); err != nil {
+		return err
 	}
 	if len(resp.CreatedOn.String()) > 0 {
 		d.Set("created_on", resp.CreatedOn.String())
@@ -182,6 +202,11 @@ func resourcePublicNetworkRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	d.Set("status", resp.Status)
+	if resp.RaEnabled != nil {
+		d.Set("ra_enabled", *resp.RaEnabled)
+	} else {
+		d.Set("ra_enabled", nil)
+	}
 
 	return nil
 }
@@ -195,6 +220,19 @@ func resourcePublicNetworkUpdate(d *schema.ResourceData, m interface{}) error {
 		request.Name = &name
 		var desc = d.Get("description").(string)
 		request.Description = &desc
+
+		requestCommand := publicnetwork.NewUpdatePublicNetworkCommand(client, networkID, *request)
+		_, err := requestCommand.Execute()
+		if err != nil {
+			return err
+		}
+	} else if d.HasChange("ra_enabled") {
+		client := m.(receiver.BMCSDK)
+		networkID := d.Id()
+		request := &networkapiclient.PublicNetworkModify{}
+		raEnabled := d.Get("ra_enabled").(bool)
+		request.RaEnabled = &raEnabled
+
 		requestCommand := publicnetwork.NewUpdatePublicNetworkCommand(client, networkID, *request)
 		_, err := requestCommand.Execute()
 		if err != nil {
@@ -278,4 +316,56 @@ func refreshForPublicNetworkMembershipStatus(client *receiver.BMCSDK, id string)
 			return 0, "unassigned", nil
 		}
 	}
+}
+
+func flattenIpBlocks(pubNetIpBlock []networkapiclient.PublicNetworkIpBlock, ipBlocksInput []interface{}) []interface{} {
+	if pubNetIpBlock != nil {
+		var ib []interface{}
+		var ipBlocksExists = false
+		if ipBlocksInput != nil {
+			ib = ipBlocksInput
+			ipBlocksExists = true
+		} else {
+			ib = make([]interface{}, len(pubNetIpBlock))
+			ipBlocksExists = false
+		}
+		for i, j := range pubNetIpBlock {
+			for k := range ib {
+				if !ipBlocksExists || ib[k].(map[string]interface{})["public_network_ip_block"].([]interface{})[0].(map[string]interface{})["id"] == j.Id {
+
+					var ibItem map[string]interface{}
+					var pnib []interface{}
+					var pnibItem map[string]interface{}
+
+					if !ipBlocksExists {
+						ibItem = make(map[string]interface{})
+						pnib = make([]interface{}, 1)
+						pnibItem = make(map[string]interface{})
+					} else {
+						ibItem = ib[k].(map[string]interface{})
+						pnib = ibItem["public_network_ip_block"].([]interface{})
+						pnibItem = pnib[0].(map[string]interface{})
+					}
+
+					pnibItem["id"] = j.Id
+					if len(j.Cidr) > 0 {
+						pnibItem["cidr"] = j.Cidr
+					}
+					if len(j.UsedIpsCount) > 0 {
+						pnibItem["used_ips_count"] = j.UsedIpsCount
+					}
+					if !ipBlocksExists {
+						pnib[0] = pnibItem
+						ibItem["public_network_ip_block"] = pnib
+						ib[i] = ibItem
+					}
+				}
+				if !ipBlocksExists {
+					break
+				}
+			}
+		}
+		ipBlocksInput = ib
+	}
+	return ipBlocksInput
 }

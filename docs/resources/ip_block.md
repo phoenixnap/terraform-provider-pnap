@@ -41,7 +41,8 @@ resource "pnap_ip_block" "ip-block-1" {
 The following arguments are supported:
 
 * `location` - (Required) IP Block location ID. Currently this field should be set to `PHX`, `ASH`, `SGP`, `NLD`, `CHI`, `SEA` or `AUS`.
-* `cidr_block_size` - (Required) CIDR IP Block Size. Currently this field should be set to either `/31`, `/30`, `/29` or `/28`. For a larger Block Size contact support.
+* `cidr_block_size` - (Required) CIDR IP Block Size.  V4 supported sizes: [`/31`, `/30`, `/29` or `/28`]. V6 supported sizes: [`/64`]. For a larger Block Size contact support.
+* `ip_version` - IP Version. This field should be set to `V4` or `V6`. Default value is `V4`.
 * `description` - Description of the IP Block.
 * `tags` - Tags to set to IP Block, if any.
     * `tag_assignment` - Tag request to assign to the IP Block.
@@ -56,9 +57,10 @@ The following attributes are exported:
 * `location` - IP Block location ID.
 * `cidr_block_size` - CIDR IP Block Size.
 * `cidr` - The IP Block in CIDR notation.
+* `ip_version` - The IP Version of the block.
 * `status` - The status of the IP Block.
 * `assigned_resource_id` - ID of the resource assigned to the IP Block.
-* `assigned_resource_type `- Type of the resource assigned to the IP Block.
+* `assigned_resource_type`- Type of the resource assigned to the IP Block.
 * `description` - Description of the IP Block.
 * `tags` - The tags assigned to the IP Block.
     * `tag_assignment` - Tag assigned to the IP Block.

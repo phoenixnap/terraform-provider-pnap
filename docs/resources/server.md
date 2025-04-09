@@ -144,10 +144,11 @@ The `public_network_configuration` is the fourth field of the `network_configura
 The `public_network_configuration` block has field `public_networks`:
 
 The `public_networks` block has field `server_public_network`.
-The `server_public_network` block has 2 fields:
+The `server_public_network` block has 3 fields:
 
 * `id` - (Required) The network identifier.
 * `ips` - (Required) IPs to configure on the server. IPs must be within the network's range. Must contain at least 1 item.
+* `compute_slaac_ip` - Requests Stateless Address Autoconfiguration (SLAAC). Applicable for Network which contains IPv6 block.
 
 
 The `storage_configuration` block has field `root_partition`.

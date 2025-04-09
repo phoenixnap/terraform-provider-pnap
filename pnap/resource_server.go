@@ -450,6 +450,10 @@ func resourceServer() *schema.Resource {
 																Type:     schema.TypeString,
 																Computed: true,
 															},
+															"compute_slaac_ip": {
+																Type:     schema.TypeBool,
+																Optional: true,
+															},
 														},
 													},
 												},
@@ -711,17 +715,17 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 						id := serverPrivateNetworkItem["id"].(string)
 						tempIps := serverPrivateNetworkItem["ips"].(*schema.Set).List()
 
-						NetIps := make([]string, len(tempIps))
+						netIps := make([]string, len(tempIps))
 						for i, v := range tempIps {
-							NetIps[i] = fmt.Sprint(v)
+							netIps[i] = fmt.Sprint(v)
 						}
 						dhcp := serverPrivateNetworkItem["dhcp"].(bool)
 
 						if (len(id)) > 0 {
 							serverPrivateNetworkObject.Id = id
 						}
-						if (len(NetIps)) > 0 {
-							serverPrivateNetworkObject.Ips = NetIps
+						if (len(netIps)) > 0 {
+							serverPrivateNetworkObject.Ips = netIps
 						}
 
 						serverPrivateNetworkObject.Dhcp = &dhcp
@@ -792,16 +796,20 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 					id := serverPublicNetworkItem["id"].(string)
 					tempIps := serverPublicNetworkItem["ips"].(*schema.Set).List()
 
-					NetIps := make([]string, len(tempIps))
+					netIps := make([]string, len(tempIps))
 					for i, v := range tempIps {
-						NetIps[i] = fmt.Sprint(v)
+						netIps[i] = fmt.Sprint(v)
 					}
+					computeSlaacIp := serverPublicNetworkItem["compute_slaac_ip"].(bool)
+
 					if (len(id)) > 0 {
 						serverPublicNetworkObject.Id = id
 					}
-					if (len(NetIps)) > 0 {
-						serverPublicNetworkObject.Ips = NetIps
+					if (len(netIps)) > 0 {
+						serverPublicNetworkObject.Ips = netIps
 					}
+					serverPublicNetworkObject.ComputeSlaacIp = &computeSlaacIp
+
 					serPublicNets[k] = serverPublicNetworkObject
 				}
 				publicNetworkConfigurationObject.PublicNetworks = serPublicNets
