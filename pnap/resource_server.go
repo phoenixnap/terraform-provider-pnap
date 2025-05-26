@@ -3,6 +3,7 @@ package pnap
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -725,6 +726,10 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 							serverPrivateNetworkObject.Id = id
 						}
 						if (len(netIps)) > 0 {
+							if (len(netIps)) == 1 && netIps[0] == "" {
+								// Designate an empty array of IPs
+								netIps = make([]string, 0)
+							}
 							serverPrivateNetworkObject.Ips = netIps
 						}
 
@@ -990,7 +995,7 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	var ncInput = d.Get("network_configuration").([]interface{})
-	networkConfiguration := flattenNetworkConfiguration(&resp.NetworkConfiguration, ncInput)
+	networkConfiguration := flattenNetworkConfiguration(d, &resp.NetworkConfiguration, ncInput)
 
 	if err := d.Set("network_configuration", networkConfiguration); err != nil {
 		return err
@@ -1300,7 +1305,7 @@ func refreshForCreate(client *receiver.BMCSDK, id string) resource.StateRefreshF
 	}
 }
 
-func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncInput []interface{}) []interface{} {
+func flattenNetworkConfiguration(d *schema.ResourceData, netConf *bmcapiclient.NetworkConfiguration, ncInput []interface{}) []interface{} {
 	if netConf != nil { //len(ncInput)
 		if len(ncInput) == 0 {
 			ncInput = make([]interface{}, 1)
@@ -1378,6 +1383,15 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 									}
 									spnItem["ips"] = ips
 								}
+
+								num := strconv.Itoa(k)
+								key := "network_configuration.0.private_network_configuration.0.private_networks." + num + ".server_private_network.0.ips"
+								ipsInterface := d.Get(key)
+								ips := ipsInterface.(*schema.Set).List()
+								if len(ips) == 1 && ips[0] == "" {
+									spnItem["ips"] = ips
+								}
+
 								if j.Dhcp != nil {
 									spnItem["dhcp"] = *j.Dhcp
 								}
