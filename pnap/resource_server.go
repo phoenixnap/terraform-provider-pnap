@@ -1390,7 +1390,18 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 										ipsInputS[m] = n.(string)
 									}
 									ipsInputMono := divideIpsRange(ipsInputS)
-									if compareIps(ipsApiMono, ipsInputMono) {
+
+									// remove duplicates of IP adresses
+									presentIps := make(map[string]bool)
+									var ipsInputMonoPurged []string
+									for _, k := range ipsInputMono {
+										if _, l := presentIps[k]; !l {
+											presentIps[k] = true
+											ipsInputMonoPurged = append(ipsInputMonoPurged, k)
+										}
+									}
+
+									if compareIps(ipsApiMono, ipsInputMonoPurged) {
 										spnItem["ips"] = ipsInput
 									} else {
 										ips := make([]interface{}, len(ipsApi))
