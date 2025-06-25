@@ -125,7 +125,7 @@ The `private_networks` block has field `server_private_network`.
 The `server_private_network` block has 3 fields:
 
 * `id` - (Required) The network identifier.
-* `ips` - IPs to configure/configured on the server. Should be null or empty list if DHCP is true. Must contain at most 10 items.
+* `ips` - IPs to configure/configured on the server. Valid IP formats are single IPv4 addresses or IPv4 ranges. IPs must be within the network's range. Should be null or empty list if DHCP is true. Setting the `force` query parameter to `true` allows you to: (1) Assign no specific IP addresses by designating an empty array of IPs (to do this set the field exactly to `[""]`). (2) Assign one or more IP addresses which are already configured on other resource(s) in network. (3) Assign IP addresses which are considered as reserved in network.
 * `dhcp` - Determines whether DHCP is enabled for this server. Should be false if ips is not an empty list. Not supported for proxmox OS. Default value is `false`.
 
 The `ip_blocks_configuration` is the third field of the `network_configuration` block.

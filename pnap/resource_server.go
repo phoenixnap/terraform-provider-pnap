@@ -1,8 +1,10 @@
 package pnap
 
 import (
+	"encoding/binary"
 	"fmt"
 	"log"
+	"net/netip"
 	"strings"
 	"time"
 
@@ -725,6 +727,10 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 							serverPrivateNetworkObject.Id = id
 						}
 						if (len(netIps)) > 0 {
+							if (len(netIps)) == 1 && netIps[0] == "" {
+								// Designate an empty array of IPs
+								netIps = make([]string, 0)
+							}
 							serverPrivateNetworkObject.Ips = netIps
 						}
 
@@ -1349,7 +1355,7 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 						pnetworksExists = false
 					}
 					for i, j := range prNet {
-						for k, _ := range pn {
+						for k := range pn {
 							if !pnetworksExists || pn[k].(map[string]interface{})["server_private_network"].([]interface{})[0].(map[string]interface{})["id"] == j.Id {
 
 								var pnItem map[string]interface{}
@@ -1371,13 +1377,41 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 								}
 
 								spnItem["id"] = j.Id
-								if j.Ips != nil {
-									ips := make([]interface{}, len(j.Ips))
-									for k, l := range j.Ips {
-										ips[k] = l
+
+								ipsInput := spnItem["ips"].(*schema.Set).List()
+								if len(ipsInput) == 1 && ipsInput[0] == "" {
+									spnItem["ips"] = ipsInput
+								} else if j.Ips != nil {
+									ipsApi := j.Ips
+									ipsApiMono := divideIpsRange(ipsApi)
+
+									ipsInputS := make([]string, len(ipsInput))
+									for m, n := range ipsInput {
+										ipsInputS[m] = n.(string)
 									}
-									spnItem["ips"] = ips
+									ipsInputMono := divideIpsRange(ipsInputS)
+
+									// remove duplicates of IP adresses
+									presentIps := make(map[string]bool)
+									var ipsInputMonoPurged []string
+									for _, k := range ipsInputMono {
+										if _, l := presentIps[k]; !l {
+											presentIps[k] = true
+											ipsInputMonoPurged = append(ipsInputMonoPurged, k)
+										}
+									}
+
+									if compareIps(ipsApiMono, ipsInputMonoPurged) {
+										spnItem["ips"] = ipsInput
+									} else {
+										ips := make([]interface{}, len(ipsApi))
+										for o, p := range ipsApi {
+											ips[o] = p
+										}
+										spnItem["ips"] = ips
+									}
 								}
+
 								if j.Dhcp != nil {
 									spnItem["dhcp"] = *j.Dhcp
 								}
@@ -1503,4 +1537,62 @@ func supressUserDefinedNetworkType(k, oldValue, newValue string, d *schema.Resou
 	} else {
 		return false
 	}
+}
+
+// divideIpsRange transforms a slice of IP adresses in range format to a slice of individual IP adresses.
+func divideIpsRange(ipsRanged []string) []string {
+	var ipsMono []string
+	for _, j := range ipsRanged {
+		if strings.Contains(j, " - ") {
+			firstLast := strings.Split(j, " - ")
+			if len(firstLast) > 0 {
+				first := firstLast[0]
+				last := firstLast[1]
+				firstAddr, _ := netip.ParseAddr(first)
+				lastAddr, _ := netip.ParseAddr(last)
+				nextAddr := firstAddr.Next()
+
+				num1 := binary.BigEndian.Uint32(firstAddr.AsSlice())
+				num2 := binary.BigEndian.Uint32(lastAddr.AsSlice())
+				for i := num1; i <= num2; i++ {
+					if nextAddr == lastAddr {
+						ipsMono = append(ipsMono, first, last)
+						break
+					} else {
+						ipsMono = append(ipsMono, first)
+						first = nextAddr.String()
+						nextAddr = nextAddr.Next()
+					}
+				}
+			}
+		} else {
+			ipsMono = append(ipsMono, j)
+		}
+	}
+	return ipsMono
+}
+
+// compareIps compares slices of individual IP adresses and returns true if they are equal or false if they are not equal.
+func compareIps(ips1 []string, ips2 []string) bool {
+	var num int
+	if len(ips1) == len(ips2) {
+		for _, j := range ips1 {
+			ip1, _ := netip.ParseAddr(j)
+			var exists bool
+			for _, l := range ips2 {
+				ip2, _ := netip.ParseAddr(l)
+				if ip1 == ip2 {
+					num += 1
+					exists = true
+				}
+			}
+			if !exists {
+				return false
+			}
+		}
+		if len(ips1) == num {
+			return true
+		}
+	}
+	return false
 }
