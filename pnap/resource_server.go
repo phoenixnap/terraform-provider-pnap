@@ -1378,7 +1378,10 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 
 								spnItem["id"] = j.Id
 
-								ipsInput := spnItem["ips"].(*schema.Set).List()
+								ipsInput := make([]interface{}, 0)
+								if spnItem["ips"] != nil {
+									ipsInput = spnItem["ips"].(*schema.Set).List()
+								}
 								if len(ipsInput) == 1 && ipsInput[0] == "" {
 									spnItem["ips"] = ipsInput
 								} else if j.Ips != nil {
