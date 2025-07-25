@@ -265,6 +265,10 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
+			"transfer_reservation_to": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"tags": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -1161,6 +1165,17 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		if err != nil {
 			return err
 		}
+	} else if d.HasChange("transfer_reservation_to") {
+		client := m.(receiver.BMCSDK)
+		request := &bmcapiclient.ReservationTransferDetails{}
+		serverID := d.Id()
+		request.TargetServerId = d.Get("transfer_reservation_to").(string)
+
+		requestCommand := server.NewTransferServerReservationCommand(client, serverID, *request)
+		_, err := requestCommand.Execute()
+		if err != nil {
+			return err
+		}
 	} else if d.HasChange("tags") {
 		tags := d.Get("tags").([]interface{})
 		client := m.(receiver.BMCSDK)
@@ -1378,7 +1393,10 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 
 								spnItem["id"] = j.Id
 
-								ipsInput := spnItem["ips"].(*schema.Set).List()
+								ipsInput := make([]interface{}, 0)
+								if spnItem["ips"] != nil {
+									ipsInput = spnItem["ips"].(*schema.Set).List()
+								}
 								if len(ipsInput) == 1 && ipsInput[0] == "" {
 									spnItem["ips"] = ipsInput
 								} else if j.Ips != nil {
