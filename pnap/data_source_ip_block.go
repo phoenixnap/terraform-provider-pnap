@@ -42,6 +42,10 @@ func dataSourceIpBlock() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"parent_ip_block_allocation_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"assigned_resource_id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -81,6 +85,10 @@ func dataSourceIpBlock() *schema.Resource {
 						},
 					},
 				},
+			},
+			"is_system_managed": {
+				Type:     schema.TypeBool,
+				Computed: true,
 			},
 			"is_bring_your_own": {
 				Type:     schema.TypeBool,
@@ -138,6 +146,11 @@ func dataSourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 			} else {
 				d.Set("status", "")
 			}
+			if instance.ParentIpBlockAllocationId != nil {
+				d.Set("parent_ip_block_allocation_id", *instance.ParentIpBlockAllocationId)
+			} else {
+				d.Set("parent_ip_block_allocation_id", "")
+			}
 			if instance.AssignedResourceId != nil {
 				d.Set("assigned_resource_id", *instance.AssignedResourceId)
 			} else {
@@ -156,6 +169,11 @@ func dataSourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 			tags := flattenDataTags(instance.Tags)
 			if err := d.Set("tags", tags); err != nil {
 				return err
+			}
+			if instance.IsSystemManaged != nil {
+				d.Set("is_system_managed", *instance.IsSystemManaged)
+			} else {
+				d.Set("is_system_managed", nil)
 			}
 			if instance.IsBringYourOwn != nil {
 				d.Set("is_bring_your_own", *instance.IsBringYourOwn)
