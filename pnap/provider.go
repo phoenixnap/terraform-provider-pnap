@@ -27,6 +27,16 @@ func Provider() *schema.Provider {
 				Optional: true,
 				Default:  "",
 			},
+			"token_url": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
+			},
+			"api_base_url": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"pnap_ssh_key":         resourceSshKey(),
@@ -67,15 +77,22 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	clientId := d.Get("client_id").(string)
 	clientSecret := d.Get("client_secret").(string)
 	configFilePath := d.Get("config_file_path").(string)
+	tokenUrl := d.Get("token_url").(string)
+	apiBaseUrl := d.Get("api_base_url").(string)
 
 	configuration := dto.Configuration{}
-	configuration.UserAgent = "terraform-provider-pnap/0.27.2"
-	configuration.PoweredBy = "terraform-provider-pnap/0.27.2"
+	configuration.UserAgent = "terraform-provider-pnap/0.27.3"
+	configuration.PoweredBy = "terraform-provider-pnap/0.27.3"
 	if (clientId != "") && (clientSecret != "") {
 		configuration.ClientID = clientId
 		configuration.ClientSecret = clientSecret
-		configuration.TokenURL = "https://auth.phoenixnap.com/auth/realms/BMC/protocol/openid-connect/token"
-		configuration.ApiHostName = "https://api.phoenixnap.com/"
+		if (tokenUrl != "") && (apiBaseUrl != "") {
+			configuration.TokenURL = tokenUrl
+			configuration.ApiHostName = apiBaseUrl
+		} else {
+			configuration.TokenURL = "https://auth.phoenixnap.com/auth/realms/BMC/protocol/openid-connect/token"
+			configuration.ApiHostName = "https://api.phoenixnap.com/"
+		}
 		/* auth := dto.Authentication{ClientID : clientId,
 		ClientSecret: clientSecret,
 		TokenURL: "https://auth.phoenixnap.com/auth/realms/BMC/protocol/openid-connect/token",
