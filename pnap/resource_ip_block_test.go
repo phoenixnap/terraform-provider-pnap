@@ -94,7 +94,8 @@ func testAccCreateIpBlockResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_ip_block" "%s" {
     location = "PHX"
-    cidr_block_size = "/31"
+    cidr_block_size = "/64"
+	ip_version = "V6"
     description = "acctest"
 }`, rName)
 }
@@ -103,7 +104,8 @@ func testAccUpdateIpBlockResource(rName string) string {
 	return fmt.Sprintf(`
 resource "pnap_ip_block" "%s" {
     location = "PHX"
-    cidr_block_size = "/31"
+    cidr_block_size = "/64"
+	ip_version = "V6"
     description = "acctest-basic"
 }`, rName)
 }
@@ -142,11 +144,26 @@ func testAccCheckIpBlockExists(resourceName string, ipBlock *ipapiclient.IpBlock
 // Terraform
 func testAccCheckIpBlockAttributes(resourceName string, ipBlock *ipapiclient.IpBlock) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		if ipBlock.Location != "PHX" {
+		if ipBlock.Location != nil {
+			if *ipBlock.Location != "PHX" {
+				return fmt.Errorf("location is not set")
+			}
+		} else {
 			return fmt.Errorf("location is not set")
 		}
-		if ipBlock.CidrBlockSize != "/31" {
+		if ipBlock.CidrBlockSize != nil {
+			if *ipBlock.CidrBlockSize != "/64" {
+				return fmt.Errorf("cidr block size is not set")
+			}
+		} else {
 			return fmt.Errorf("cidr block size is not set")
+		}
+		if ipBlock.IpVersion != nil {
+			if *ipBlock.IpVersion != "V6" {
+				return fmt.Errorf("ip version is not set")
+			}
+		} else {
+			return fmt.Errorf("ip version is not set")
 		}
 		if ipBlock.Description != nil {
 			if *ipBlock.Description != "acctest" {
@@ -155,13 +172,20 @@ func testAccCheckIpBlockAttributes(resourceName string, ipBlock *ipapiclient.IpB
 		} else {
 			return fmt.Errorf("description is not set")
 		}
-		if ipBlock.Status != "unassigned" {
+		if ipBlock.Status != nil {
+			if *ipBlock.Status != "unassigned" {
+				return fmt.Errorf("status is not set")
+			}
+		} else {
 			return fmt.Errorf("status is not set")
 		}
-		if ipBlock.IsBringYourOwn != false {
+		if ipBlock.IsBringYourOwn != nil {
+			if *ipBlock.IsBringYourOwn != false {
+				return fmt.Errorf("is bring your own is not set")
+			}
+		} else {
 			return fmt.Errorf("is bring your own is not set")
 		}
-
 		return nil
 	}
 }
@@ -170,11 +194,26 @@ func testAccCheckIpBlockAttributes(resourceName string, ipBlock *ipapiclient.IpB
 // Terraform
 func testAccCheckIpBlockNewAttributes(resourceName string, ipBlock *ipapiclient.IpBlock) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		if ipBlock.Location != "PHX" {
+		if ipBlock.Location != nil {
+			if *ipBlock.Location != "PHX" {
+				return fmt.Errorf("location is not set")
+			}
+		} else {
 			return fmt.Errorf("location is not set")
 		}
-		if ipBlock.CidrBlockSize != "/31" {
+		if ipBlock.CidrBlockSize != nil {
+			if *ipBlock.CidrBlockSize != "/64" {
+				return fmt.Errorf("cidr block size is not set")
+			}
+		} else {
 			return fmt.Errorf("cidr block size is not set")
+		}
+		if ipBlock.IpVersion != nil {
+			if *ipBlock.IpVersion != "V6" {
+				return fmt.Errorf("ip version is not set")
+			}
+		} else {
+			return fmt.Errorf("ip version is not set")
 		}
 		if ipBlock.Description != nil {
 			if *ipBlock.Description != "acctest-basic" {
@@ -183,10 +222,18 @@ func testAccCheckIpBlockNewAttributes(resourceName string, ipBlock *ipapiclient.
 		} else {
 			return fmt.Errorf("description is not updated")
 		}
-		if ipBlock.Status != "unassigned" {
+		if ipBlock.Status != nil {
+			if *ipBlock.Status != "unassigned" {
+				return fmt.Errorf("status is not set")
+			}
+		} else {
 			return fmt.Errorf("status is not set")
 		}
-		if ipBlock.IsBringYourOwn != false {
+		if ipBlock.IsBringYourOwn != nil {
+			if *ipBlock.IsBringYourOwn != false {
+				return fmt.Errorf("is bring your own is not set")
+			}
+		} else {
 			return fmt.Errorf("is bring your own is not set")
 		}
 
@@ -210,12 +257,12 @@ func init() {
 			} else {
 
 				for _, instance := range resp {
-					if instance.Description != nil && strings.HasPrefix(*instance.Description, "acctest") {
-						deleteCommand := helperipblock.NewDeleteIpBlockCommand(client, instance.Id)
+					if instance.Id != nil && instance.Description != nil && strings.HasPrefix(*instance.Description, "acctest") {
+						deleteCommand := helperipblock.NewDeleteIpBlockCommand(client, *instance.Id)
 						_, err := deleteCommand.Execute()
 
 						if err != nil {
-							return fmt.Errorf("Error destroying ip block %s during sweep: %s ", instance.Id, err)
+							return fmt.Errorf("Error destroying ip block %s during sweep: %s ", *instance.Id, err)
 						}
 					}
 				}

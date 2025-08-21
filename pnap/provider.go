@@ -81,8 +81,8 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	apiBaseUrl := d.Get("api_base_url").(string)
 
 	configuration := dto.Configuration{}
-	configuration.UserAgent = "terraform-provider-pnap/0.27.3"
-	configuration.PoweredBy = "terraform-provider-pnap/0.27.3"
+	configuration.UserAgent = "terraform-provider-pnap/0.28.0"
+	configuration.PoweredBy = "terraform-provider-pnap/0.28.0"
 	if (clientId != "") && (clientSecret != "") {
 		configuration.ClientID = clientId
 		configuration.ClientSecret = clientSecret

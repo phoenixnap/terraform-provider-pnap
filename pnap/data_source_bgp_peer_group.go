@@ -31,7 +31,7 @@ func dataSourceBgpPeerGroup() *schema.Resource {
 				Computed:      true,
 				ConflictsWith: []string{"id"},
 			},
-			"ipv4_prefixes": {
+			"ipv4_prefixes": { // Deprecated
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
@@ -54,6 +54,30 @@ func dataSourceBgpPeerGroup() *schema.Resource {
 						},
 						"in_use": {
 							Type:     schema.TypeBool,
+							Computed: true,
+						},
+					},
+				},
+			},
+			"ip_prefixes": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"ip_allocation_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"cidr": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"ip_version": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"status": {
+							Type:     schema.TypeString,
 							Computed: true,
 						},
 					},
@@ -129,6 +153,11 @@ func dataSourceBgpPeerGroup() *schema.Resource {
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
+			"peering_loopbacks_v6": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
 			"keep_alive_timer_seconds": {
 				Type:     schema.TypeInt,
 				Computed: true,
@@ -171,6 +200,10 @@ func dataSourceBgpPeerGroupRead(d *schema.ResourceData, m interface{}) error {
 				if err := d.Set("ipv4_prefixes", ipv4Prefixes); err != nil {
 					return err
 				}
+				ipPrefixes := flattenIpPrefixes(instance.IpPrefixes)
+				if err := d.Set("ip_prefixes", ipPrefixes); err != nil {
+					return err
+				}
 				target := instance.TargetAsnDetails
 				targetAsnDetails := flattenAsnDetails(&target)
 				if err := d.Set("target_asn_details", targetAsnDetails); err != nil {
@@ -189,6 +222,11 @@ func dataSourceBgpPeerGroupRead(d *schema.ResourceData, m interface{}) error {
 					peeringLoopbacks = append(peeringLoopbacks, v)
 				}
 				d.Set("peering_loopbacks_v4", peeringLoopbacks)
+				var peeringLoopbacks6 []interface{}
+				for _, v6 := range instance.PeeringLoopbacksV6 {
+					peeringLoopbacks6 = append(peeringLoopbacks6, v6)
+				}
+				d.Set("peering_loopbacks_v6", peeringLoopbacks6)
 				d.Set("keep_alive_timer_seconds", int(instance.KeepAliveTimerSeconds))
 				d.Set("hold_timer_seconds", int(instance.HoldTimerSeconds))
 
@@ -226,6 +264,10 @@ func dataSourceBgpPeerGroupRead(d *schema.ResourceData, m interface{}) error {
 			if err := d.Set("ipv4_prefixes", ipv4Prefixes); err != nil {
 				return err
 			}
+			ipPrefixes := flattenIpPrefixes(instance.IpPrefixes)
+			if err := d.Set("ip_prefixes", ipPrefixes); err != nil {
+				return err
+			}
 			target := instance.TargetAsnDetails
 			targetAsnDetails := flattenAsnDetails(&target)
 			if err := d.Set("target_asn_details", targetAsnDetails); err != nil {
@@ -244,6 +286,11 @@ func dataSourceBgpPeerGroupRead(d *schema.ResourceData, m interface{}) error {
 				peeringLoopbacks = append(peeringLoopbacks, v)
 			}
 			d.Set("peering_loopbacks_v4", peeringLoopbacks)
+			var peeringLoopbacks6 []interface{}
+			for _, v6 := range instance.PeeringLoopbacksV6 {
+				peeringLoopbacks6 = append(peeringLoopbacks6, v6)
+			}
+			d.Set("peering_loopbacks_v6", peeringLoopbacks6)
 			d.Set("keep_alive_timer_seconds", int(instance.KeepAliveTimerSeconds))
 			d.Set("hold_timer_seconds", int(instance.HoldTimerSeconds))
 
