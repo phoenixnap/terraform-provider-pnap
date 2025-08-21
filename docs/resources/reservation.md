@@ -41,7 +41,11 @@ The following attributes are exported:
 * `product_category` - The product category.
 * `location` - The location code.
 * `reservation_model` - The reservation model.
+* `reservation_state` - Reservation state.
 * `initial_invoice_model` - Reservations created with initial invoice model ON_CREATION will be invoiced on same date when reservation is created. Reservation created with CALENDAR_MONTH initial invoice model will be invoiced at the begining of next month.
+* `quantity` - Represents the quantity.
+  * `quantity` - Quantity size.
+  * `unit` - Quantity unit.
 * `start_date_time` - The point in time (in UTC) when the reservation starts.
 * `end_date_time` - The point in time (in UTC) when the reservation ends.
 * `last_renewal_date_time` - The point in time (in UTC) when the reservation was renewed last.

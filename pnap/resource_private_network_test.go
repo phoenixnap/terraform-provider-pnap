@@ -11,7 +11,7 @@ import (
 
 	helperprivatenetwork "github.com/PNAP/go-sdk-helper-bmc/command/networkapi/privatenetwork"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
-	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v3"
+	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v4"
 )
 
 func TestAccPnapPrivateNetwork_basic(t *testing.T) {
@@ -41,10 +41,9 @@ func TestAccPnapPrivateNetwork_basic(t *testing.T) {
 					testAccCheckPrivateNetworkAttributes_basic(rName, &privateNetwork),
 					// verify local values
 					resource.TestCheckResourceAttr(rLine, "location_default", "false"),
-					resource.TestCheckResourceAttr(rLine, "cidr", "10.0.1.0/31"),
 					resource.TestCheckResourceAttr(rLine, "status", "READY"),
+					resource.TestCheckResourceAttr(rLine, "type", "PRIVATE"),
 					resource.TestCheckResourceAttrSet(rLine, "vlan_id"),
-					resource.TestCheckResourceAttrSet(rLine, "type"),
 					resource.TestCheckResourceAttrSet(rLine, "created_on"),
 				),
 			},
@@ -59,10 +58,9 @@ func TestAccPnapPrivateNetwork_basic(t *testing.T) {
 					testAccCheckPrivateNetworkNewAttributes_basic(rName2, &privateNetwork),
 					// verify local values
 					resource.TestCheckResourceAttr(rLine, "location_default", "false"),
-					resource.TestCheckResourceAttr(rLine, "cidr", "10.0.1.0/31"),
 					resource.TestCheckResourceAttr(rLine, "status", "READY"),
+					resource.TestCheckResourceAttr(rLine, "type", "PRIVATE"),
 					resource.TestCheckResourceAttrSet(rLine, "vlan_id"),
-					resource.TestCheckResourceAttrSet(rLine, "type"),
 					resource.TestCheckResourceAttrSet(rLine, "created_on"),
 				),
 			},
@@ -95,8 +93,8 @@ func TestAccPnapPrivateNetwork_force(t *testing.T) {
 					resource.TestCheckResourceAttr(rLine, "location_default", "false"),
 					resource.TestCheckResourceAttr(rLine, "cidr", ""),
 					resource.TestCheckResourceAttr(rLine, "status", "READY"),
+					resource.TestCheckResourceAttr(rLine, "type", "PRIVATE"),
 					resource.TestCheckResourceAttrSet(rLine, "vlan_id"),
-					resource.TestCheckResourceAttrSet(rLine, "type"),
 					resource.TestCheckResourceAttrSet(rLine, "created_on"),
 				),
 			},
@@ -113,8 +111,8 @@ func TestAccPnapPrivateNetwork_force(t *testing.T) {
 					resource.TestCheckResourceAttr(rLine, "location_default", "false"),
 					resource.TestCheckResourceAttr(rLine, "cidr", ""),
 					resource.TestCheckResourceAttr(rLine, "status", "READY"),
+					resource.TestCheckResourceAttr(rLine, "type", "PRIVATE"),
 					resource.TestCheckResourceAttrSet(rLine, "vlan_id"),
-					resource.TestCheckResourceAttrSet(rLine, "type"),
 					resource.TestCheckResourceAttrSet(rLine, "created_on"),
 				),
 			},
@@ -236,9 +234,6 @@ func testAccCheckPrivateNetworkAttributes_basic(resourceName string, privateNetw
 		} else {
 			return fmt.Errorf("cidr is not set")
 		}
-		if privateNetwork.LocationDefault != false {
-			return fmt.Errorf("location default is not set")
-		}
 		if privateNetwork.Description != nil {
 			if *privateNetwork.Description != "acctest" {
 				return fmt.Errorf("description is not set")
@@ -268,9 +263,6 @@ func testAccCheckPrivateNetworkNewAttributes_basic(resourceName string, privateN
 		} else {
 			return fmt.Errorf("cidr is not set")
 		}
-		if privateNetwork.LocationDefault != false {
-			return fmt.Errorf("location default is not set")
-		}
 		if privateNetwork.Description != nil {
 			if *privateNetwork.Description != "acctest-basic" {
 				return fmt.Errorf("description is not updated")
@@ -296,9 +288,6 @@ func testAccCheckPrivateNetworkAttributes_force(resourceName string, privateNetw
 		if privateNetwork.Cidr != nil {
 			return fmt.Errorf("cidr is not set")
 		}
-		if privateNetwork.LocationDefault != false {
-			return fmt.Errorf("location default is not set")
-		}
 		if privateNetwork.Description != nil {
 			if *privateNetwork.Description != "acctest" {
 				return fmt.Errorf("description is not set")
@@ -323,9 +312,6 @@ func testAccCheckPrivateNetworkNewAttributes_force(resourceName string, privateN
 		}
 		if privateNetwork.Cidr != nil {
 			return fmt.Errorf("cidr is not set")
-		}
-		if privateNetwork.LocationDefault != false {
-			return fmt.Errorf("location default is not set")
 		}
 		if privateNetwork.Description != nil {
 			if *privateNetwork.Description != "acctest-force" {

@@ -96,12 +96,20 @@ func resourceIpBlock() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"parent_ip_block_allocation_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"assigned_resource_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 			"assigned_resource_type": {
 				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"is_system_managed": {
+				Type:     schema.TypeBool,
 				Computed: true,
 			},
 			"is_bring_your_own": {
@@ -207,6 +215,11 @@ func resourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 	} else {
 		d.Set("status", "")
 	}
+	if resp.ParentIpBlockAllocationId != nil {
+		d.Set("parent_ip_block_allocation_id", *resp.ParentIpBlockAllocationId)
+	} else {
+		d.Set("parent_ip_block_allocation_id", "")
+	}
 	if resp.AssignedResourceId != nil {
 		d.Set("assigned_resource_id", *resp.AssignedResourceId)
 	} else {
@@ -222,12 +235,17 @@ func resourceIpBlockRead(d *schema.ResourceData, m interface{}) error {
 	} else {
 		d.Set("description", "")
 	}
-	if resp.Tags != nil && len(resp.Tags) > 0 {
+	if len(resp.Tags) > 0 {
 		var tagsInput = d.Get("tags").([]interface{})
 		tags := flattenTags(resp.Tags, tagsInput)
 		if err := d.Set("tags", tags); err != nil {
 			return err
 		}
+	}
+	if resp.IsSystemManaged != nil {
+		d.Set("is_system_managed", *resp.IsSystemManaged)
+	} else {
+		d.Set("is_system_managed", nil)
 	}
 	if resp.IsBringYourOwn != nil {
 		d.Set("is_bring_your_own", *resp.IsBringYourOwn)

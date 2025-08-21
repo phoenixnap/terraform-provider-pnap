@@ -41,12 +41,17 @@ The following attributes are exported:
 * `id` - The unique identifier of the BGP Peer Group.
 * `status` - The BGP Peer Group status.
 * `location` - The BGP Peer Group location.
-* `ipv4_prefixes` - The list of BGP Peer Group IPv4 prefixes.
+* `ipv4_prefixes` - (Deprecated) The list of BGP Peer Group IPv4 prefixes.
     * `ipv4_allocation_id` - IPv4 allocation ID.
     * `cidr` - The IP block in CIDR format.
     * `status`- The BGP IPv4 Prefix status.
     * `is_bring_your_own_ip` - Identifies IP as a "bring your own" IP block.
     * `in_use` - The boolean value of the BGP IPv4 Prefix is in use.
+* `ip_prefixes` - The list of BGP Peer Group IP prefixes.
+    * `ip_allocation_id` - IP allocation ID.
+    * `cidr` - The IP block in CIDR format, dependent on IP version.
+    * `ip_version`- The IP block version.
+    * `status`- The BGP IP Prefix status.
 * `target_asn_details ` - BGP Peer Group ASN details.
     * `asn` - The BGP Peer Group ASN.
     * `is_bring_your_own` - True if the BGP Peer Group ASN is a "bring your own" ASN.
@@ -62,6 +67,7 @@ The following attributes are exported:
 * `rpki_roa_origin_asn` - The RPKI ROA Origin ASN of the BGP Peer Group based on location.
 * `ebgp_multi_hop` - The eBGP Multi-hop of the BGP Peer Group.
 * `peering_loopbacks_v4` - The IPv4 Peering Loopback addresses of the BGP Peer Group. Valid IP formats are IPv4 addresses.
+* `peering_loopbacks_v6` - The IPv6 Peering Loopback addresses of the BGP Peer Group. Valid IP formats are IPv6 addresses.
 * `keep_alive_timer_seconds` - The Keep Alive Timer in seconds, of the BGP Peer Group.
 * `hold_timer_seconds` - The Hold Timer in seconds, of the BGP Peer Group.
 * `created_on` - Date and time of creation.

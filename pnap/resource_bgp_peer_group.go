@@ -47,7 +47,7 @@ func resourceBgpPeerGroup() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"ipv4_prefixes": {
+			"ipv4_prefixes": { // Deprecated
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
@@ -70,6 +70,30 @@ func resourceBgpPeerGroup() *schema.Resource {
 						},
 						"in_use": {
 							Type:     schema.TypeBool,
+							Computed: true,
+						},
+					},
+				},
+			},
+			"ip_prefixes": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"ip_allocation_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"cidr": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"ip_version": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"status": {
+							Type:     schema.TypeString,
 							Computed: true,
 						},
 					},
@@ -132,6 +156,11 @@ func resourceBgpPeerGroup() *schema.Resource {
 				Computed: true,
 			},
 			"peering_loopbacks_v4": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"peering_loopbacks_v6": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
@@ -202,6 +231,10 @@ func resourceBgpPeerGroupRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("ipv4_prefixes", ipv4Prefixes); err != nil {
 		return err
 	}
+	ipPrefixes := flattenIpPrefixes(resp.IpPrefixes)
+	if err := d.Set("ip_prefixes", ipPrefixes); err != nil {
+		return err
+	}
 	target := resp.TargetAsnDetails
 	targetAsnDetails := flattenAsnDetails(&target)
 	if err := d.Set("target_asn_details", targetAsnDetails); err != nil {
@@ -220,6 +253,11 @@ func resourceBgpPeerGroupRead(d *schema.ResourceData, m interface{}) error {
 		peeringLoopbacks = append(peeringLoopbacks, v)
 	}
 	d.Set("peering_loopbacks_v4", peeringLoopbacks)
+	var peeringLoopbacks6 []interface{}
+	for _, v6 := range resp.PeeringLoopbacksV6 {
+		peeringLoopbacks6 = append(peeringLoopbacks6, v6)
+	}
+	d.Set("peering_loopbacks_v6", peeringLoopbacks6)
 	d.Set("keep_alive_timer_seconds", int(resp.KeepAliveTimerSeconds))
 	d.Set("hold_timer_seconds", int(resp.HoldTimerSeconds))
 
@@ -292,6 +330,23 @@ func flattenIpv4Prefixes(ipv4Prefixes []networkapiclient.BgpIPv4Prefix) []interf
 			s["status"] = v.Status
 			s["is_bring_your_own_ip"] = v.IsBringYourOwnIp
 			s["in_use"] = v.InUse
+
+			ss[i] = s
+		}
+		return ss
+	}
+	return make([]interface{}, 0)
+}
+
+func flattenIpPrefixes(ipPrefixes []networkapiclient.BgpIpPrefix) []interface{} {
+	if ipPrefixes != nil {
+		ss := make([]interface{}, len(ipPrefixes))
+		for i, v := range ipPrefixes {
+			s := make(map[string]interface{})
+			s["ip_allocation_id"] = v.IpAllocationId
+			s["cidr"] = v.Cidr
+			s["ip_version"] = v.IpVersion
+			s["status"] = v.Status
 
 			ss[i] = s
 		}

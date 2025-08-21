@@ -40,9 +40,29 @@ func resourceReservation() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"reservation_state": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"initial_invoice_model": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+			"quantity": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"quantity": {
+							Type:     schema.TypeFloat,
+							Computed: true,
+						},
+						"unit": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
 			},
 			"start_date_time": {
 				Type:     schema.TypeString,
@@ -120,9 +140,12 @@ func resourceReservationRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("product_category", resp.ProductCategory)
 	d.Set("location", resp.Location)
 	d.Set("reservation_model", resp.ReservationModel)
+	d.Set("reservation_state", resp.ReservationState)
 	if resp.InitialInvoiceModel != nil {
 		d.Set("initial_invoice_model", *resp.InitialInvoiceModel)
 	}
+	quant := flattenQuantity(resp.Quantity)
+	d.Set("quantity", quant)
 	d.Set("start_date_time", resp.StartDateTime.String())
 	if resp.EndDateTime != nil {
 		endDateTime := *resp.EndDateTime
@@ -197,4 +220,17 @@ func resourceReservationUpdate(d *schema.ResourceData, m interface{}) error {
 
 func resourceReservationDelete(d *schema.ResourceData, m interface{}) error {
 	return fmt.Errorf("unsupported action")
+}
+
+func flattenQuantity(quantity billingapiclient.Quantity) map[string]interface{} {
+	quant := make(map[string]interface{})
+	size := quantity.Quantity
+	if size > 0 {
+		quant["quantity"] = float64(size)
+	}
+	unit := quantity.Unit
+	if len(unit) > 0 {
+		quant["unit"] = string(unit)
+	}
+	return quant
 }
