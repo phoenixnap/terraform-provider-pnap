@@ -53,6 +53,7 @@ The following attributes are exported:
 * `public_ip_addresses` - Public IP Addresses assigned to server. Must contain at least 1 item.
 * `primary_ip_address` - First usable public IP Address.
 * `network_type` - The type of network configuration for this server.
+* `bring_your_own_license` - Use a Bring Your Own (BYO) Windows license. If true, the server is provisioned in trial mode, and you must activate your own license. If false (default), the server includes a managed Windows license billed by the platform.
 * `esxi` - Esxi OS configuration.
     * `datastore_configuration` - Esxi data storage configuration.
         * `datastore_name` - Datastore name.
