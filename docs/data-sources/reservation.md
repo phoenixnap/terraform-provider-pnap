@@ -61,3 +61,8 @@ The following attributes are exported:
 * `price_unit` - The unit to which the price applies.
 * `assigned_resource_id` - The resource ID currently being assigned to reservation.
 * `next_billing_date` - Next billing date for reservation.
+* `utilization` - Utilization.
+  * `quantity` - Represents the quantity.
+    * `quantity` - Quantity size.
+    * `unit` - Quantity unit.
+  * `percentage` - Percentage.
