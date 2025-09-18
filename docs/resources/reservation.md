@@ -30,6 +30,9 @@ The following arguments are supported:
 * `sku` - (Required) The SKU code of product pricing plan.
 * `auto_renew` - A flag indicating whether the reservation will auto-renew (default is true, it can only be modified after the creation of resource).
 * `auto_renew_disable_reason` - The reason for disabling auto-renewal.
+* `quantity` - Represents the quantity.
+  * `quantity` - Quantity size.
+  * `unit` - The quantity unit.
 
 
 ## Attributes Reference
@@ -56,3 +59,8 @@ The following attributes are exported:
 * `price_unit` - The unit to which the price applies.
 * `assigned_resource_id` - The resource ID currently being assigned to reservation.
 * `next_billing_date` - Next billing date for reservation.
+* `utilization` - Utilization.
+  * `quantity` - Represents the quantity.
+    * `quantity` - Quantity size.
+    * `unit` - Quantity unit.
+  * `percentage` - Percentage.
