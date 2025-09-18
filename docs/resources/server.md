@@ -72,6 +72,7 @@ The following arguments are supported:
 * `pricing_model` - Server pricing model. Currently this field should be set to HOURLY, ONE_MONTH_RESERVATION, TWELVE_MONTHS_RESERVATION, TWENTY_FOUR_MONTHS_RESERVATION or THIRTY_SIX_MONTHS_RESERVATION.
 * `network_type` - The type of network configuration for this server. Currently this field should be set to PUBLIC_AND_PRIVATE, PRIVATE_ONLY, PUBLIC_ONLY or USER_DEFINED. Setting the force query parameter to `true` allows you to configure network configuration type as NONE.
 * `rdp_allowed_ips` - List of IPs allowed for RDP access to Windows OS. Supported in single IP, CIDR and range format. When undefined, RDP is disabled. To allow RDP access from any IP use 0.0.0.0/0. Must contain at least 1 item.
+* `bring_your_own_license` - Use a Bring Your Own (BYO) Windows license. If true, the server is provisioned in trial mode, and you must activate your own license. If false (default), the server includes a managed Windows license billed by the platform.
 * `management_access_allowed_ips` - Define list of IPs allowed to access the Management UI. Supported in single IP, CIDR and range format. When undefined, Management UI is disabled.Must contain at least 1 item.
 * `install_os_to_ram` - If true, OS will be installed to and booted from the server's RAM. On restart RAM OS will be lost and the server will not be reachable unless a custom bootable OS has been deployed. Only supported for ubuntu/focal. Default value is `false`.
 * `cloud_init` - Cloud-init configuration details. Structure is documented below.
@@ -148,7 +149,7 @@ The `public_networks` block has field `server_public_network`.
 The `server_public_network` block has 3 fields:
 
 * `id` - (Required) The network identifier.
-* `ips` - (Required) IPs to configure on the server. IPs must be within the network's range. Must contain at least 1 item.
+* `ips` - (Required) IPs to configure on the server. Valid IP formats include single IP addresses or IP ranges. IPs must be within the network's range. Must contain at least 1 item. Setting the `force` query parameter to `true` allows you to: (1) Assign no specific IP addresses by designating an empty array of IPs (to do this set the field exactly to `[""]`). (2) Assign one or more IP addresses which are already configured on other resource(s) in network.
 * `compute_slaac_ip` - Requests Stateless Address Autoconfiguration (SLAAC). Applicable for Network which contains IPv6 block.
 
 
@@ -179,6 +180,7 @@ The following attributes are exported:
 * `public_ip_addresses` - Public IP Addresses assigned to server. Must contain at least 1 item.
 * `reservation_id` - The reservation reference id if any.
 * `pricing_model` - The pricing model this server is being billed.
+* `bring_your_own_license` - Use a Bring Your Own (BYO) Windows license. If true, the server is provisioned in trial mode, and you must activate your own license. If false (default), the server includes a managed Windows license billed by the platform.
 * `password` - Password set for user Admin on Windows server which will only be returned in response to provisioning a server.
 * `network_type` - The type of network configuration for this server. 
 * `cluster_id` - The cluster reference id if any.

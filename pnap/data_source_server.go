@@ -63,6 +63,10 @@ func dataSourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"bring_your_own_license": {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 			"esxi": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -367,6 +371,9 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 					}
 					netrisSoftgate[0] = netrisSoftgateItem
 					d.Set("netris_softgate", netrisSoftgate)
+				}
+				if instance.OsConfiguration.Windows != nil {
+					d.Set("bring_your_own_license", instance.OsConfiguration.Windows.BringYourOwnLicense)
 				}
 			}
 
