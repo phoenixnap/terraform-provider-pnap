@@ -46,6 +46,7 @@ The following arguments are supported:
     * `public_network_ip_block` - The assigned IP Block to the public network.
         * `id` - The IP Block identifier.
 * `ra_enabled` - Boolean indicating whether Router Advertisement is enabled. Only applicable for Network with IPv6 Blocks.
+* `force` - Query parameter controlling advanced features availability. Allows resource assigned IP block to be removed even if resource members within this network have IPs assigned from the IP Block being removed. Default value is `false`.
 
 ## Attributes Reference
 

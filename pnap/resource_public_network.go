@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/PNAP/go-sdk-helper-bmc/command/networkapi/publicnetwork"
+	"github.com/PNAP/go-sdk-helper-bmc/dto"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 
 	networkapiclient "github.com/phoenixnap/go-sdk-bmc/networkapi/v4"
@@ -116,6 +117,10 @@ func resourcePublicNetwork() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"force": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -212,7 +217,82 @@ func resourcePublicNetworkRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourcePublicNetworkUpdate(d *schema.ResourceData, m interface{}) error {
-	if d.HasChange("name") || d.HasChange("description") {
+	if d.HasChange("ip_blocks") {
+		client := m.(receiver.BMCSDK)
+		networkID := d.Id()
+		query := &dto.Query{}
+		var force = d.Get("force").(bool)
+		query.Force = force
+		oldInterface, newInterface := d.GetChange("ip_blocks")
+		old := oldInterface.([]interface{})
+		new := newInterface.([]interface{})
+
+		var newIds []string
+		if len(new) > 0 {
+			for _, j := range new {
+				ibItem := j.(map[string]interface{})
+				pnib := ibItem["public_network_ip_block"].([]interface{})[0]
+				pnibItem := pnib.(map[string]interface{})
+				newId := pnibItem["id"].(string)
+				newIds = append(newIds, newId)
+			}
+		}
+		var oldIds []string
+		if len(old) > 0 {
+			for _, j := range old {
+				ibItem := j.(map[string]interface{})
+				pnib := ibItem["public_network_ip_block"].([]interface{})[0]
+				pnibItem := pnib.(map[string]interface{})
+				oldId := pnibItem["id"].(string)
+				oldIds = append(oldIds, oldId)
+			}
+		}
+		var sameIds []string
+		var idExists bool
+		for _, l := range newIds {
+			idExists = false
+			for _, n := range oldIds {
+				if n == l {
+					idExists = true
+				}
+			}
+			if idExists {
+				sameIds = append(sameIds, l)
+			}
+		}
+		for _, p := range newIds {
+			idExists = false
+			for _, r := range sameIds {
+				if p == r {
+					idExists = true
+				}
+			}
+			if !idExists {
+				request := &networkapiclient.PublicNetworkIpBlockCreate{}
+				request.Id = p
+				requestCommand := publicnetwork.NewAddIpBlock2PublicNetworkCommand(client, networkID, *request)
+				_, err := requestCommand.Execute()
+				if err != nil {
+					return err
+				}
+			}
+		}
+		for _, t := range oldIds {
+			idExists = false
+			for _, v := range sameIds {
+				if t == v {
+					idExists = true
+				}
+			}
+			if !idExists {
+				requestCommand := publicnetwork.NewRemoveIpBlockFromPublicNetworkCommandWithQuery(client, networkID, t, query)
+				_, err := requestCommand.Execute()
+				if err != nil {
+					return err
+				}
+			}
+		}
+	} else if d.HasChange("name") || d.HasChange("description") {
 		client := m.(receiver.BMCSDK)
 		networkID := d.Id()
 		request := &networkapiclient.PublicNetworkModify{}
@@ -238,6 +318,8 @@ func resourcePublicNetworkUpdate(d *schema.ResourceData, m interface{}) error {
 		if err != nil {
 			return err
 		}
+	} else if d.HasChange("force") {
+		// Do nothing
 	} else {
 		return fmt.Errorf("unsupported action")
 	}
