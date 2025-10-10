@@ -275,6 +275,10 @@ func resourcePublicNetworkUpdate(d *schema.ResourceData, m interface{}) error {
 				if err != nil {
 					return err
 				}
+				waitResultError := ipBlockWaitForUnassign(p, &client)
+				if waitResultError != nil {
+					return waitResultError
+				}
 			}
 		}
 		for _, t := range oldIds {
@@ -289,6 +293,10 @@ func resourcePublicNetworkUpdate(d *schema.ResourceData, m interface{}) error {
 				_, err := requestCommand.Execute()
 				if err != nil {
 					return err
+				}
+				waitResultError := ipBlockWaitForUnassign(t, &client)
+				if waitResultError != nil {
+					return waitResultError
 				}
 			}
 		}
