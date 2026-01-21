@@ -30,9 +30,9 @@ The following arguments are supported:
 * `sku` - (Required) The SKU code of product pricing plan.
 * `auto_renew` - A flag indicating whether the reservation will auto-renew (default is true, it can only be modified after the creation of resource).
 * `auto_renew_disable_reason` - The reason for disabling auto-renewal.
-* `quantity` - Represents the quantity.
-  * `quantity` - Quantity size.
-  * `unit` - The quantity unit.
+* `quantity` - (Required) Represents the quantity.
+  * `quantity` - (Required) Quantity size.
+  * `unit` - (Required) The quantity unit.
 
 
 ## Attributes Reference
