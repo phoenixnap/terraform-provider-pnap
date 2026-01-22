@@ -32,7 +32,7 @@ The following arguments are supported:
 * `auto_renew_disable_reason` - The reason for disabling auto-renewal.
 * `quantity` - (Required) Represents the quantity.
   * `quantity` - (Required) Quantity size.
-  * `unit` - (Required) The quantity unit.
+  * `unit` - (Required) The quantity unit. The following values are allowed: `TB`, `COUNT`.
 
 
 ## Attributes Reference
