@@ -50,8 +50,7 @@ func resourceReservation() *schema.Resource {
 			},
 			"quantity": {
 				Type:     schema.TypeList,
-				Optional: true,
-				Computed: true,
+				Required: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -223,11 +222,26 @@ func resourceReservationRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceReservationUpdate(d *schema.ResourceData, m interface{}) error {
-	if d.HasChange("sku") {
+	if d.HasChange("sku") || d.HasChange("quantity") {
 		client := m.(receiver.BMCSDK)
 		reservationID := d.Id()
 		request := &billingapiclient.ReservationRequest{}
 		request.Sku = d.Get("sku").(string)
+		if d.Get("quantity") != nil && len(d.Get("quantity").([]interface{})) > 0 {
+			quantity := d.Get("quantity").([]interface{})[0]
+			quantityItem := quantity.(map[string]interface{})
+			quan := quantityItem["quantity"].(float64)
+			unit := quantityItem["unit"].(string)
+			quantityObject := billingapiclient.Quantity{}
+			quantityObject.Quantity = float32(quan)
+
+			unitEnum, errorUnit := billingapiclient.NewQuantityUnitEnumFromValue(unit)
+			if errorUnit != nil {
+				return errorUnit
+			}
+			quantityObject.Unit = *unitEnum
+			request.Quantity = &quantityObject
+		}
 		requestCommand := reservation.NewConvertReservationCommand(client, reservationID, *request)
 		resp, err := requestCommand.Execute()
 		if err != nil {
