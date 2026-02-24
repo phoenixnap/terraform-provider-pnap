@@ -30,25 +30,31 @@ resource "pnap_server" "Test-Server-1" {
     
     ]
     cloud_init {
-        user_data = filebase64("~/terraform-provider-pnap/create-folder.txt")
+        user_data = filebase64("create-folder.txt")
     }
     delete_ip_blocks = true
+    tags {
+        tag_assignment {
+            name = pnap_tag.tag-1.name
+            value = "dev"
+        }
+    }
     network_configuration {
-      private_network_configuration {
-        configuration_type = "USER_DEFINED"
-        private_networks  {
-          server_private_network {
-              id = pnap_private_network.Test-Network-33.id
-              ips=["10.0.0.12"]
-          }
+        private_network_configuration {
+            configuration_type = "USER_DEFINED"
+            private_networks  {
+                server_private_network {
+                    id = pnap_private_network.Test-Network-33.id
+                    ips=["10.0.0.12"]
+                }
+            }
+            private_networks  {
+                server_private_network {
+                    id = pnap_private_network.Test-Network-44.id
+                    ips=["172.16.0.12"]
+                }
+            }
         }
-        private_networks  {
-          server_private_network {
-              id = pnap_private_network.Test-Network-44.id
-              ips=["172.16.0.12"]
-          }
-        }
-      }
     }
     #pricing_model = "ONE_MONTH_RESERVATION"
     #allowed actions are: reboot, reset, powered-on, powered-off, shutdown

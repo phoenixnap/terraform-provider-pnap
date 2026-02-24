@@ -76,16 +76,18 @@ The following attributes are exported:
             * `ips` - IPs configured on the server.
             * `dhcp` - Determines whether DHCP is enabled for this server.
             * `status_description` - The status of the network.
+            * `vlan_id` - The VLAN on which this network has been configured within the network switch.
     * `ip_blocks_configuration` - IP block details of bare metal server.
         * `configuration_type` - Determines the approach for configuring IP blocks for the server being provisioned.
         * `ip_blocks` - The IP blocks assigned to this server.
             * `id` - The IP block's ID.
-            * `ips` - The VLAN on which this IP block has been configured within the network switch.
+            * `vlan_id` - The VLAN on which this IP block has been configured within the network switch.
     * `public_network_configuration` - Public network details of bare metal server.
         * `public_networks` - The list of public networks this server is member of.
             * `id` - The network identifier.
             * `ips` - IPs configured on the server.
             * `status_description` - The status of the assignment to the network.
+            * `vlan_id` - The VLAN on which this network has been configured within the network switch.
 * `storage_configuration` - Storage configuration.
     * `root_partition` - Root partition configuration.
         * `raid` - Software RAID configuration.
