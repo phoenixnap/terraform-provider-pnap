@@ -376,6 +376,10 @@ func resourceServer() *schema.Resource {
 																Type:     schema.TypeString,
 																Computed: true,
 															},
+															"vlan_id": {
+																Type:     schema.TypeInt,
+																Computed: true,
+															},
 														},
 													},
 												},
@@ -464,6 +468,10 @@ func resourceServer() *schema.Resource {
 															"compute_slaac_ip": {
 																Type:     schema.TypeBool,
 																Optional: true,
+															},
+															"vlan_id": {
+																Type:     schema.TypeInt,
+																Computed: true,
 															},
 														},
 													},
@@ -1445,6 +1453,9 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 								if j.StatusDescription != nil {
 									spnItem["status_description"] = *j.StatusDescription
 								}
+								if j.VlanId != nil {
+									spnItem["vlan_id"] = *j.VlanId
+								}
 								if !pnetworksExists {
 									spn[0] = spnItem
 									pnItem["server_private_network"] = spn
@@ -1571,6 +1582,9 @@ func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncI
 								}
 								if j.StatusDescription != nil {
 									spnItem["status_description"] = *j.StatusDescription
+								}
+								if j.VlanId != nil {
+									spnItem["vlan_id"] = *j.VlanId
 								}
 								if !pnetworksExists {
 									spn[0] = spnItem
