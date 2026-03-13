@@ -179,6 +179,10 @@ func dataSourceServer() *schema.Resource {
 													Type:     schema.TypeString,
 													Computed: true,
 												},
+												"vlan_id": {
+													Type:     schema.TypeInt,
+													Computed: true,
+												},
 											},
 										},
 									},
@@ -234,6 +238,10 @@ func dataSourceServer() *schema.Resource {
 												},
 												"status_description": {
 													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"vlan_id": {
+													Type:     schema.TypeInt,
 													Computed: true,
 												},
 											},
@@ -477,6 +485,9 @@ func flattenServerDataNetworkConfiguration(networkConfiguration bmcapi.NetworkCo
 				if j.StatusDescription != nil {
 					spn["status_description"] = *j.StatusDescription
 				}
+				if j.VlanId != nil {
+					spn["vlan_id"] = *j.VlanId
+				}
 				prNet[i] = spn
 			}
 			prnc["private_networks"] = prNet
@@ -524,6 +535,9 @@ func flattenServerDataNetworkConfiguration(networkConfiguration bmcapi.NetworkCo
 				spn["ips"] = ips
 				if j.StatusDescription != nil {
 					spn["status_description"] = *j.StatusDescription
+				}
+				if j.VlanId != nil {
+					spn["vlan_id"] = *j.VlanId
 				}
 				puNet[i] = spn
 			}
