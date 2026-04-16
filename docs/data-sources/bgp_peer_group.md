@@ -32,7 +32,7 @@ output "BGPPeerGroup1" {
 
 The following arguments are supported:
 
-* `location` - The BGP Peer Group location. Supported values are `PHX`, `ASH`, `SGP`, `NLD`, `CHI`, `SEA` and `AUS`.
+* `location` - The BGP Peer Group location. Supported values are `PHX`, `ASH`, `SGP`, `NLD`, `CHI` and `SEA`.
 * `id` - The unique identifier of the BGP Peer Group.
 
 ## Attributes Reference

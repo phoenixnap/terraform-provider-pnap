@@ -29,7 +29,7 @@ resource "pnap_bgp_peer_group" "BGP-Peer-Group-1" {
 
 The following arguments are supported:
 
-* `location` - (Required) The BGP Peer Group location. Supported values are `PHX`, `ASH`, `SGP`, `NLD`, `CHI`, `SEA` and `AUS`.
+* `location` - (Required) The BGP Peer Group location. Supported values are `PHX`, `ASH`, `SGP`, `NLD`, `CHI` and `SEA`.
 * `asn` - (Required) The BGP Peer Group ASN. Default value is `65401`.
 * `password`- The BGP Peer Group password.
 * `advertised_routes` - (Required) The Advertised routes for the BGP Peer Group. Supported values are `DEFAULT` and `NONE`. Default value is `NONE`.

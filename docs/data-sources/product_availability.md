@@ -37,7 +37,7 @@ The following arguments are supported:
 * `product_category` - Product category. Currently only `SERVER` category is supported.
 * `product_code` - The code identifying the product. This code has significance across all locations.
 * `show_only_min_quantity_available` - Show only locations where product with requested quantity is available or all locations where product is offered. Default value is `true`.
-* `location` - The location code. Currently the following values are allowed: `PHX`, `ASH`, `NLD`, `SGP`, `CHI`, `SEA` and `AUS`.
+* `location` - The location code. Currently the following values are allowed: `PHX`, `ASH`, `NLD`, `SGP`, `CHI` and `SEA`.
 * `solution` - Currently only the following value is allowed: `SERVER_RANCHER`.
 * `min_quantity` - Minimal quantity of product needed. Minimum, maximum and default values might differ for different products. For servers, they are 1, 10 and 1 respectively.
 
