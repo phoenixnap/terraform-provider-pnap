@@ -2,7 +2,6 @@ package pnap
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/PNAP/go-sdk-helper-bmc/command/billingapi/reservation"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
@@ -31,9 +30,25 @@ func dataSourceReservation() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"reservation_model": {
+			"reservation_model": { // Deprecated
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+			"term": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"lenght_in_months": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"reservation_model": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
 			},
 			"reservation_state": {
 				Type:     schema.TypeString,
@@ -150,6 +165,8 @@ func dataSourceReservationRead(d *schema.ResourceData, m interface{}) error {
 				d.Set("product_category", instance.ProductCategory)
 				d.Set("location", instance.Location)
 				d.Set("reservation_model", instance.ReservationModel)
+				term := flattenTerm(instance.Term)
+				d.Set("term", term)
 				d.Set("reservation_state", instance.ReservationState)
 				if instance.InitialInvoiceModel != nil {
 					d.Set("initial_invoice_model", *instance.InitialInvoiceModel)
@@ -171,7 +188,7 @@ func dataSourceReservationRead(d *schema.ResourceData, m interface{}) error {
 				}
 				d.Set("auto_renew", instance.AutoRenew)
 				d.Set("sku", instance.Sku)
-				price := math.Round(float64(instance.Price)*100000) / 100000
+				price := customRound(float64(instance.Price))
 				d.Set("price", price)
 				d.Set("price_unit", instance.PriceUnit)
 				if instance.AssignedResourceId != nil {
@@ -198,6 +215,8 @@ func dataSourceReservationRead(d *schema.ResourceData, m interface{}) error {
 				d.Set("product_category", instance.ProductCategory)
 				d.Set("location", instance.Location)
 				d.Set("reservation_model", instance.ReservationModel)
+				term := flattenTerm(instance.Term)
+				d.Set("term", term)
 				d.Set("reservation_state", instance.ReservationState)
 				if instance.InitialInvoiceModel != nil {
 					d.Set("initial_invoice_model", *instance.InitialInvoiceModel)
@@ -219,7 +238,7 @@ func dataSourceReservationRead(d *schema.ResourceData, m interface{}) error {
 				}
 				d.Set("auto_renew", instance.AutoRenew)
 				d.Set("sku", instance.Sku)
-				price := math.Round(float64(instance.Price)*100000) / 100000
+				price := customRound(float64(instance.Price))
 				d.Set("price", price)
 				d.Set("price_unit", instance.PriceUnit)
 				if instance.AssignedResourceId != nil {
@@ -246,6 +265,8 @@ func dataSourceReservationRead(d *schema.ResourceData, m interface{}) error {
 				d.Set("product_category", instance.ProductCategory)
 				d.Set("location", instance.Location)
 				d.Set("reservation_model", instance.ReservationModel)
+				term := flattenTerm(instance.Term)
+				d.Set("term", term)
 				d.Set("reservation_state", instance.ReservationState)
 				if instance.InitialInvoiceModel != nil {
 					d.Set("initial_invoice_model", *instance.InitialInvoiceModel)
@@ -267,7 +288,7 @@ func dataSourceReservationRead(d *schema.ResourceData, m interface{}) error {
 				}
 				d.Set("auto_renew", instance.AutoRenew)
 				d.Set("sku", instance.Sku)
-				price := math.Round(float64(instance.Price)*100000) / 100000
+				price := customRound(float64(instance.Price))
 				d.Set("price", price)
 				d.Set("price_unit", instance.PriceUnit)
 				if instance.AssignedResourceId != nil {

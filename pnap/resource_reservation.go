@@ -2,12 +2,11 @@ package pnap
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/PNAP/go-sdk-helper-bmc/command/billingapi/reservation"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	billingapiclient "github.com/phoenixnap/go-sdk-bmc/billingapi/v3"
+	billingapiclient "github.com/phoenixnap/go-sdk-bmc/billingapi/v4"
 )
 
 func resourceReservation() *schema.Resource {
@@ -36,9 +35,25 @@ func resourceReservation() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"reservation_model": {
+			"reservation_model": { // Deprecated
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+			"term": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"lenght_in_months": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"reservation_model": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
 			},
 			"reservation_state": {
 				Type:     schema.TypeString,
@@ -160,7 +175,7 @@ func resourceReservationCreate(d *schema.ResourceData, m interface{}) error {
 			return errorUnit
 		}
 		quantityObject.Unit = *unitEnum
-		request.Quantity = &quantityObject
+		request.Quantity = quantityObject
 	}
 	requestCommand := reservation.NewCreateReservationCommand(client, *request)
 	resp, err := requestCommand.Execute()
@@ -184,6 +199,8 @@ func resourceReservationRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("product_category", resp.ProductCategory)
 	d.Set("location", resp.Location)
 	d.Set("reservation_model", resp.ReservationModel)
+	term := flattenTerm(resp.Term)
+	d.Set("term", term)
 	d.Set("reservation_state", resp.ReservationState)
 	if resp.InitialInvoiceModel != nil {
 		d.Set("initial_invoice_model", *resp.InitialInvoiceModel)
@@ -205,7 +222,7 @@ func resourceReservationRead(d *schema.ResourceData, m interface{}) error {
 	}
 	d.Set("auto_renew", resp.AutoRenew)
 	d.Set("sku", resp.Sku)
-	price := math.Round(float64(resp.Price)*100000) / 100000
+	price := customRound(float64(resp.Price))
 	d.Set("price", price)
 	d.Set("price_unit", resp.PriceUnit)
 	if resp.AssignedResourceId != nil {
@@ -240,7 +257,7 @@ func resourceReservationUpdate(d *schema.ResourceData, m interface{}) error {
 				return errorUnit
 			}
 			quantityObject.Unit = *unitEnum
-			request.Quantity = &quantityObject
+			request.Quantity = quantityObject
 		}
 		requestCommand := reservation.NewConvertReservationCommand(client, reservationID, *request)
 		resp, err := requestCommand.Execute()
@@ -283,17 +300,20 @@ func resourceReservationDelete(d *schema.ResourceData, m interface{}) error {
 	return fmt.Errorf("unsupported action")
 }
 
+func flattenTerm(reservationTerm *billingapiclient.ReservationTerm) []interface{} {
+	term := make([]interface{}, 1)
+	termItem := make(map[string]interface{})
+	termItem["lenght_in_months"] = int(reservationTerm.LengthInMonths)
+	termItem["reservation_model"] = string(reservationTerm.ReservationModel)
+	term[0] = termItem
+	return term
+}
+
 func flattenQuantity(quantity *billingapiclient.Quantity) []interface{} {
 	quant := make([]interface{}, 1)
 	quantItem := make(map[string]interface{})
-	size := quantity.Quantity
-	if size > 0 {
-		quantItem["quantity"] = float64(size)
-	}
-	unit := quantity.Unit
-	if len(unit) > 0 {
-		quantItem["unit"] = string(unit)
-	}
+	quantItem["quantity"] = customRound(float64(quantity.Quantity))
+	quantItem["unit"] = string(quantity.Unit)
 	quant[0] = quantItem
 	return quant
 }
@@ -305,10 +325,7 @@ func flattenUtilization(utilization *billingapiclient.Utilization) []interface{}
 		quantity := utilization.Quantity
 		quant := flattenQuantity(&quantity)
 		utilItem["quantity"] = quant
-		percentage := utilization.Percentage
-		if percentage >= 0 {
-			utilItem["percentage"] = float64(percentage)
-		}
+		utilItem["percentage"] = customRound(float64(utilization.Percentage))
 	}
 	util[0] = utilItem
 	return util
