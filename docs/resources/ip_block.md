@@ -40,7 +40,7 @@ resource "pnap_ip_block" "ip-block-1" {
 
 The following arguments are supported:
 
-* `location` - (Required) IP Block location ID. Currently this field should be set to `PHX`, `ASH`, `SGP`, `NLD`, `CHI`, `SEA` or `AUS`.
+* `location` - (Required) IP Block location ID. Currently this field should be set to `PHX`, `ASH`, `SGP`, `NLD`, `CHI` or `SEA`.
 * `cidr_block_size` - (Required) CIDR IP Block Size.  V4 supported sizes: [`/31`, `/30`, `/29` or `/28`]. V6 supported sizes: [`/64`]. For a larger Block Size contact support.
 * `ip_version` - IP Version. This field should be set to `V4` or `V6`. Default value is `V4`.
 * `description` - Description of the IP Block.

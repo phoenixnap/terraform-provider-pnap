@@ -71,7 +71,7 @@ The following arguments are supported:
 * `os` - (Required) The server’s OS ID used when the server was created (e.g., ubuntu/bionic, centos/centos7). For a full list of available operating systems visit [API docs](https://developers.phoenixnap.com/docs/bmc/1).
 * `type` - (Required) Server type ID. Cannot be changed once a server is created (e.g., s1.c1.small, s1.c1.medium). For a full list of available types visit [API docs](https://developers.phoenixnap.com/docs/bmc/1). 
 * `location` - (Required) Server Location ID. Cannot be changed once a server is created (e.g., PHX). For a full list of available locations visit [API docs](https://developers.phoenixnap.com/docs/bmc/1)
-* `installDefaultSshKeys` - Whether or not to install SSH keys marked as default in addition to any SSH keys specified in this request.
+* `install_default_ssh_keys` - Whether or not to install SSH keys marked as default in addition to any SSH keys specified in this request.
 * `ssh_keys` - A list of SSH Keys that will be installed on the server.
 * `ssh_key_ids` - A list of SSH key IDs that will be installed on the server in addition to any SSH keys specified in this request.
 * `reservation_id` - Server reservation ID.

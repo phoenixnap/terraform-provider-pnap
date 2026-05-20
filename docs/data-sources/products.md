@@ -35,7 +35,7 @@ The following arguments are supported:
 * `product_code` - The code identifying the product. This code has significance across all locations.
 * `product_category` - The product category.
 * `sku_code` - The SKU identifier.
-* `location` - The location code. Currently the following values are allowed: `PHX`, `ASH`, `NLD`, `SGP`, `CHI`, `SEA`, `AUS` and `GLOBAL`.
+* `location` - The location code. Currently the following values are allowed: `PHX`, `ASH`, `NLD`, `SGP`, `CHI`, `SEA` and `GLOBAL`.
 
 
 ## Attributes Reference
@@ -43,7 +43,7 @@ The following arguments are supported:
 The following attributes are exported:
 
 * `products` - The list of products recorded.
-    * `product_code` - The code identifying the product.
+    * `product_code` - The code identifying the product. This code has significance across all locations.
     * `product_category` - The product category.
     * `plans` - The pricing plans available for this product.
         * `sku` - The SKU identifying the pricing plan.
@@ -58,9 +58,15 @@ The following attributes are exported:
                 * `code` - A unique code associated with the discount.
                 * `type` - The discount type.
                 * `value` - The value or amount of the discount. The interpretation of this value depends on the 'type' of discount.
+                * `coupon_code` - Coupon code which is the source of the discount.
         * `correlated_product_code` - Product code of the correlated product.
-        * `package_quantity` - Package size per month.
-        * `package_unit` - Package size unit.
+        * `package_quantity` - (Deprecated) Package size per month.
+        * `package_unit` - (Deprecated) Package size unit.
+        * `package_details` - Represents details object which contains package quantity and its unit.
+            * `package_quantity` - Represents the package size per month for a product's pricing plan.
+                * `min` - Minimum package quantity.
+                * `max` - Maximum package quantity.
+            * `package_unit` - Package size unit.
     * `metadata` - Details of the server product.
         * `ram_in_gb` - RAM in GB.
         * `cpu` - CPU name.

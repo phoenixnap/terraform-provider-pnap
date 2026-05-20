@@ -8,7 +8,7 @@ import (
 	"github.com/PNAP/go-sdk-helper-bmc/dto"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	locationapiclient "github.com/phoenixnap/go-sdk-bmc/locationapi/v3"
+	locationapiclient "github.com/phoenixnap/go-sdk-bmc/locationapi/v4"
 )
 
 func dataSourceLocations() *schema.Resource {
@@ -66,7 +66,7 @@ func dataSourceLocationsRead(d *schema.ResourceData, m interface{}) error {
 
 	loc := d.Get("location").(string)
 	if len(loc) > 0 {
-		locEnum, errorLoc := locationapiclient.NewLocationEnumFromValue(loc)
+		locEnum, errorLoc := locationapiclient.NewProductLocationEnumFromValue(loc)
 		if errorLoc != nil {
 			return errorLoc
 		}
