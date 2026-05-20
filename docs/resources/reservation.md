@@ -43,7 +43,10 @@ The following attributes are exported:
 * `product_code` - The code identifying the product. This code has significance across all locations.
 * `product_category` - The product category.
 * `location` - The location code.
-* `reservation_model` - The reservation model.
+* `reservation_model` - (Deprecated) The reservation model.
+* `term` - The Reservation term.
+  * `lenght_in_months` - Term's length, expressed in months.
+  * `reservation_model` - The reservation model.
 * `reservation_state` - Reservation state.
 * `initial_invoice_model` - Reservations created with initial invoice model ON_CREATION will be invoiced on same date when reservation is created. Reservation created with CALENDAR_MONTH initial invoice model will be invoiced at the begining of next month.
 * `quantity` - Represents the quantity.

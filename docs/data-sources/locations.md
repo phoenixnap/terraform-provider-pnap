@@ -32,7 +32,7 @@ output "Locations" {
 
 The following arguments are supported:
 
-* `location` - The location code. Currently the following values are allowed: `PHX`, `ASH`, `NLD`, `SGP`, `CHI`, `SEA` and `AUS`.
+* `location` - The location code. Currently the following values are allowed: `PHX`, `ASH`, `NLD`, `SGP`, `CHI` and `SEA`.
 * `product_category` - The product category. Currently the following values are allowed: `SERVER`, `BANDWIDTH`, `OPERATING_SYSTEM`, `PUBLIC_IP` and `STORAGE`.
 
 

@@ -61,7 +61,7 @@ The following arguments are supported:
 
 * `name` - (Required) The friendly name of this private network. This name should be unique.
 * `description` - The description of this private network.
-* `location` - (Required) The location of this private network. Supported values are `PHX`, `ASH`, `SGP`, `NLD`, `CHI`, `SEA` and `AUS`.
+* `location` - (Required) The location of this private network. Supported values are `PHX`, `ASH`, `SGP`, `NLD`, `CHI` and `SEA`.
 * `location_default` - Identifies network as the default private network for the specified location. Default value is `false`.
 * `vlan_id `- The VLAN that will be assigned to this network.
 * `cidr` - IP range associated with this private network in CIDR notation. Setting the `force` query parameter to `true` allows you to skip assigning a specific IP range to network.
