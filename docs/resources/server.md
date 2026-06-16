@@ -83,6 +83,7 @@ The following arguments are supported:
 * `install_os_to_ram` - If true, OS will be installed to and booted from the server's RAM. On restart RAM OS will be lost and the server will not be reachable unless a custom bootable OS has been deployed. Only supported for ubuntu/focal. Default value is `false`.
 * `cloud_init` - Cloud-init configuration details. Structure is documented below.
 * `esxi` - Esxi OS configuration. Structure is documented below.
+* `ipxe` - iPXE configuration details. Structure is documented below.
 * `netris_softgate` - Netris Softgate configuration properties. Follow [instructions](https://phoenixnap.com/kb/netris-bare-metal-cloud#deploy-netris-softgate) for retrieving the required details. Structure is documented below.
 * `tags` - Tags to set to server, if any. Structure is documented below.
 * `network_configuration` - Entire network details of bare metal server. Structure is documented below.
@@ -97,6 +98,18 @@ The `esxi` block has field `datastore_configuration`:
 The `datastore_configuration` block has one field:
 
 * `datastore_name` - Datastore name.
+
+
+The `ipxe` block has two fields: `url` and `native_vlan_configuration`.
+
+* `url` - The URL of the iPXE boot script used to start the server.
+
+The `native_vlan_configuration` is the second field of the `ipxe` block.
+The `native_vlan_configuration` block has three fields:
+
+* `vlan_id` - The VLAN ID of the network to be used as the native VLAN.
+* `static_dhcp_address_v4` - The static IP V4 address assigned to the server within the native VLAN. This address is set as the DHCP reservation and used for the iPXE boot process.
+* `status` - The status of the native VLAN configuration.
 
 
 The `cloud_init` block has one field:

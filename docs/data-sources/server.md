@@ -57,6 +57,12 @@ The following attributes are exported:
 * `esxi` - Esxi OS configuration.
     * `datastore_configuration` - Esxi data storage configuration.
         * `datastore_name` - Datastore name.
+* `ipxe` - iPXE configuration details.
+    * `url` - The URL of the iPXE boot script used to start the server.
+    * `native_vlan_configuration` - Specifies the native VLAN configuration for the server.
+        * `vlan_id` - The VLAN ID of the network to be used as the native VLAN.
+        * `static_dhcp_address_v4` - The static IP V4 address assigned to the server within the native VLAN.
+        * `status` - The status of the native VLAN configuration.
 * `netris_controller` - Netris Controller configuration properties.
     * `host_os` - Host OS on which the Netris Controller is installed.
 * `netris_softgate` - Netris Softgate configuration properties.
