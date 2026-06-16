@@ -3,16 +3,16 @@ module github.com/phoenixnap/terraform-provider-pnap
 go 1.23.0
 
 require (
-	github.com/PNAP/go-sdk-helper-bmc v0.24.0
+	github.com/PNAP/go-sdk-helper-bmc v0.25.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.17.0
-	github.com/phoenixnap/go-sdk-bmc/billingapi/v4 v4.0.0
-	github.com/phoenixnap/go-sdk-bmc/bmcapi/v3 v3.4.0
-	github.com/phoenixnap/go-sdk-bmc/ipapi/v3 v3.2.0
-	github.com/phoenixnap/go-sdk-bmc/locationapi/v4 v4.0.0
-	github.com/phoenixnap/go-sdk-bmc/networkapi/v4 v4.1.0
-	github.com/phoenixnap/go-sdk-bmc/networkstorageapi/v3 v3.0.4
-	github.com/phoenixnap/go-sdk-bmc/ranchersolutionapi/v3 v3.1.3
-	github.com/phoenixnap/go-sdk-bmc/tagapi/v3 v3.0.6
+	github.com/phoenixnap/go-sdk-bmc/billingapi/v4 v4.0.1
+	github.com/phoenixnap/go-sdk-bmc/bmcapi/v3 v3.5.0
+	github.com/phoenixnap/go-sdk-bmc/ipapi/v3 v3.2.1
+	github.com/phoenixnap/go-sdk-bmc/locationapi/v4 v4.0.1
+	github.com/phoenixnap/go-sdk-bmc/networkapi/v4 v4.1.1
+	github.com/phoenixnap/go-sdk-bmc/networkstorageapi/v3 v3.0.5
+	github.com/phoenixnap/go-sdk-bmc/ranchersolutionapi/v3 v3.1.4
+	github.com/phoenixnap/go-sdk-bmc/tagapi/v3 v3.0.7
 //github.com/phoenixnap/pulumi-pnap/sdk v0.0.1-beta.3
 
 )
@@ -56,9 +56,9 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
-	github.com/phoenixnap/go-sdk-bmc/auditapi/v3 v3.0.6 // indirect
-	github.com/phoenixnap/go-sdk-bmc/invoicingapi v1.0.6 // indirect
-	github.com/phoenixnap/go-sdk-bmc/paymentsapi v1.0.6 // indirect
+	github.com/phoenixnap/go-sdk-bmc/auditapi/v3 v3.0.7 // indirect
+	github.com/phoenixnap/go-sdk-bmc/invoicingapi v1.0.7 // indirect
+	github.com/phoenixnap/go-sdk-bmc/paymentsapi v1.0.7 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
