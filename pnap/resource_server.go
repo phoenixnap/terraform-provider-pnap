@@ -212,6 +212,44 @@ func resourceServer() *schema.Resource {
 					},
 				},
 			},
+			"ipxe": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"url": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"native_vlan_configuration": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Computed: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"vlan_id": {
+										Type:     schema.TypeInt,
+										Optional: true,
+										Computed: true,
+									},
+									"static_dhcp_address_v4": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Computed: true,
+									},
+									"status": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"netris_controller": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -620,6 +658,22 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		userData = cloudInitItem["user_data"].(string)
 	}
 
+	var bootUrl, staticDhcpAddressV4 string
+	var nativeVlanId int32
+	if d.Get("ipxe") != nil && len(d.Get("ipxe").([]interface{})) > 0 {
+		iPXE := d.Get("ipxe").([]interface{})[0]
+		iPXEItem := iPXE.(map[string]interface{})
+		if len(iPXEItem["url"].(string)) > 0 {
+			bootUrl = iPXEItem["url"].(string)
+		}
+		if iPXEItem["native_vlan_configuration"] != nil && len(iPXEItem["native_vlan_configuration"].([]interface{})) > 0 {
+			nativeVlanConf := iPXEItem["native_vlan_configuration"].([]interface{})[0]
+			nativeVlanConfItem := nativeVlanConf.(map[string]interface{})
+			nativeVlanId = int32(nativeVlanConfItem["vlan_id"].(int))
+			staticDhcpAddressV4 = nativeVlanConfItem["static_dhcp_address_v4"].(string)
+		}
+	}
+
 	var controllerAddress, controllerVersion, controllerAuthKey string
 	var netris bool
 	if d.Get("netris_softgate") != nil && len(d.Get("netris_softgate").([]interface{})) > 0 {
@@ -631,7 +685,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		netris = true
 	}
 
-	if len(temp2) > 0 || bringLicense || len(temp3) > 0 || installOsToRam || len(datastoreName) > 0 || len(userData) > 0 || netris {
+	if len(temp2) > 0 || bringLicense || len(temp3) > 0 || installOsToRam || len(datastoreName) > 0 || len(userData) > 0 || len(bootUrl) > 0 || netris {
 		dtoOsConfiguration := bmcapiclient.OsConfiguration{}
 
 		if len(temp2) > 0 || bringLicense {
@@ -659,6 +713,19 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 			cloudInitObject := bmcapiclient.OsConfigurationCloudInit{}
 			cloudInitObject.UserData = &userData
 			dtoOsConfiguration.CloudInit = &cloudInitObject
+		}
+		if len(bootUrl) > 0 {
+			iPXEObject := bmcapiclient.OsConfigurationIPXE{}
+			nativeVlanConfObject := bmcapiclient.OsConfigurationIPXENativeVlanConfiguration{}
+			iPXEObject.Url = bootUrl
+			if nativeVlanId > 0 {
+				nativeVlanConfObject.VlanId = &nativeVlanId
+			}
+			if len(staticDhcpAddressV4) > 0 {
+				nativeVlanConfObject.StaticDhcpAddressV4 = &staticDhcpAddressV4
+			}
+			iPXEObject.NativeVlanConfiguration = &nativeVlanConfObject
+			dtoOsConfiguration.IPXE = &iPXEObject
 		}
 		if netris {
 			netrisSoftgateObject := bmcapiclient.OsConfigurationNetrisSoftgate{}
@@ -994,6 +1061,29 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 			cloudInit[0] = cloudInitItem
 			d.Set("cloud_init", cloudInit)
 		}
+		if resp.OsConfiguration.IPXE != nil {
+			iPXE := make([]interface{}, 1)
+			iPXEItem := make(map[string]interface{})
+			iPXEItem["url"] = resp.OsConfiguration.IPXE.Url
+			nativeVlanConfResp := resp.OsConfiguration.IPXE.NativeVlanConfiguration
+			if nativeVlanConfResp != nil {
+				nativeVlanConf := make([]interface{}, 1)
+				nativeVlanConfItem := make(map[string]interface{})
+				if nativeVlanConfResp.VlanId != nil {
+					nativeVlanConfItem["vlan_id"] = int(*nativeVlanConfResp.VlanId)
+				}
+				if nativeVlanConfResp.StaticDhcpAddressV4 != nil {
+					nativeVlanConfItem["static_dhcp_address_v4"] = *nativeVlanConfResp.StaticDhcpAddressV4
+				}
+				if nativeVlanConfResp.Status != nil {
+					nativeVlanConfItem["status"] = *nativeVlanConfResp.Status
+				}
+				nativeVlanConf[0] = nativeVlanConfItem
+				iPXEItem["native_vlan_configuration"] = nativeVlanConf
+			}
+			iPXE[0] = iPXEItem
+			d.Set("ipxe", iPXE)
+		}
 		if resp.OsConfiguration.NetrisSoftgate != nil {
 			netrisSoftgate := make([]interface{}, 1)
 			netrisSoftgateItem := make(map[string]interface{})
@@ -1080,8 +1170,25 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			//reboot
 
 			serverID := d.Id()
+			isIPXE := strings.Contains(d.Get("os").(string), "ipxe")
+			rebootRequest := &bmcapiclient.RebootRequest{}
+			bootType := "STANDARD"
+			if isIPXE {
+				bootType = "IPXE"
+				if d.Get("ipxe") != nil && len(d.Get("ipxe").([]interface{})) > 0 {
+					iPXE := d.Get("ipxe").([]interface{})[0]
+					iPXEItem := iPXE.(map[string]interface{})
+					if len(iPXEItem["url"].(string)) > 0 {
+						url1 := iPXEItem["url"].(string)
+						ipxeUrl := bmcapiclient.NullableString{}
+						ipxeUrl.Set(&url1)
+						rebootRequest.IpxeUrl = ipxeUrl
+					}
+				}
+			}
+			rebootRequest.BootType = &bootType
 
-			requestCommand := server.NewRebootServerCommand(client, serverID)
+			requestCommand := server.NewRebootServerCommand(client, serverID, *rebootRequest)
 			_, err := requestCommand.Execute()
 			if err != nil {
 				return err
@@ -1197,6 +1304,37 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		request.TargetServerId = d.Get("transfer_reservation_to").(string)
 
 		requestCommand := server.NewTransferServerReservationCommand(client, serverID, *request)
+		_, err := requestCommand.Execute()
+		if err != nil {
+			return err
+		}
+	} else if d.HasChange("ipxe") {
+		client := m.(receiver.BMCSDK)
+		serverID := d.Id()
+		request := &bmcapiclient.OsConfigurationIPXE{}
+		nativeVlanConfObject := bmcapiclient.OsConfigurationIPXENativeVlanConfiguration{}
+		if d.Get("ipxe") != nil && len(d.Get("ipxe").([]interface{})) > 0 {
+			iPXE := d.Get("ipxe").([]interface{})[0]
+			iPXEItem := iPXE.(map[string]interface{})
+			if len(iPXEItem["url"].(string)) > 0 {
+				request.Url = iPXEItem["url"].(string)
+			}
+			if iPXEItem["native_vlan_configuration"] != nil && len(iPXEItem["native_vlan_configuration"].([]interface{})) > 0 {
+				nativeVlanConf := iPXEItem["native_vlan_configuration"].([]interface{})[0]
+				nativeVlanConfItem := nativeVlanConf.(map[string]interface{})
+				nativeVlanId := int32(nativeVlanConfItem["vlan_id"].(int))
+				if nativeVlanId > 0 {
+					nativeVlanConfObject.VlanId = &nativeVlanId
+				}
+				staticDhcpAddressV4 := nativeVlanConfItem["static_dhcp_address_v4"].(string)
+				if len(staticDhcpAddressV4) > 0 {
+					nativeVlanConfObject.StaticDhcpAddressV4 = &staticDhcpAddressV4
+				}
+			}
+			request.NativeVlanConfiguration = &nativeVlanConfObject
+		}
+
+		requestCommand := server.NewUpdateServerIPXECommand(client, serverID, *request)
 		_, err := requestCommand.Execute()
 		if err != nil {
 			return err
@@ -1644,7 +1782,7 @@ func supressUserDefinedNetworkType(k, oldValue, newValue string, d *schema.Resou
 	}
 }
 
-// divideIpsRange transforms a slice of IP adresses in range format to a slice of individual IP adresses.
+// divideIpsRange transforms a slice of IP addresses in range format to a slice of individual IP addresses.
 func divideIpsRange(ipsRanged []string) []string {
 	var ipsMono []string
 	for _, j := range ipsRanged {
@@ -1677,7 +1815,7 @@ func divideIpsRange(ipsRanged []string) []string {
 	return ipsMono
 }
 
-// compareIps compares slices of individual IP adresses and returns true if they are equal or false if they are not equal.
+// compareIps compares slices of individual IP addresses and returns true if they are equal or false if they are not equal.
 func compareIps(ips1 []string, ips2 []string) bool {
 	var num int
 	if len(ips1) == len(ips2) {
@@ -1702,7 +1840,7 @@ func compareIps(ips1 []string, ips2 []string) bool {
 	return false
 }
 
-// removeDuplicateIps removes duplicates of IP adresses
+// removeDuplicateIps removes duplicates of IP addresses
 func removeDuplicateIps(ips []string) []string {
 	presentIps := make(map[string]bool)
 	var ipsPurged []string

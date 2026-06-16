@@ -87,6 +87,38 @@ func dataSourceServer() *schema.Resource {
 					},
 				},
 			},
+			"ipxe": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"url": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"native_vlan_configuration": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"vlan_id": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"static_dhcp_address_v4": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"status": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"netris_controller": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -361,6 +393,29 @@ func dataSourceServerRead(d *schema.ResourceData, m interface{}) error {
 					esxiItem["datastore_configuration"] = datastoreConfiguration
 					esxi[0] = esxiItem
 					d.Set("esxi", esxi)
+				}
+				if instance.OsConfiguration.IPXE != nil {
+					iPXE := make([]interface{}, 1)
+					iPXEItem := make(map[string]interface{})
+					iPXEItem["url"] = instance.OsConfiguration.IPXE.Url
+					nativeVlanConfResp := instance.OsConfiguration.IPXE.NativeVlanConfiguration
+					if nativeVlanConfResp != nil {
+						nativeVlanConf := make([]interface{}, 1)
+						nativeVlanConfItem := make(map[string]interface{})
+						if nativeVlanConfResp.VlanId != nil {
+							nativeVlanConfItem["vlan_id"] = int(*nativeVlanConfResp.VlanId)
+						}
+						if nativeVlanConfResp.StaticDhcpAddressV4 != nil {
+							nativeVlanConfItem["static_dhcp_address_v4"] = *nativeVlanConfResp.StaticDhcpAddressV4
+						}
+						if nativeVlanConfResp.Status != nil {
+							nativeVlanConfItem["status"] = *nativeVlanConfResp.Status
+						}
+						nativeVlanConf[0] = nativeVlanConfItem
+						iPXEItem["native_vlan_configuration"] = nativeVlanConf
+					}
+					iPXE[0] = iPXEItem
+					d.Set("ipxe", iPXE)
 				}
 				if instance.OsConfiguration.NetrisController != nil {
 					netrisController := make([]interface{}, 1)
