@@ -1,6 +1,7 @@
 package pnap
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 	"log"
@@ -377,21 +378,20 @@ func resourceServer() *schema.Resource {
 									},
 									"configuration_type": {
 										Type:     schema.TypeString,
-										Computed: true,
 										Optional: true,
-										Default:  nil,
 									},
 									"private_networks": {
-										Type:     schema.TypeList,
-										Computed: true,
-										Optional: true,
+										Type:       schema.TypeList,
+										Optional:   true,
+										Computed:   true,
+										ConfigMode: schema.SchemaConfigModeAttr,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"server_private_network": {
-													Type:     schema.TypeList,
-													Optional: true,
-													Computed: true,
-													MaxItems: 1,
+													Type:       schema.TypeList,
+													Required:   true,
+													MaxItems:   1,
+													ConfigMode: schema.SchemaConfigModeAttr,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
 															"id": {
@@ -436,7 +436,6 @@ func resourceServer() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"configuration_type": {
 										Type:     schema.TypeString,
-										Computed: true,
 										Optional: true,
 									},
 									"ip_blocks": {
@@ -447,8 +446,7 @@ func resourceServer() *schema.Resource {
 											Schema: map[string]*schema.Schema{
 												"server_ip_block": {
 													Type:     schema.TypeList,
-													Optional: true,
-													Computed: true,
+													Required: true,
 													MaxItems: 1,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
@@ -478,16 +476,17 @@ func resourceServer() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"public_networks": {
-										Type:     schema.TypeList,
-										Computed: true,
-										Optional: true,
+										Type:       schema.TypeList,
+										Optional:   true,
+										Computed:   true,
+										ConfigMode: schema.SchemaConfigModeAttr,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"server_public_network": {
-													Type:     schema.TypeList,
-													Optional: true,
-													Computed: true,
-													MaxItems: 1,
+													Type:       schema.TypeList,
+													Required:   true,
+													MaxItems:   1,
+													ConfigMode: schema.SchemaConfigModeAttr,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
 															"id": {
@@ -575,6 +574,54 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+		},
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+			// Customizing value [""] for empty array of ips to be replaced with value [] because of block to attribute change in provider
+			if diff.Id() == "" {
+				return nil
+			} else {
+				rawNCint := diff.Get("network_configuration")
+				if rawNCint != nil && len(rawNCint.([]interface{})) > 0 {
+					networkConfiguration := rawNCint.([]interface{})[0]
+					networkConfigurationItem := networkConfiguration.(map[string]interface{})
+					if networkConfigurationItem["private_network_configuration"] != nil && len(networkConfigurationItem["private_network_configuration"].([]interface{})) > 0 {
+						privateNetworkConfiguration := networkConfigurationItem["private_network_configuration"].([]interface{})[0]
+						privateNetworkConfigurationItem := privateNetworkConfiguration.(map[string]interface{})
+						rawPN := privateNetworkConfigurationItem["private_networks"].([]interface{})
+						for i := range rawPN {
+							if rawPN[i] != nil && len(rawPN[i].(map[string]interface{})["server_private_network"].([]interface{})) > 0 {
+								ispnItem := rawPN[i].(map[string]interface{})["server_private_network"].([]interface{})[0].(map[string]interface{})
+								ipsInput := ispnItem["ips"].(*schema.Set).List()
+								if len(ipsInput) == 1 && ipsInput[0] == "" {
+									ispnItem["ips"] = make([]interface{}, 0)
+								}
+								// key := "network_configuration.0.private_network_configuration.0.private_networks." + strconv.Itoa(i) + ".ips"
+								// if _, ok := diff.GetOkExists(key); !ok {
+								// 	ispnItem["ips"] = make([]interface{}, 0)
+								// }
+							}
+						}
+					}
+					if networkConfigurationItem["public_network_configuration"] != nil && len(networkConfigurationItem["public_network_configuration"].([]interface{})) > 0 {
+						publicNetworkConfiguration := networkConfigurationItem["public_network_configuration"].([]interface{})[0]
+						publicNetworkConfigurationItem := publicNetworkConfiguration.(map[string]interface{})
+						rawPN := publicNetworkConfigurationItem["public_networks"].([]interface{})
+						for i := range rawPN {
+							if rawPN[i] != nil && len(rawPN[i].(map[string]interface{})["server_public_network"].([]interface{})) > 0 {
+								ispnItem := rawPN[i].(map[string]interface{})["server_public_network"].([]interface{})[0].(map[string]interface{})
+								ipsInput := ispnItem["ips"].(*schema.Set).List()
+								if len(ipsInput) == 1 && ipsInput[0] == "" {
+									ispnItem["ips"] = make([]interface{}, 0)
+								}
+							}
+						}
+					}
+					if err := diff.SetNew("network_configuration", rawNCint); err != nil {
+						return fmt.Errorf("failed to override name: %w", err)
+					}
+				}
+			}
+			return nil
 		},
 	}
 }
@@ -824,8 +871,8 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 						}
 
 						serverPrivateNetworkObject.Dhcp = &dhcp
-						serPrivateNets[k] = serverPrivateNetworkObject
 
+						serPrivateNets[k] = serverPrivateNetworkObject
 					}
 					privateNetworkConfigurationObject.PrivateNetworks = serPrivateNets
 				}
@@ -1115,7 +1162,10 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	var ncInput = d.Get("network_configuration").([]interface{})
-	networkConfiguration := flattenNetworkConfiguration(&resp.NetworkConfiguration, ncInput)
+	networkConfiguration, err := flattenNetworkConfiguration(&resp.NetworkConfiguration, ncInput)
+	if err != nil {
+		return err
+	}
 
 	if err := d.Set("network_configuration", networkConfiguration); err != nil {
 		return err
@@ -1369,6 +1419,304 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		if err != nil {
 			return err
 		}
+	} else if d.HasChange("network_configuration") {
+		client := m.(receiver.BMCSDK)
+		serverID := d.Id()
+		query := &dto.Query{}
+		var force = d.Get("force").(bool)
+		query.Force = force
+		oldInterface, _ := d.GetChange("network_configuration")
+		newInterface := d.Get("network_configuration")
+		old := oldInterface.([]interface{})
+		new := newInterface.([]interface{})
+
+		if len(new) != 1 || len(old) != 1 {
+			return fmt.Errorf("unsupported action")
+		}
+		ncOldMap := old[0].(map[string]interface{})
+		ncNewMap := new[0].(map[string]interface{})
+		if d.HasChange("network_configuration.0.gateway_address") || d.HasChange("network_configuration.0.ip_blocks_configuration") {
+			return fmt.Errorf("unsupported action")
+		}
+		var pncNew, pncOld, pnNew, pnOld []interface{}
+		if (ncNewMap["private_network_configuration"]) != nil && len(ncNewMap["private_network_configuration"].([]interface{})) > 0 {
+			pncNew = ncNewMap["private_network_configuration"].([]interface{})
+		}
+		if (ncOldMap["private_network_configuration"]) != nil && len(ncOldMap["private_network_configuration"].([]interface{})) > 0 {
+			pncOld = ncOldMap["private_network_configuration"].([]interface{})
+		}
+		var pncNewMap, pncOldMap map[string]interface{}
+		if len(pncNew) > 0 && pncNew[0] != nil {
+			pncNewMap = pncNew[0].(map[string]interface{})
+		}
+		if len(pncOld) > 0 && pncOld[0] != nil {
+			pncOldMap = pncOld[0].(map[string]interface{})
+		}
+		if pncNewMap["gateway_address"] != pncOldMap["gateway_address"] {
+			return fmt.Errorf("unsupported action")
+		}
+		if pncNewMap["private_networks"] != nil {
+			pnNew = pncNewMap["private_networks"].([]interface{})
+		}
+		if pncOldMap["private_networks"] != nil {
+			pnOld = pncOldMap["private_networks"].([]interface{})
+		}
+		var newIds []string
+		var newIpss [][]string
+		var newDhcps []bool
+		if len(pnNew) > 0 {
+			for _, j := range pnNew {
+				pnNewMap := j.(map[string]interface{})
+				spnNew := pnNewMap["server_private_network"].([]interface{})[0]
+				spnNewMap := spnNew.(map[string]interface{})
+				newId := spnNewMap["id"].(string)
+				// b1, _ := json.MarshalIndent(newId, "", "  ")
+				// log.Printf("newId object is" + string(b1))
+				tempIps := spnNewMap["ips"].(*schema.Set).List()
+				// b2, _ := json.MarshalIndent(tempIps, "", "  ")
+				// log.Printf("tempIps object is" + string(b2))
+				newIps := make([]string, len(tempIps))
+				for i, v := range tempIps {
+					newIps[i] = fmt.Sprint(v)
+				}
+				// Designate an empty array of IPs
+				if (len(newIps)) > 0 {
+					if (len(newIps)) == 1 && newIps[0] == "" {
+						newIps = make([]string, 0)
+					}
+				}
+				newDhcp := spnNewMap["dhcp"].(bool)
+				newIds = append(newIds, newId)
+				newIpss = append(newIpss, newIps)
+				// b3, _ := json.MarshalIndent(newIpss, "", "  ")
+				// log.Printf("newIpss object is" + string(b3))
+				newDhcps = append(newDhcps, newDhcp)
+			}
+		}
+		var oldIds []string
+		var oldIpss [][]string
+		var oldDhcps []bool
+		if len(pnOld) > 0 {
+			for _, j := range pnOld {
+				pnOldMap := j.(map[string]interface{})
+				spnOld := pnOldMap["server_private_network"].([]interface{})[0]
+				spnOldMap := spnOld.(map[string]interface{})
+				oldId := spnOldMap["id"].(string)
+				tempIps := spnOldMap["ips"].(*schema.Set).List()
+				oldIps := make([]string, len(tempIps))
+				for i, v := range tempIps {
+					oldIps[i] = fmt.Sprint(v)
+				}
+				oldDhcp := spnOldMap["dhcp"].(bool)
+				oldIds = append(oldIds, oldId)
+				oldIpss = append(oldIpss, oldIps)
+				oldDhcps = append(oldDhcps, oldDhcp)
+			}
+		}
+		// b, _ := json.MarshalIndent(oldIds, "", "  ")
+		// log.Printf("oldIds object is" + string(b))
+		// c, _ := json.MarshalIndent(oldIpss, "", "  ")
+		// log.Printf("oldIpss" + string(c))
+		// d1, _ := json.MarshalIndent(newIds, "", "  ")
+		// log.Printf("newIds object is" + string(d1))
+		// e, _ := json.MarshalIndent(newIpss, "", "  ")
+		// log.Printf("newIpss object is" + string(e))
+		var sameIds []string
+		var idExists bool
+		for k, l := range newIds {
+			idExists = false
+			for m, n := range oldIds {
+				if n == l {
+					idExists = true
+					checkIps, err := compareInputIps(oldIpss[m], newIpss[k])
+					if err != nil {
+						return err
+					} else if !checkIps {
+						return fmt.Errorf("unsupported action (private ips has changed)")
+					} else if oldDhcps[m] != newDhcps[k] {
+						return fmt.Errorf("unsupported action (dhcp has changed)")
+					}
+				}
+			}
+			if idExists {
+				sameIds = append(sameIds, l)
+			}
+		}
+		for o, p := range newIds {
+			idExists = false
+			for _, r := range sameIds {
+				if p == r {
+					idExists = true
+				}
+			}
+			if !idExists {
+				request := &bmcapiclient.ServerPrivateNetwork{}
+				request.Id = p
+				request.Ips = newIpss[o]
+				request.Dhcp = &newDhcps[o]
+				requestCommand := server.NewAddServer2PrivateNetworkCommandWithQuery(client, serverID, *request, query)
+				// e2, _ := json.MarshalIndent(request, "", "  ")
+				// log.Printf("request object is" + string(e2))
+				_, err := requestCommand.Execute()
+				if err != nil {
+					return err
+				}
+				waitResultError := resourceWaitForPrivateNetworkAssign(d.Id(), p, &client)
+				if waitResultError != nil {
+					return waitResultError
+				}
+			}
+		}
+		for _, t := range oldIds {
+			idExists = false
+			for _, v := range sameIds {
+				if t == v {
+					idExists = true
+				}
+			}
+			if !idExists {
+				requestCommand := server.NewDeleteServerPrivateNetworkCommand(client, serverID, t)
+				_, err := requestCommand.Execute()
+				if err != nil {
+					return err
+				}
+				waitResultError := resourceWaitForPrivateNetworkUnassign(d.Id(), t, &client)
+				if waitResultError != nil {
+					return waitResultError
+				}
+			}
+		}
+		var pbncNew, pbncOld, pbnNew, pbnOld []interface{}
+		if (ncNewMap["public_network_configuration"]) != nil && len(ncNewMap["public_network_configuration"].([]interface{})) > 0 {
+			pbncNew = ncNewMap["public_network_configuration"].([]interface{})
+		}
+		if (ncOldMap["public_network_configuration"]) != nil && len(ncOldMap["public_network_configuration"].([]interface{})) > 0 {
+			pbncOld = ncOldMap["public_network_configuration"].([]interface{})
+		}
+		var pbncNewMap, pbncOldMap map[string]interface{}
+		if len(pbncNew) > 0 && pbncNew[0] != nil {
+			pbncNewMap = pbncNew[0].(map[string]interface{})
+		}
+		if len(pbncOld) > 0 && pbncOld[0] != nil {
+			pbncOldMap = pbncOld[0].(map[string]interface{})
+		}
+		if pbncNewMap["public_networks"] != nil {
+			pbnNew = pbncNewMap["public_networks"].([]interface{})
+		}
+		if pbncOldMap["public_networks"] != nil {
+			pbnOld = pbncOldMap["public_networks"].([]interface{})
+		}
+		var newPubIds []string
+		var newPubIpss [][]string
+		var newSlaacs []bool
+		if len(pbnNew) > 0 {
+			for _, j := range pbnNew {
+				pbnNewMap := j.(map[string]interface{})
+				spbnNew := pbnNewMap["server_public_network"].([]interface{})[0]
+				spbnNewMap := spbnNew.(map[string]interface{})
+				newPubId := spbnNewMap["id"].(string)
+				tempPubIps := spbnNewMap["ips"].(*schema.Set).List()
+				newPubIps := make([]string, len(tempPubIps))
+				for i, v := range tempPubIps {
+					newPubIps[i] = fmt.Sprint(v)
+				}
+				// Designate an empty array of IPs
+				if (len(newPubIps)) > 0 {
+					if (len(newPubIps)) == 1 && newPubIps[0] == "" {
+						newPubIps = make([]string, 0)
+					}
+				}
+				newSlaac := spbnNewMap["compute_slaac_ip"].(bool)
+				newPubIds = append(newPubIds, newPubId)
+				newPubIpss = append(newPubIpss, newPubIps)
+				newSlaacs = append(newSlaacs, newSlaac)
+			}
+		}
+		var oldPubIds []string
+		var oldPubIpss [][]string
+		var oldSlaacs []bool
+		if len(pbnOld) > 0 {
+			for _, j := range pbnOld {
+				pbnOldMap := j.(map[string]interface{})
+				spbnOld := pbnOldMap["server_public_network"].([]interface{})[0]
+				spbnOldMap := spbnOld.(map[string]interface{})
+				oldPubId := spbnOldMap["id"].(string)
+				tempPubIps := spbnOldMap["ips"].(*schema.Set).List()
+				oldPubIps := make([]string, len(tempPubIps))
+				for i, v := range tempPubIps {
+					oldPubIps[i] = fmt.Sprint(v)
+				}
+				oldSlaac := spbnOldMap["compute_slaac_ip"].(bool)
+				oldPubIds = append(oldPubIds, oldPubId)
+				oldPubIpss = append(oldPubIpss, oldPubIps)
+				oldSlaacs = append(oldSlaacs, oldSlaac)
+			}
+		}
+		var samePubIds []string
+		var pubIdExists bool
+		for k, l := range newPubIds {
+			pubIdExists = false
+			for m, n := range oldPubIds {
+				if n == l {
+					pubIdExists = true
+					checkIps, err := compareInputIps(oldPubIpss[m], newPubIpss[k])
+					if err != nil {
+						return err
+					} else if !checkIps {
+						return fmt.Errorf("unsupported action (public ips has changed)")
+					} else if oldSlaacs[m] != newSlaacs[k] {
+						return fmt.Errorf("unsupported action (compute_slaac_ip has changed)")
+					}
+				}
+			}
+			if pubIdExists {
+				samePubIds = append(samePubIds, l)
+			}
+		}
+		for o, p := range newPubIds {
+			pubIdExists = false
+			for _, r := range samePubIds {
+				if p == r {
+					pubIdExists = true
+				}
+			}
+			if !pubIdExists {
+				request := &bmcapiclient.ServerPublicNetwork{}
+				request.Id = p
+				request.Ips = newPubIpss[o]
+				if newSlaacs[o] == true {
+					request.ComputeSlaacIp = &newSlaacs[o]
+				}
+				requestCommand := server.NewAddServer2PublicNetworkCommandWithQuery(client, serverID, *request, query)
+				_, err := requestCommand.Execute()
+				if err != nil {
+					return err
+				}
+				waitResultError := resourceWaitForPublicNetworkAssign(d.Id(), p, &client)
+				if waitResultError != nil {
+					return waitResultError
+				}
+			}
+		}
+		for _, t := range oldPubIds {
+			pubIdExists = false
+			for _, v := range samePubIds {
+				if t == v {
+					pubIdExists = true
+				}
+			}
+			if !pubIdExists {
+				requestCommand := server.NewDeleteServerPublicNetworkCommand(client, serverID, t)
+				_, err := requestCommand.Execute()
+				if err != nil {
+					return err
+				}
+				waitResultError := resourceWaitForPublicNetworkUnassign(d.Id(), t, &client)
+				if waitResultError != nil {
+					return waitResultError
+				}
+			}
+		}
 	} else if d.HasChange("hostname") || d.HasChange("description") {
 		client := m.(receiver.BMCSDK)
 		serverID := d.Id()
@@ -1484,266 +1832,224 @@ func refreshForCreate(client *receiver.BMCSDK, id string) resource.StateRefreshF
 	}
 }
 
-func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncInput []interface{}) []interface{} {
-	if netConf != nil { //len(ncInput)
-		if len(ncInput) == 0 {
-			ncInput = make([]interface{}, 1)
-			n := make(map[string]interface{})
-			ncInput[0] = n
-		}
-		nci := ncInput[0]
-		nciMap := nci.(map[string]interface{})
+func resourceWaitForPrivateNetworkAssign(id string, netId string, client *receiver.BMCSDK) error {
+	log.Printf("Waiting for server %s to change private network configuration...", id)
 
-		if netConf != nil {
-			if netConf.GatewayAddress != nil {
-				nciMap["gateway_address"] = *netConf.GatewayAddress
-			}
-			if netConf.PrivateNetworkConfiguration != nil {
-				prNetConf := *netConf.PrivateNetworkConfiguration
-				//pnc := make([]interface{}, 1)
-				var pnc []interface{}
-				if (nciMap["private_network_configuration"]) != nil && len(nciMap["private_network_configuration"].([]interface{})) > 0 {
-					pnc = nciMap["private_network_configuration"].([]interface{})
-				} else {
-					pnc = make([]interface{}, 1)
-				}
-				//pncItem := make(map[string]interface{})
-				var pncItem map[string]interface{}
-				if len(pnc) > 0 && pnc[0] != nil {
-					pncItem = pnc[0].(map[string]interface{})
-				} else {
-					pncItem = make(map[string]interface{})
-				}
-				if prNetConf.GatewayAddress != nil {
-					pncItem["gateway_address"] = *prNetConf.GatewayAddress
-				}
-				if prNetConf.ConfigurationType != nil && len(*prNetConf.ConfigurationType) > 0 {
-					pncItem["configuration_type"] = *prNetConf.ConfigurationType
-				}
-				if prNetConf.PrivateNetworks != nil {
-					prNet := prNetConf.PrivateNetworks
-					//pn := make([]interface{}, len(prNet))
-					var pn []interface{}
-					var pnetworksExists = false
-					if pncItem["private_networks"] != nil {
-						pn = pncItem["private_networks"].([]interface{})
-						pnetworksExists = true
-					} else {
-						pn = make([]interface{}, len(prNet))
-						pnetworksExists = false
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"unassigned", "assigning", "in-progress"},
+		Target:     []string{"assigned"},
+		Refresh:    refreshForPrivateNetworksChange(client, id, netId),
+		Timeout:    pnapRetryTimeout,
+		Delay:      pnapRetryDelay,
+		MinTimeout: pnapRetryMinTimeout,
+	}
+
+	_, err := stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf("Error waiting for server (%s) to change private network configuration: %v", id, err)
+	}
+	return nil
+}
+
+func resourceWaitForPrivateNetworkUnassign(id string, netId string, client *receiver.BMCSDK) error {
+	log.Printf("Waiting for server %s to change private network configuration...", id)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"assigned", "unassigning", "in-progress"},
+		Target:     []string{"unassigned"},
+		Refresh:    refreshForPrivateNetworksChange(client, id, netId),
+		Timeout:    pnapRetryTimeout,
+		Delay:      pnapRetryDelay,
+		MinTimeout: pnapRetryMinTimeout,
+	}
+
+	_, err := stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf("Error waiting for server (%s) to change private network configuration: %v", id, err)
+	}
+	return nil
+}
+
+func refreshForPrivateNetworksChange(client *receiver.BMCSDK, id string, netId string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+
+		var status string
+		requestCommand := server.NewGetServerCommand(*client, id)
+
+		resp, err := requestCommand.Execute()
+		if err != nil {
+			return 0, "", err
+		} else if resp.NetworkConfiguration.PrivateNetworkConfiguration == nil {
+			return 0, "unassigned", nil
+		} else if nets := resp.NetworkConfiguration.PrivateNetworkConfiguration.PrivateNetworks; len(nets) > 0 {
+			var netFound bool
+			for _, j := range nets {
+				if j.Id == netId {
+					netFound = true
+					if j.StatusDescription != nil {
+						status = *j.StatusDescription
+						break
 					}
-					for i, j := range prNet {
-						for k := range pn {
-							if !pnetworksExists || pn[k].(map[string]interface{})["server_private_network"].([]interface{})[0].(map[string]interface{})["id"] == j.Id {
-
-								var pnItem map[string]interface{}
-								var spn []interface{}
-								var spnItem map[string]interface{}
-
-								if !pnetworksExists {
-									pnItem = make(map[string]interface{})
-									spn = make([]interface{}, 1)
-									spnItem = make(map[string]interface{})
-								} else {
-									//pnItem := make(map[string]interface{})
-									pnItem = pn[k].(map[string]interface{})
-
-									//spn := make([]interface{}, 1)
-									spn = pnItem["server_private_network"].([]interface{})
-									//spnItem := make(map[string]interface{})
-									spnItem = spn[0].(map[string]interface{})
-								}
-
-								spnItem["id"] = j.Id
-
-								ipsInput := make([]interface{}, 0)
-								if spnItem["ips"] != nil {
-									ipsInput = spnItem["ips"].(*schema.Set).List()
-								}
-								if len(ipsInput) == 1 && ipsInput[0] == "" {
-									spnItem["ips"] = ipsInput
-								} else if j.Ips != nil {
-									ipsApi := j.Ips
-									ipsApiMono := divideIpsRange(ipsApi)
-
-									ipsInputS := make([]string, len(ipsInput))
-									for m, n := range ipsInput {
-										ipsInputS[m] = n.(string)
-									}
-									ipsInputMono := divideIpsRange(ipsInputS)
-
-									ipsInputMonoPurged := removeDuplicateIps(ipsInputMono)
-
-									if compareIps(ipsApiMono, ipsInputMonoPurged) {
-										spnItem["ips"] = ipsInput
-									} else {
-										ips := make([]interface{}, len(ipsApi))
-										for o, p := range ipsApi {
-											ips[o] = p
-										}
-										spnItem["ips"] = ips
-									}
-								}
-
-								if j.Dhcp != nil {
-									spnItem["dhcp"] = *j.Dhcp
-								}
-								if j.StatusDescription != nil {
-									spnItem["status_description"] = *j.StatusDescription
-								}
-								if j.VlanId != nil {
-									spnItem["vlan_id"] = *j.VlanId
-								}
-								if !pnetworksExists {
-									spn[0] = spnItem
-									pnItem["server_private_network"] = spn
-									pn[i] = pnItem
-								}
-							}
-							if !pnetworksExists {
-								break
-							}
-						}
-					}
-					pncItem["private_networks"] = pn
-				}
-				pnc[0] = pncItem
-				nciMap["private_network_configuration"] = pnc
-			}
-			if netConf.IpBlocksConfiguration != nil {
-				ipBlocksConf := *netConf.IpBlocksConfiguration
-				if ipBlocksConf.IpBlocks != nil {
-					ibc := nciMap["ip_blocks_configuration"]
-					if ibc == nil || len(ibc.([]interface{})) == 0 {
-						ibc = make([]interface{}, 1)
-						ibci := make(map[string]interface{})
-						ibc.([]interface{})[0] = ibci
-					}
-
-					ibci := ibc.([]interface{})[0]
-					ibcInput := ibci.(map[string]interface{})
-
-					ipBlocks := ipBlocksConf.IpBlocks
-					ib := make([]interface{}, len(ipBlocks))
-					for i, j := range ipBlocks {
-						ibItem := make(map[string]interface{})
-						sib := make([]interface{}, 1)
-						sibItem := make(map[string]interface{})
-
-						sibItem["id"] = j.Id
-						if j.VlanId != nil {
-							sibItem["vlan_id"] = *j.VlanId
-						}
-						sib[0] = sibItem
-						ibItem["server_ip_block"] = sib
-						ib[i] = ibItem
-					}
-					ibcInput["ip_blocks"] = ib
 				}
 			}
-			if netConf.PublicNetworkConfiguration != nil {
-				pubNetConf := *netConf.PublicNetworkConfiguration
-				var pnc []interface{}
-				if (nciMap["public_network_configuration"]) != nil && len(nciMap["public_network_configuration"].([]interface{})) > 0 {
-					pnc = nciMap["public_network_configuration"].([]interface{})
-				} else {
-					pnc = make([]interface{}, 1)
-				}
-				var pncItem map[string]interface{}
-				if len(pnc) > 0 && pnc[0] != nil {
-					pncItem = pnc[0].(map[string]interface{})
-				} else {
-					pncItem = make(map[string]interface{})
-				}
-				if pubNetConf.PublicNetworks != nil {
-					pubNet := pubNetConf.PublicNetworks
-					var pn []interface{}
-					var pnetworksExists = false
-					if pncItem["public_networks"] != nil {
-						pn = pncItem["public_networks"].([]interface{})
-						pnetworksExists = true
-					} else {
-						pn = make([]interface{}, len(pubNet))
-						pnetworksExists = false
-					}
-					for i, j := range pubNet {
-						for k := range pn {
-							if !pnetworksExists || pn[k].(map[string]interface{})["server_public_network"].([]interface{})[0].(map[string]interface{})["id"] == j.Id {
-
-								var pnItem map[string]interface{}
-								var spn []interface{}
-								var spnItem map[string]interface{}
-
-								if !pnetworksExists {
-									pnItem = make(map[string]interface{})
-									spn = make([]interface{}, 1)
-									spnItem = make(map[string]interface{})
-								} else {
-									pnItem = pn[k].(map[string]interface{})
-									spn = pnItem["server_public_network"].([]interface{})
-									spnItem = spn[0].(map[string]interface{})
-								}
-
-								spnItem["id"] = j.Id
-
-								ipsInput := make([]interface{}, 0)
-								if spnItem["ips"] != nil {
-									ipsInput = spnItem["ips"].(*schema.Set).List()
-								}
-								if len(ipsInput) == 1 && ipsInput[0] == "" {
-									spnItem["ips"] = ipsInput
-								} else if j.Ips != nil {
-									ipsApi := j.Ips
-									ipsApiMono := divideIpsRange(ipsApi)
-
-									ipsInputS := make([]string, len(ipsInput))
-									for m, n := range ipsInput {
-										ipsInputS[m] = n.(string)
-									}
-									ipsInputMono := divideIpsRange(ipsInputS)
-
-									ipsInputMonoPurged := removeDuplicateIps(ipsInputMono)
-
-									if compareIps(ipsApiMono, ipsInputMonoPurged) {
-										spnItem["ips"] = ipsInput
-									} else {
-										ips := make([]interface{}, len(ipsApi))
-										for o, p := range ipsApi {
-											ips[o] = p
-										}
-										spnItem["ips"] = ips
-									}
-								}
-
-								if j.ComputeSlaacIp != nil {
-									spnItem["dhcp"] = *j.ComputeSlaacIp
-								}
-								if j.StatusDescription != nil {
-									spnItem["status_description"] = *j.StatusDescription
-								}
-								if j.VlanId != nil {
-									spnItem["vlan_id"] = *j.VlanId
-								}
-								if !pnetworksExists {
-									spn[0] = spnItem
-									pnItem["server_public_network"] = spn
-									pn[i] = pnItem
-								}
-							}
-							if !pnetworksExists {
-								break
-							}
-						}
-					}
-					pncItem["public_networks"] = pn
-				}
-				pnc[0] = pncItem
-				nciMap["public_network_configuration"] = pnc
+			if !netFound {
+				status = "unassigned"
 			}
-			//return ncInput
+			return 0, status, nil
+		} else {
+			return 0, "unassigned", nil
 		}
 	}
-	return ncInput
+}
+
+func resourceWaitForPublicNetworkAssign(id string, netId string, client *receiver.BMCSDK) error {
+	log.Printf("Waiting for server %s to change public network configuration...", id)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"unassigned", "assigning", "in-progress"},
+		Target:     []string{"assigned"},
+		Refresh:    refreshForPublicNetworksChange(client, id, netId),
+		Timeout:    pnapRetryTimeout,
+		Delay:      pnapRetryDelay,
+		MinTimeout: pnapRetryMinTimeout,
+	}
+
+	_, err := stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf("Error waiting for server (%s) to change public network configuration: %v", id, err)
+	}
+	return nil
+}
+
+func resourceWaitForPublicNetworkUnassign(id string, netId string, client *receiver.BMCSDK) error {
+	log.Printf("Waiting for server %s to change public network configuration...", id)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"assigned", "unassigning", "in-progress"},
+		Target:     []string{"unassigned"},
+		Refresh:    refreshForPublicNetworksChange(client, id, netId),
+		Timeout:    pnapRetryTimeout,
+		Delay:      pnapRetryDelay,
+		MinTimeout: pnapRetryMinTimeout,
+	}
+
+	_, err := stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf("Error waiting for server (%s) to change public network configuration: %v", id, err)
+	}
+	return nil
+}
+
+func refreshForPublicNetworksChange(client *receiver.BMCSDK, id string, netId string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+
+		var status string
+		requestCommand := server.NewGetServerCommand(*client, id)
+
+		resp, err := requestCommand.Execute()
+		if err != nil {
+			return 0, "", err
+		} else if resp.NetworkConfiguration.PublicNetworkConfiguration == nil {
+			return 0, "unassigned", nil
+		} else if nets := resp.NetworkConfiguration.PublicNetworkConfiguration.PublicNetworks; len(nets) > 0 {
+			var netFound bool
+			for _, j := range nets {
+				if j.Id == netId {
+					netFound = true
+					if j.StatusDescription != nil {
+						status = *j.StatusDescription
+						break
+					}
+				}
+			}
+			if !netFound {
+				status = "unassigned"
+			}
+			return 0, status, nil
+		} else {
+			return 0, "unassigned", nil
+		}
+	}
+}
+
+func flattenNetworkConfiguration(netConf *bmcapiclient.NetworkConfiguration, ncInput []interface{}) ([]interface{}, error) {
+	if len(ncInput) == 0 {
+		ncInput = make([]interface{}, 1)
+		n := make(map[string]interface{})
+		ncInput[0] = n
+	}
+	nci := ncInput[0]
+	nciMap := nci.(map[string]interface{})
+	var err error
+
+	if netConf != nil {
+		if netConf.GatewayAddress != nil {
+			nciMap["gateway_address"] = *netConf.GatewayAddress
+		}
+		if netConf.PrivateNetworkConfiguration != nil {
+			prNetConf := *netConf.PrivateNetworkConfiguration
+			pnc := make([]interface{}, 1)
+			if (nciMap["private_network_configuration"]) != nil && len(nciMap["private_network_configuration"].([]interface{})) > 0 {
+				pnc = nciMap["private_network_configuration"].([]interface{})
+			}
+			pncItem := make(map[string]interface{})
+			if len(pnc) > 0 && pnc[0] != nil {
+				pncItem = pnc[0].(map[string]interface{})
+			}
+			if prNetConf.GatewayAddress != nil {
+				pncItem["gateway_address"] = *prNetConf.GatewayAddress
+			}
+			if prNetConf.PrivateNetworks != nil {
+				privateNetworks := prNetConf.PrivateNetworks
+				pncItem, err = readServerPrivateNetworks(pncItem, privateNetworks)
+				if err != nil {
+					return nil, err
+				}
+			}
+			pnc[0] = pncItem
+			nciMap["private_network_configuration"] = pnc
+		}
+		if netConf.IpBlocksConfiguration != nil {
+			ipBlocksConf := *netConf.IpBlocksConfiguration
+			ibc := make([]interface{}, 1)
+			if (nciMap["ip_blocks_configuration"]) != nil && len(nciMap["ip_blocks_configuration"].([]interface{})) > 0 {
+				ibc = nciMap["ip_blocks_configuration"].([]interface{})
+			}
+			ibcItem := make(map[string]interface{})
+			if len(ibc) > 0 && ibc[0] != nil {
+				ibcItem = ibc[0].(map[string]interface{})
+			}
+			if ipBlocksConf.IpBlocks != nil {
+				ipBlocks := ipBlocksConf.IpBlocks
+				ibcItem = readServerIpBlocks(ibcItem, ipBlocks)
+			}
+			ibc[0] = ibcItem
+			nciMap["ip_blocks_configuration"] = ibc
+		}
+		if netConf.PublicNetworkConfiguration != nil {
+			pubNetConf := *netConf.PublicNetworkConfiguration
+			pnc := make([]interface{}, 1)
+			if (nciMap["public_network_configuration"]) != nil && len(nciMap["public_network_configuration"].([]interface{})) > 0 {
+				pnc = nciMap["public_network_configuration"].([]interface{})
+			}
+			pncItem := make(map[string]interface{})
+			if len(pnc) > 0 && pnc[0] != nil {
+				pncItem = pnc[0].(map[string]interface{})
+			}
+			if pubNetConf.PublicNetworks != nil {
+				pubNet := pubNetConf.PublicNetworks
+				pncItem, err = readServerPublicNetworks(pncItem, pubNet)
+				if err != nil {
+					return nil, err
+				}
+			}
+			pnc[0] = pncItem
+			nciMap["public_network_configuration"] = pnc
+		}
+		return ncInput, nil
+	} else {
+		return nil, nil
+	}
 }
 
 func flattenServerTags(tagsRead []bmcapiclient.TagAssignment, tagsInput []interface{}) []interface{} {
@@ -1782,17 +2088,360 @@ func supressUserDefinedNetworkType(k, oldValue, newValue string, d *schema.Resou
 	}
 }
 
+// readServerPrivateNetworks reads server private networks from API and sorts them in the same order as in configuration
+func readServerPrivateNetworks(pncItem map[string]interface{}, prNet []bmcapiclient.ServerPrivateNetwork) (map[string]interface{}, error) {
+	pn1 := make([]interface{}, 0)
+	pn2 := make([]interface{}, 0)
+	if pncItem["private_networks"] != nil && len(pncItem["private_networks"].([]interface{})) > 0 {
+		pni := pncItem["private_networks"].([]interface{})
+		// writing networks that are in the configuration, in the same order as in the configuration
+		for k := range pni {
+			for _, j := range prNet {
+				if pni[k] != nil && len(pni[k].(map[string]interface{})["server_private_network"].([]interface{})) > 0 {
+					ispnItem := pni[k].(map[string]interface{})["server_private_network"].([]interface{})[0].(map[string]interface{})
+					if ispnItem["id"] == j.Id {
+						pnItem := make(map[string]interface{})
+						spn := make([]interface{}, 1)
+						spnItem := make(map[string]interface{})
+						spnItem["id"] = j.Id
+						ipsInput := ispnItem["ips"].(*schema.Set).List()
+						ipsi, err := resolveIps(ipsInput, j.Ips)
+						if err != nil {
+							return nil, err
+						}
+						spnItem["ips"] = ipsi
+						if j.Dhcp != nil {
+							spnItem["dhcp"] = *j.Dhcp
+						}
+						if j.StatusDescription != nil {
+							spnItem["status_description"] = *j.StatusDescription
+						}
+						if j.VlanId != nil {
+							spnItem["vlan_id"] = *j.VlanId
+						}
+						spn[0] = spnItem
+						pnItem["server_private_network"] = spn
+						pn1 = append(pn1, pnItem)
+					}
+				}
+			}
+		}
+		// writing networks that are not in the configuration, if any
+		for _, j := range prNet {
+			sameId := false
+			for k := range pni {
+				if pni[k] != nil && len(pni[k].(map[string]interface{})["server_private_network"].([]interface{})) > 0 {
+					ispnItem := pni[k].(map[string]interface{})["server_private_network"].([]interface{})[0].(map[string]interface{})
+					if ispnItem["id"] == j.Id {
+						sameId = true
+					}
+				}
+			}
+			if !sameId {
+				pnItem := make(map[string]interface{})
+				spn := make([]interface{}, 1)
+				spnItem := make(map[string]interface{})
+				spnItem["id"] = j.Id
+				if j.Ips != nil {
+					ips := make([]interface{}, len(j.Ips))
+					for k, l := range j.Ips {
+						ips[k] = l
+					}
+					spnItem["ips"] = ips
+				}
+				if j.Dhcp != nil {
+					spnItem["dhcp"] = *j.Dhcp
+				}
+				if j.StatusDescription != nil {
+					spnItem["status_description"] = *j.StatusDescription
+				}
+				if j.VlanId != nil {
+					spnItem["vlan_id"] = *j.VlanId
+				}
+				spn[0] = spnItem
+				pnItem["server_private_network"] = spn
+				pn2 = append(pn2, pnItem)
+			}
+		}
+		if len(pn2) > 0 {
+			for i := range pn2 {
+				pn1 = append(pn1, pn2[i])
+			}
+		}
+	} else {
+		pn1 = make([]interface{}, len(prNet))
+		// writing networks in the same order as in the api response
+		for i, j := range prNet {
+			pnItem := make(map[string]interface{})
+			spn := make([]interface{}, 1)
+			spnItem := make(map[string]interface{})
+			spnItem["id"] = j.Id
+			if j.Ips != nil {
+				ips := make([]interface{}, len(j.Ips))
+				for k, l := range j.Ips {
+					ips[k] = l
+				}
+				spnItem["ips"] = ips
+			}
+			if j.Dhcp != nil {
+				spnItem["dhcp"] = *j.Dhcp
+			}
+			if j.StatusDescription != nil {
+				spnItem["status_description"] = *j.StatusDescription
+			}
+			if j.VlanId != nil {
+				spnItem["vlan_id"] = *j.VlanId
+			}
+			spn[0] = spnItem
+			pnItem["server_private_network"] = spn
+			pn1[i] = pnItem
+		}
+	}
+	pncItem["private_networks"] = pn1
+	return pncItem, nil
+}
+
+// resolveIps returns configuration value of IPs if it is the same as API value (only written in different format)
+// In other cases it returns the API response value
+func resolveIps(ipsInput []interface{}, ipsApi []string) ([]interface{}, error) {
+	if ipsApi != nil {
+		ipsApiMono, err := divideIpsRange(ipsApi)
+		if err != nil {
+			return nil, err
+		}
+
+		ipsInputS := make([]string, len(ipsInput))
+		for m, n := range ipsInput {
+			ipsInputS[m] = n.(string)
+		}
+		ipsInputMono, err := divideIpsRange(ipsInputS)
+		if err != nil {
+			return nil, err
+		}
+
+		ipsInputMonoPurged := removeDuplicateIps(ipsInputMono)
+
+		if compareIps(ipsApiMono, ipsInputMonoPurged) {
+			return ipsInput, nil
+		} else {
+			ips := make([]interface{}, len(ipsApi))
+			for o, p := range ipsApi {
+				ips[o] = p
+			}
+			return ips, nil
+		}
+	} else {
+		return ipsInput, nil
+	}
+}
+
+// readServerIpBlocks reads server ip blocks from API and sorts them in the same order as in configuration
+func readServerIpBlocks(ibcItem map[string]interface{}, ipBlocks []bmcapiclient.ServerIpBlock) map[string]interface{} {
+	ib1 := make([]interface{}, 0)
+	ib2 := make([]interface{}, 0)
+	if ibcItem["ip_blocks"] != nil && len(ibcItem["ip_blocks"].([]interface{})) > 0 {
+		ibi := ibcItem["ip_blocks"].([]interface{})
+		// writing ip blocks that are in the configuration, in the same order as in the configuration
+		for k := range ibi {
+			for _, j := range ipBlocks {
+				if ibi[k] != nil && len(ibi[k].(map[string]interface{})["server_ip_block"].([]interface{})) > 0 {
+					isibItem := ibi[k].(map[string]interface{})["server_ip_block"].([]interface{})[0].(map[string]interface{})
+					if isibItem["id"] == j.Id {
+						ibItem := make(map[string]interface{})
+						sib := make([]interface{}, 1)
+						sibItem := make(map[string]interface{})
+						sibItem["id"] = j.Id
+						if j.VlanId != nil {
+							sibItem["vlan_id"] = *j.VlanId
+						}
+						sib[0] = sibItem
+						ibItem["server_ip_block"] = sib
+						ib1 = append(ib1, ibItem)
+					}
+				}
+			}
+		}
+		// writing ip blocks that are not in the configuration, if any
+		for _, j := range ipBlocks {
+			sameId := false
+			for k := range ibi {
+				if ibi[k] != nil && len(ibi[k].(map[string]interface{})["server_ip_block"].([]interface{})) > 0 {
+					isibItem := ibi[k].(map[string]interface{})["server_ip_block"].([]interface{})[0].(map[string]interface{})
+					if isibItem["id"] == j.Id {
+						sameId = true
+					}
+				}
+			}
+			if !sameId {
+				ibItem := make(map[string]interface{})
+				sib := make([]interface{}, 1)
+				sibItem := make(map[string]interface{})
+				sibItem["id"] = j.Id
+				if j.VlanId != nil {
+					sibItem["vlan_id"] = *j.VlanId
+				}
+				sib[0] = sibItem
+				ibItem["server_ip_block"] = sib
+				ib2 = append(ib2, ibItem)
+			}
+		}
+		if len(ib2) > 0 {
+			for i := range ib2 {
+				ib1 = append(ib1, ib2[i])
+			}
+		}
+	} else {
+		ib1 = make([]interface{}, len(ipBlocks))
+		// writing ip blocks in the same order as in the api response
+		for i, j := range ipBlocks {
+			ibItem := make(map[string]interface{})
+			sib := make([]interface{}, 1)
+			sibItem := make(map[string]interface{})
+			sibItem["id"] = j.Id
+			if j.VlanId != nil {
+				sibItem["vlan_id"] = *j.VlanId
+			}
+			sib[0] = sibItem
+			ibItem["server_ip_block"] = sib
+			ib1[i] = ibItem
+		}
+	}
+	ibcItem["ip_blocks"] = ib1
+	return ibcItem
+}
+
+// readServerPublicNetworks reads server public networks from API and sorts them in the same order as in configuration
+func readServerPublicNetworks(pncItem map[string]interface{}, pubNet []bmcapiclient.ServerPublicNetwork) (map[string]interface{}, error) {
+	pn1 := make([]interface{}, 0)
+	pn2 := make([]interface{}, 0)
+	if pncItem["public_networks"] != nil && len(pncItem["public_networks"].([]interface{})) > 0 {
+		pni := pncItem["public_networks"].([]interface{})
+		// writing networks that are in the configuration, in the same order as in the configuration
+		for k := range pni {
+			for _, j := range pubNet {
+				if pni[k] != nil && len(pni[k].(map[string]interface{})["server_public_network"].([]interface{})) > 0 {
+					ispnItem := pni[k].(map[string]interface{})["server_public_network"].([]interface{})[0].(map[string]interface{})
+					if ispnItem["id"] == j.Id {
+						pnItem := make(map[string]interface{})
+						spn := make([]interface{}, 1)
+						spnItem := make(map[string]interface{})
+						spnItem["id"] = j.Id
+						ipsInput := ispnItem["ips"].(*schema.Set).List()
+						var ipv6 bool
+						for _, l := range j.Ips {
+							if strings.Contains(l, ":") {
+								ipv6 = true
+							}
+						}
+						if ipv6 {
+							spnItem["ips"] = ipsInput
+						} else {
+							ipsi, err := resolveIps(ipsInput, j.Ips)
+							if err != nil {
+								return nil, err
+							}
+							spnItem["ips"] = ipsi
+						}
+						if j.StatusDescription != nil {
+							spnItem["status_description"] = *j.StatusDescription
+						}
+						spnItem["compute_slaac_ip"] = ispnItem["compute_slaac_ip"].(bool)
+						if j.VlanId != nil {
+							spnItem["vlan_id"] = *j.VlanId
+						}
+						spn[0] = spnItem
+						pnItem["server_public_network"] = spn
+						pn1 = append(pn1, pnItem)
+					}
+				}
+			}
+		}
+		// writing networks that are not in the configuration, if any
+		for _, j := range pubNet {
+			sameId := false
+			for k := range pni {
+				if pni[k] != nil && len(pni[k].(map[string]interface{})["server_public_network"].([]interface{})) > 0 {
+					ispnItem := pni[k].(map[string]interface{})["server_public_network"].([]interface{})[0].(map[string]interface{})
+					if ispnItem["id"] == j.Id {
+						sameId = true
+					}
+				}
+			}
+			if !sameId {
+				pnItem := make(map[string]interface{})
+				spn := make([]interface{}, 1)
+				spnItem := make(map[string]interface{})
+				spnItem["id"] = j.Id
+				if j.Ips != nil {
+					ips := make([]interface{}, len(j.Ips))
+					for k, l := range j.Ips {
+						ips[k] = l
+					}
+					spnItem["ips"] = ips
+				}
+				if j.StatusDescription != nil {
+					spnItem["status_description"] = *j.StatusDescription
+				}
+				if j.VlanId != nil {
+					spnItem["vlan_id"] = *j.VlanId
+				}
+				spn[0] = spnItem
+				pnItem["server_public_network"] = spn
+				pn2 = append(pn2, pnItem)
+			}
+		}
+		if len(pn2) > 0 {
+			for i := range pn2 {
+				pn1 = append(pn1, pn2[i])
+			}
+		}
+	} else {
+		pn1 = make([]interface{}, len(pubNet))
+		// writing networks in the same order as in the api response
+		for i, j := range pubNet {
+			pnItem := make(map[string]interface{})
+			spn := make([]interface{}, 1)
+			spnItem := make(map[string]interface{})
+			spnItem["id"] = j.Id
+			if j.Ips != nil {
+				ips := make([]interface{}, len(j.Ips))
+				for k, l := range j.Ips {
+					ips[k] = l
+				}
+				spnItem["ips"] = ips
+			}
+			if j.StatusDescription != nil {
+				spnItem["status_description"] = *j.StatusDescription
+			}
+			if j.VlanId != nil {
+				spnItem["vlan_id"] = *j.VlanId
+			}
+			spn[0] = spnItem
+			pnItem["server_public_network"] = spn
+			pn1[i] = pnItem
+		}
+	}
+	pncItem["public_networks"] = pn1
+	return pncItem, nil
+}
+
 // divideIpsRange transforms a slice of IP addresses in range format to a slice of individual IP addresses.
-func divideIpsRange(ipsRanged []string) []string {
+func divideIpsRange(ipsRanged []string) ([]string, error) {
 	var ipsMono []string
 	for _, j := range ipsRanged {
-		if strings.Contains(j, " - ") {
-			firstLast := strings.Split(j, " - ")
-			if len(firstLast) > 0 {
-				first := firstLast[0]
-				last := firstLast[1]
-				firstAddr, _ := netip.ParseAddr(first)
-				lastAddr, _ := netip.ParseAddr(last)
+		if strings.Contains(j, "-") {
+			firstLast := strings.Split(j, "-")
+			if len(firstLast) > 1 {
+				first := strings.TrimSpace(firstLast[0])
+				last := strings.TrimSpace(firstLast[1])
+				firstAddr, err := netip.ParseAddr(first)
+				if err != nil {
+					return nil, err
+				}
+				lastAddr, err := netip.ParseAddr(last)
+				if err != nil {
+					return nil, err
+				}
 				nextAddr := firstAddr.Next()
 
 				num1 := binary.BigEndian.Uint32(firstAddr.AsSlice())
@@ -1809,10 +2458,11 @@ func divideIpsRange(ipsRanged []string) []string {
 				}
 			}
 		} else {
+			j = strings.TrimSpace(j)
 			ipsMono = append(ipsMono, j)
 		}
 	}
-	return ipsMono
+	return ipsMono, nil
 }
 
 // compareIps compares slices of individual IP addresses and returns true if they are equal or false if they are not equal.
@@ -1851,4 +2501,43 @@ func removeDuplicateIps(ips []string) []string {
 		}
 	}
 	return ipsPurged
+}
+
+// compareInputIps compares slices of Ips from configuration. If they are the same returns true, if they are different returns false
+func compareInputIps(oldIpss []string, newIpss []string) (bool, error) {
+	if oldIpss != nil && newIpss != nil {
+		oldIpssMono, err := divideIpsRange(oldIpss)
+		if err != nil {
+			return false, err
+		}
+		oldIpssMonoPurged := removeDuplicateIps(oldIpssMono)
+		newIpssMono, err := divideIpsRange(newIpss)
+		if err != nil {
+			return false, err
+		}
+		newIpssMonoPurged := removeDuplicateIps(newIpssMono)
+
+		if len(oldIpssMonoPurged) == 1 && oldIpssMonoPurged[0] == "" && len(newIpssMonoPurged) == 0 {
+			return true, nil
+		} else if compareIps(oldIpssMonoPurged, newIpssMonoPurged) {
+			return true, nil
+		} else {
+			// log.Printf("request object is false compare")
+			// b, _ := json.MarshalIndent(oldIpssMonoPurged, "", "  ")
+			// log.Printf("oldIpssMonoPurged object is" + string(b))
+			// c, _ := json.MarshalIndent(newIpssMonoPurged, "", "  ")
+			// log.Printf("newIpssMonoPurged object is" + string(c))
+			return false, nil
+		}
+	} else if oldIpss == nil && newIpss == nil {
+		return true, nil
+	} else {
+		// if oldIpss == nil {
+		// 	log.Printf("request object is false oldIpss")
+		// }
+		// if newIpss == nil {
+		// 	log.Printf("request object is false newIpss")
+		// }
+		return false, nil
+	}
 }
