@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -576,49 +577,101 @@ func resourceServer() *schema.Resource {
 			},
 		},
 		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
-			// Customizing value [""] for empty array of ips to be replaced with value [] because of block to attribute change in provider
-			if diff.Id() == "" {
-				return nil
-			} else {
-				rawNCint := diff.Get("network_configuration")
-				if rawNCint != nil && len(rawNCint.([]interface{})) > 0 {
-					networkConfiguration := rawNCint.([]interface{})[0]
-					networkConfigurationItem := networkConfiguration.(map[string]interface{})
-					if networkConfigurationItem["private_network_configuration"] != nil && len(networkConfigurationItem["private_network_configuration"].([]interface{})) > 0 {
-						privateNetworkConfiguration := networkConfigurationItem["private_network_configuration"].([]interface{})[0]
-						privateNetworkConfigurationItem := privateNetworkConfiguration.(map[string]interface{})
-						rawPN := privateNetworkConfigurationItem["private_networks"].([]interface{})
-						for i := range rawPN {
-							if rawPN[i] != nil && len(rawPN[i].(map[string]interface{})["server_private_network"].([]interface{})) > 0 {
-								ispnItem := rawPN[i].(map[string]interface{})["server_private_network"].([]interface{})[0].(map[string]interface{})
-								ipsInput := ispnItem["ips"].(*schema.Set).List()
-								if len(ipsInput) == 1 && ipsInput[0] == "" {
+			isNullPrivIps, isNullDhcp := markNotSetPrivateNetworkFields(diff)
+			isNullComputeSlaacIp := markNotSetPublicNetworkComputeSlaacIp(diff)
+			oldRawNCint, rawNCint := diff.GetChange("network_configuration")
+			var oldIds []string
+			var oldPubIds []string
+			if oldRawNCint != nil && len(oldRawNCint.([]interface{})) > 0 {
+				networkConfiguration := oldRawNCint.([]interface{})[0]
+				networkConfigurationItem := networkConfiguration.(map[string]interface{})
+				if networkConfigurationItem["private_network_configuration"] != nil && len(networkConfigurationItem["private_network_configuration"].([]interface{})) > 0 {
+					privateNetworkConfiguration := networkConfigurationItem["private_network_configuration"].([]interface{})[0]
+					privateNetworkConfigurationItem := privateNetworkConfiguration.(map[string]interface{})
+					oldRawPN := privateNetworkConfigurationItem["private_networks"].([]interface{})
+					oldIds = make([]string, len(oldRawPN))
+					for i := range oldRawPN {
+						if oldRawPN[i] != nil && len(oldRawPN[i].(map[string]interface{})["server_private_network"].([]interface{})) > 0 {
+							ispnItem := oldRawPN[i].(map[string]interface{})["server_private_network"].([]interface{})[0].(map[string]interface{})
+							id := ispnItem["id"].(string)
+							oldIds[i] = id
+						}
+					}
+				}
+				if networkConfigurationItem["public_network_configuration"] != nil && len(networkConfigurationItem["public_network_configuration"].([]interface{})) > 0 {
+					publicNetworkConfiguration := networkConfigurationItem["public_network_configuration"].([]interface{})[0]
+					publicNetworkConfigurationItem := publicNetworkConfiguration.(map[string]interface{})
+					oldRawPN := publicNetworkConfigurationItem["public_networks"].([]interface{})
+					oldPubIds = make([]string, len(oldRawPN))
+					for i := range oldRawPN {
+						if oldRawPN[i] != nil && len(oldRawPN[i].(map[string]interface{})["server_public_network"].([]interface{})) > 0 {
+							ispnItem := oldRawPN[i].(map[string]interface{})["server_public_network"].([]interface{})[0].(map[string]interface{})
+							id := ispnItem["id"].(string)
+							oldPubIds[i] = id
+						}
+					}
+				}
+			}
+			if rawNCint != nil && len(rawNCint.([]interface{})) > 0 {
+				networkConfiguration := rawNCint.([]interface{})[0]
+				networkConfigurationItem := networkConfiguration.(map[string]interface{})
+				if networkConfigurationItem["private_network_configuration"] != nil && len(networkConfigurationItem["private_network_configuration"].([]interface{})) > 0 {
+					privateNetworkConfiguration := networkConfigurationItem["private_network_configuration"].([]interface{})[0]
+					privateNetworkConfigurationItem := privateNetworkConfiguration.(map[string]interface{})
+					rawPN := privateNetworkConfigurationItem["private_networks"].([]interface{})
+					for i := range rawPN {
+						if rawPN[i] != nil && len(rawPN[i].(map[string]interface{})["server_private_network"].([]interface{})) > 0 {
+							ispnItem := rawPN[i].(map[string]interface{})["server_private_network"].([]interface{})[0].(map[string]interface{})
+							id := ispnItem["id"].(string)
+							ipsInput := ispnItem["ips"].(*schema.Set).List()
+							// Customizing value [""] for empty array of ips to be replaced with value [] because of block to attribute change in provider
+							if len(ipsInput) == 1 && ipsInput[0] == "" {
+								ispnItem["ips"] = make([]interface{}, 0)
+							}
+							// Correcting Terraform's index-based prior state fallback
+							if len(rawPN) == len(isNullPrivIps) {
+								if i < len(oldIds) && oldIds[i] == id {
+									// Do nothing
+								} else if isNullPrivIps[i] {
 									ispnItem["ips"] = make([]interface{}, 0)
 								}
-								// key := "network_configuration.0.private_network_configuration.0.private_networks." + strconv.Itoa(i) + ".ips"
-								// if _, ok := diff.GetOkExists(key); !ok {
-								// 	ispnItem["ips"] = make([]interface{}, 0)
-								// }
+							}
+							if len(rawPN) == len(isNullDhcp) {
+								if i < len(oldIds) && oldIds[i] == id {
+									// Do nothing
+								} else if isNullDhcp[i] {
+									ispnItem["dhcp"] = false
+								}
 							}
 						}
 					}
-					if networkConfigurationItem["public_network_configuration"] != nil && len(networkConfigurationItem["public_network_configuration"].([]interface{})) > 0 {
-						publicNetworkConfiguration := networkConfigurationItem["public_network_configuration"].([]interface{})[0]
-						publicNetworkConfigurationItem := publicNetworkConfiguration.(map[string]interface{})
-						rawPN := publicNetworkConfigurationItem["public_networks"].([]interface{})
-						for i := range rawPN {
-							if rawPN[i] != nil && len(rawPN[i].(map[string]interface{})["server_public_network"].([]interface{})) > 0 {
-								ispnItem := rawPN[i].(map[string]interface{})["server_public_network"].([]interface{})[0].(map[string]interface{})
-								ipsInput := ispnItem["ips"].(*schema.Set).List()
-								if len(ipsInput) == 1 && ipsInput[0] == "" {
-									ispnItem["ips"] = make([]interface{}, 0)
+				}
+				if networkConfigurationItem["public_network_configuration"] != nil && len(networkConfigurationItem["public_network_configuration"].([]interface{})) > 0 {
+					publicNetworkConfiguration := networkConfigurationItem["public_network_configuration"].([]interface{})[0]
+					publicNetworkConfigurationItem := publicNetworkConfiguration.(map[string]interface{})
+					rawPN := publicNetworkConfigurationItem["public_networks"].([]interface{})
+					for i := range rawPN {
+						if rawPN[i] != nil && len(rawPN[i].(map[string]interface{})["server_public_network"].([]interface{})) > 0 {
+							ispnItem := rawPN[i].(map[string]interface{})["server_public_network"].([]interface{})[0].(map[string]interface{})
+							id := ispnItem["id"].(string)
+							ipsInput := ispnItem["ips"].(*schema.Set).List()
+							// Customizing value [""] for empty array of ips to be replaced with value [] because of block to attribute change in provider
+							if len(ipsInput) == 1 && ipsInput[0] == "" {
+								ispnItem["ips"] = make([]interface{}, 0)
+							}
+							// Correcting Terraform's index-based prior state fallback
+							if len(rawPN) == len(isNullComputeSlaacIp) {
+								if i < len(oldPubIds) && oldPubIds[i] == id {
+									// Do nothing
+								} else if isNullComputeSlaacIp[i] {
+									ispnItem["compute_slaac_ip"] = false
 								}
 							}
 						}
 					}
-					if err := diff.SetNew("network_configuration", rawNCint); err != nil {
-						return fmt.Errorf("failed to override name: %w", err)
-					}
+				}
+				if err := diff.SetNew("network_configuration", rawNCint); err != nil {
+					return fmt.Errorf("failed to override name: %w", err)
 				}
 			}
 			return nil
@@ -839,7 +892,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
 				networkConfigurationObject.PrivateNetworkConfiguration = &privateNetworkConfigurationObject
 				if len(privateNetworks) > 0 {
-
+					isNullPrivIps := markNotSetPrivateNetworkIps(d)
 					serPrivateNets := make([]bmcapiclient.ServerPrivateNetwork, len(privateNetworks))
 
 					for k, j := range privateNetworks {
@@ -862,11 +915,9 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 						if (len(id)) > 0 {
 							serverPrivateNetworkObject.Id = id
 						}
-						if (len(netIps)) > 0 {
-							if (len(netIps)) == 1 && netIps[0] == "" {
-								// Designate an empty array of IPs
-								netIps = make([]string, 0)
-							}
+						if len(privateNetworks) == len(isNullPrivIps) && isNullPrivIps[k] {
+							// Do nothing because ips is an empty field
+						} else {
 							serverPrivateNetworkObject.Ips = netIps
 						}
 
@@ -947,13 +998,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 					if (len(id)) > 0 {
 						serverPublicNetworkObject.Id = id
 					}
-					if (len(netIps)) > 0 {
-						if (len(netIps)) == 1 && netIps[0] == "" {
-							// Designate an empty array of IPs
-							netIps = make([]string, 0)
-						}
-						serverPublicNetworkObject.Ips = netIps
-					}
+					serverPublicNetworkObject.Ips = netIps
 					serverPublicNetworkObject.ComputeSlaacIp = &computeSlaacIp
 
 					serPublicNets[k] = serverPublicNetworkObject
@@ -1425,8 +1470,7 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		query := &dto.Query{}
 		var force = d.Get("force").(bool)
 		query.Force = force
-		oldInterface, _ := d.GetChange("network_configuration")
-		newInterface := d.Get("network_configuration")
+		oldInterface, newInterface := d.GetChange("network_configuration")
 		old := oldInterface.([]interface{})
 		new := newInterface.([]interface{})
 
@@ -1464,32 +1508,25 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		var newIds []string
 		var newIpss [][]string
 		var newDhcps []bool
+		isNullPrivIps := markNotSetPrivateNetworkIps(d)
 		if len(pnNew) > 0 {
-			for _, j := range pnNew {
+			for i, j := range pnNew {
 				pnNewMap := j.(map[string]interface{})
 				spnNew := pnNewMap["server_private_network"].([]interface{})[0]
 				spnNewMap := spnNew.(map[string]interface{})
 				newId := spnNewMap["id"].(string)
-				// b1, _ := json.MarshalIndent(newId, "", "  ")
-				// log.Printf("newId object is" + string(b1))
 				tempIps := spnNewMap["ips"].(*schema.Set).List()
-				// b2, _ := json.MarshalIndent(tempIps, "", "  ")
-				// log.Printf("tempIps object is" + string(b2))
 				newIps := make([]string, len(tempIps))
 				for i, v := range tempIps {
 					newIps[i] = fmt.Sprint(v)
 				}
-				// Designate an empty array of IPs
-				if (len(newIps)) > 0 {
-					if (len(newIps)) == 1 && newIps[0] == "" {
-						newIps = make([]string, 0)
-					}
+				// Mark an empty array of IPs
+				if len(newIps) == 0 && len(isNullPrivIps) == len(pnNew) && !isNullPrivIps[i] {
+					newIps = make([]string, 1)
 				}
 				newDhcp := spnNewMap["dhcp"].(bool)
 				newIds = append(newIds, newId)
 				newIpss = append(newIpss, newIps)
-				// b3, _ := json.MarshalIndent(newIpss, "", "  ")
-				// log.Printf("newIpss object is" + string(b3))
 				newDhcps = append(newDhcps, newDhcp)
 			}
 		}
@@ -1513,29 +1550,27 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 				oldDhcps = append(oldDhcps, oldDhcp)
 			}
 		}
-		// b, _ := json.MarshalIndent(oldIds, "", "  ")
-		// log.Printf("oldIds object is" + string(b))
-		// c, _ := json.MarshalIndent(oldIpss, "", "  ")
-		// log.Printf("oldIpss" + string(c))
-		// d1, _ := json.MarshalIndent(newIds, "", "  ")
-		// log.Printf("newIds object is" + string(d1))
-		// e, _ := json.MarshalIndent(newIpss, "", "  ")
-		// log.Printf("newIpss object is" + string(e))
-		var sameIds []string
-		var idExists bool
-		for k, l := range newIds {
-			idExists = false
-			for m, n := range oldIds {
-				if n == l {
-					idExists = true
-					checkIps, err := compareInputIps(oldIpss[m], newIpss[k])
+		if len(newIds) == len(oldIds) {
+			for i, j := range newIds {
+				if oldIds[i] == j {
+					checkIps, err := compareInputIps(oldIpss[i], newIpss[i])
 					if err != nil {
 						return err
 					} else if !checkIps {
 						return fmt.Errorf("unsupported action (private ips has changed)")
-					} else if oldDhcps[m] != newDhcps[k] {
+					} else if oldDhcps[i] != newDhcps[i] {
 						return fmt.Errorf("unsupported action (dhcp has changed)")
 					}
+				}
+			}
+		}
+		var sameIds []string
+		var idExists bool
+		for _, l := range newIds {
+			idExists = false
+			for _, n := range oldIds {
+				if n == l {
+					idExists = true
 				}
 			}
 			if idExists {
@@ -1552,11 +1587,17 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			if !idExists {
 				request := &bmcapiclient.ServerPrivateNetwork{}
 				request.Id = p
-				request.Ips = newIpss[o]
+				newIps := newIpss[o]
+				if len(newIds) == len(isNullPrivIps) && isNullPrivIps[o] {
+					// Do nothing because ips is an empty field
+				} else if len(newIps) == 1 && newIps[0] == "" {
+					request.Ips = make([]string, 0)
+				} else {
+					request.Ips = newIps
+				}
 				request.Dhcp = &newDhcps[o]
+
 				requestCommand := server.NewAddServer2PrivateNetworkCommandWithQuery(client, serverID, *request, query)
-				// e2, _ := json.MarshalIndent(request, "", "  ")
-				// log.Printf("request object is" + string(e2))
 				_, err := requestCommand.Execute()
 				if err != nil {
 					return err
@@ -1620,12 +1661,6 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 				for i, v := range tempPubIps {
 					newPubIps[i] = fmt.Sprint(v)
 				}
-				// Designate an empty array of IPs
-				if (len(newPubIps)) > 0 {
-					if (len(newPubIps)) == 1 && newPubIps[0] == "" {
-						newPubIps = make([]string, 0)
-					}
-				}
 				newSlaac := spbnNewMap["compute_slaac_ip"].(bool)
 				newPubIds = append(newPubIds, newPubId)
 				newPubIpss = append(newPubIpss, newPubIps)
@@ -1652,21 +1687,27 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 				oldSlaacs = append(oldSlaacs, oldSlaac)
 			}
 		}
-		var samePubIds []string
-		var pubIdExists bool
-		for k, l := range newPubIds {
-			pubIdExists = false
-			for m, n := range oldPubIds {
-				if n == l {
-					pubIdExists = true
-					checkIps, err := compareInputIps(oldPubIpss[m], newPubIpss[k])
+		if len(newPubIds) == len(oldPubIds) {
+			for i, j := range newPubIds {
+				if oldPubIds[i] == j {
+					checkIps, err := compareInputIps(oldPubIpss[i], newPubIpss[i])
 					if err != nil {
 						return err
 					} else if !checkIps {
 						return fmt.Errorf("unsupported action (public ips has changed)")
-					} else if oldSlaacs[m] != newSlaacs[k] {
+					} else if oldSlaacs[i] != newSlaacs[i] {
 						return fmt.Errorf("unsupported action (compute_slaac_ip has changed)")
 					}
+				}
+			}
+		}
+		var samePubIds []string
+		var pubIdExists bool
+		for _, l := range newPubIds {
+			pubIdExists = false
+			for _, n := range oldPubIds {
+				if n == l {
+					pubIdExists = true
 				}
 			}
 			if pubIdExists {
@@ -2504,40 +2545,136 @@ func removeDuplicateIps(ips []string) []string {
 }
 
 // compareInputIps compares slices of Ips from configuration. If they are the same returns true, if they are different returns false
-func compareInputIps(oldIpss []string, newIpss []string) (bool, error) {
-	if oldIpss != nil && newIpss != nil {
-		oldIpssMono, err := divideIpsRange(oldIpss)
+func compareInputIps(oldIps []string, newIps []string) (bool, error) {
+	if len(oldIps) > 0 && len(newIps) > 0 {
+		oldIpsMono, err := divideIpsRange(oldIps)
 		if err != nil {
 			return false, err
 		}
-		oldIpssMonoPurged := removeDuplicateIps(oldIpssMono)
-		newIpssMono, err := divideIpsRange(newIpss)
+		oldIpsMonoPurged := removeDuplicateIps(oldIpsMono)
+		newIpsMono, err := divideIpsRange(newIps)
 		if err != nil {
 			return false, err
 		}
-		newIpssMonoPurged := removeDuplicateIps(newIpssMono)
+		newIpsMonoPurged := removeDuplicateIps(newIpsMono)
 
-		if len(oldIpssMonoPurged) == 1 && oldIpssMonoPurged[0] == "" && len(newIpssMonoPurged) == 0 {
+		if len(oldIpsMonoPurged) == 1 && oldIpsMonoPurged[0] == "" && len(newIpsMonoPurged) == 0 {
 			return true, nil
-		} else if compareIps(oldIpssMonoPurged, newIpssMonoPurged) {
+		} else if compareIps(oldIpsMonoPurged, newIpsMonoPurged) {
 			return true, nil
 		} else {
-			// log.Printf("request object is false compare")
-			// b, _ := json.MarshalIndent(oldIpssMonoPurged, "", "  ")
-			// log.Printf("oldIpssMonoPurged object is" + string(b))
-			// c, _ := json.MarshalIndent(newIpssMonoPurged, "", "  ")
-			// log.Printf("newIpssMonoPurged object is" + string(c))
 			return false, nil
 		}
-	} else if oldIpss == nil && newIpss == nil {
+	} else if len(oldIps) == 0 && len(newIps) == 0 {
+		return true, nil
+	} else if len(oldIps) == 0 && len(newIps) == 1 && newIps[0] == "" {
 		return true, nil
 	} else {
-		// if oldIpss == nil {
-		// 	log.Printf("request object is false oldIpss")
-		// }
-		// if newIpss == nil {
-		// 	log.Printf("request object is false newIpss")
-		// }
 		return false, nil
 	}
+}
+
+// markNotSetPrivateNetworkFields returns which of the private network's fields ips and dhcp, are not set in configuration
+func markNotSetPrivateNetworkFields(diff *schema.ResourceDiff) ([]bool, []bool) {
+	var isNullPrivIps []bool
+	var isNullDhcp []bool
+	rawConfig := diff.GetRawConfig()
+	objType := rawConfig.Type()
+	if ok := objType.HasAttribute("network_configuration"); ok {
+		netConf := rawConfig.GetAttr("network_configuration")
+		if netConf.LengthInt() > 0 {
+			netConfItem := netConf.Index(cty.NumberIntVal(0))
+			pNetConf := netConfItem.GetAttr("private_network_configuration")
+			if pNetConf.LengthInt() > 0 {
+				pNetConfItem := pNetConf.Index(cty.NumberIntVal(0))
+				pNet := pNetConfItem.GetAttr("private_networks")
+				if pNet.LengthInt() > 0 {
+					for i := 0; i < pNet.LengthInt(); i++ {
+						isNullPrivIps = append(isNullPrivIps, false)
+						isNullDhcp = append(isNullDhcp, false)
+						pNetItem := pNet.Index(cty.NumberIntVal(int64(i)))
+						spn := pNetItem.GetAttr("server_private_network")
+						if spn.LengthInt() > 0 {
+							spnItem := spn.Index(cty.NumberIntVal(0))
+							ips := spnItem.GetAttr("ips")
+							if ips.IsNull() {
+								isNullPrivIps[i] = true
+							}
+							dhcp := spnItem.GetAttr("dhcp")
+							if dhcp.IsNull() {
+								isNullDhcp[i] = true
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return isNullPrivIps, isNullDhcp
+}
+
+// markNotSetPublicNetworkComputeSlaacIp returns which of the public network's compute_slaac_ip are not set in configuration
+func markNotSetPublicNetworkComputeSlaacIp(diff *schema.ResourceDiff) []bool {
+	var isNullComputeSlaacIp []bool
+	rawConfig := diff.GetRawConfig()
+	objType := rawConfig.Type()
+	if ok := objType.HasAttribute("network_configuration"); ok {
+		netConf := rawConfig.GetAttr("network_configuration")
+		if netConf.LengthInt() > 0 {
+			netConfItem := netConf.Index(cty.NumberIntVal(0))
+			pNetConf := netConfItem.GetAttr("public_network_configuration")
+			if pNetConf.LengthInt() > 0 {
+				pNetConfItem := pNetConf.Index(cty.NumberIntVal(0))
+				pNet := pNetConfItem.GetAttr("public_networks")
+				if pNet.LengthInt() > 0 {
+					for i := 0; i < pNet.LengthInt(); i++ {
+						isNullComputeSlaacIp = append(isNullComputeSlaacIp, false)
+						pNetItem := pNet.Index(cty.NumberIntVal(int64(i)))
+						spn := pNetItem.GetAttr("server_public_network")
+						if spn.LengthInt() > 0 {
+							spnItem := spn.Index(cty.NumberIntVal(0))
+							slaac := spnItem.GetAttr("compute_slaac_ip")
+							if slaac.IsNull() {
+								isNullComputeSlaacIp[i] = true
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return isNullComputeSlaacIp
+}
+
+// markNotSetPrivateNetworkIps returns which of the private network's ips are not set in configuration
+func markNotSetPrivateNetworkIps(d *schema.ResourceData) []bool {
+	var isNullPrivIps []bool
+	rawConfig := d.GetRawConfig()
+	objType := rawConfig.Type()
+	if ok := objType.HasAttribute("network_configuration"); ok {
+		netConf := rawConfig.GetAttr("network_configuration")
+		if netConf.LengthInt() > 0 {
+			netConfItem := netConf.Index(cty.NumberIntVal(0))
+			pNetConf := netConfItem.GetAttr("private_network_configuration")
+			if pNetConf.LengthInt() > 0 {
+				pNetConfItem := pNetConf.Index(cty.NumberIntVal(0))
+				pNet := pNetConfItem.GetAttr("private_networks")
+				if pNet.LengthInt() > 0 {
+					for i := 0; i < pNet.LengthInt(); i++ {
+						isNullPrivIps = append(isNullPrivIps, false)
+						pNetItem := pNet.Index(cty.NumberIntVal(int64(i)))
+						spn := pNetItem.GetAttr("server_private_network")
+						if spn.LengthInt() > 0 {
+							spnItem := spn.Index(cty.NumberIntVal(0))
+							ips := spnItem.GetAttr("ips")
+							if ips.IsNull() {
+								isNullPrivIps[i] = true
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return isNullPrivIps
 }

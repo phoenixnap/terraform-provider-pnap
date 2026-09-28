@@ -62,6 +62,40 @@ resource "pnap_server" "Test-Server-1" {
 }
 ```
 
+Update a server
+
+```hcl
+#  Remove a server from every private network.
+#  (This is an advanced network action that can make your server completely unavailable over any network.)
+resource "pnap_server" "Test-Server-1" {
+    hostname = "Test-Server-1"
+    os = "ubuntu/bionic"
+    type = "s1.c1.medium"
+    location = "PHX"
+    install_default_ssh_keys = true
+    ssh_keys = [
+        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9LdAFElNCi7JoWh6KUcchrJ2Gac1aqGRPpdZNowObpRtmiRCecAMb7bUgNAaNfcmwiQi7tos9TlnFgprIcfMWb8MSs3ABYHmBgqEEt3RWYf0fAc9CsIpJdMCUG28TPGTlRXCEUVNKgLMdcseAlJoGp1CgbHWIN65fB3he3kAZcfpPn5mapV0tsl2p+ZyuAGRYdn5dJv2RZDHUZBkOeUobwsij+weHCKAFmKQKtCP7ybgVHaQjAPrj8MGnk1jBbjDt5ws+Be+9JNjQJee9zCKbAOsIo3i+GcUIkrw5jxPU/RTGlWBcemPaKHdciSzGcjWboapzIy49qypQhZe1U75 user2@122.16.1.126"
+    
+    ]
+    cloud_init {
+        user_data = filebase64("create-folder.txt")
+    }
+    delete_ip_blocks = true
+    tags {
+        tag_assignment {
+            name = pnap_tag.tag-1.name
+            value = "dev"
+        }
+    }
+    network_configuration {
+        private_network_configuration {
+            configuration_type = "USER_DEFINED"
+            private_networks  = []
+        }
+    }
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
