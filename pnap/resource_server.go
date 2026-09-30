@@ -1479,8 +1479,10 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		}
 		ncOldMap := old[0].(map[string]interface{})
 		ncNewMap := new[0].(map[string]interface{})
-		if d.HasChange("network_configuration.0.gateway_address") || d.HasChange("network_configuration.0.ip_blocks_configuration") {
+		if d.HasChange("network_configuration.0.gateway_address") {
 			return fmt.Errorf("unsupported action")
+		} else if d.HasChange("network_configuration.0.ip_blocks_configuration") {
+			return fmt.Errorf("unsupported action, ip_blocks_configuration has changed")
 		}
 		var pncNew, pncOld, pnNew, pnOld []interface{}
 		if (ncNewMap["private_network_configuration"]) != nil && len(ncNewMap["private_network_configuration"].([]interface{})) > 0 {
@@ -1550,16 +1552,16 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 				oldDhcps = append(oldDhcps, oldDhcp)
 			}
 		}
-		if len(newIds) == len(oldIds) {
-			for i, j := range newIds {
-				if oldIds[i] == j {
-					checkIps, err := compareInputIps(oldIpss[i], newIpss[i])
+		for i, j := range newIds {
+			for k := range oldIds {
+				if oldIds[k] == j {
+					checkIps, err := compareInputIps(oldIpss[k], newIpss[i])
 					if err != nil {
 						return err
 					} else if !checkIps {
-						return fmt.Errorf("unsupported action (private ips has changed)")
-					} else if oldDhcps[i] != newDhcps[i] {
-						return fmt.Errorf("unsupported action (dhcp has changed)")
+						return fmt.Errorf("unsupported action, ips has changed on private network [id=%s]", j)
+					} else if oldDhcps[k] != newDhcps[i] {
+						return fmt.Errorf("unsupported action, dhcp has changed on private network [id=%s]", j)
 					}
 				}
 			}
@@ -1687,16 +1689,16 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 				oldSlaacs = append(oldSlaacs, oldSlaac)
 			}
 		}
-		if len(newPubIds) == len(oldPubIds) {
-			for i, j := range newPubIds {
-				if oldPubIds[i] == j {
-					checkIps, err := compareInputIps(oldPubIpss[i], newPubIpss[i])
+		for i, j := range newPubIds {
+			for k := range oldPubIds {
+				if oldPubIds[k] == j {
+					checkIps, err := compareInputIps(oldPubIpss[k], newPubIpss[i])
 					if err != nil {
 						return err
 					} else if !checkIps {
-						return fmt.Errorf("unsupported action (public ips has changed)")
-					} else if oldSlaacs[i] != newSlaacs[i] {
-						return fmt.Errorf("unsupported action (compute_slaac_ip has changed)")
+						return fmt.Errorf("unsupported action, ips has changed on public network [id=%s]", j)
+					} else if oldSlaacs[k] != newSlaacs[i] {
+						return fmt.Errorf("unsupported action, compute_slaac_ip has changed on public network [id=%s]", j)
 					}
 				}
 			}
@@ -2588,13 +2590,16 @@ func markNotSetPrivateNetworkFields(diff *schema.ResourceDiff) ([]bool, []bool) 
 			if pNetConf.LengthInt() > 0 {
 				pNetConfItem := pNetConf.Index(cty.NumberIntVal(0))
 				pNet := pNetConfItem.GetAttr("private_networks")
+				if pNet.IsNull() || !pNet.IsKnown() {
+					return nil, nil
+				}
 				if pNet.LengthInt() > 0 {
 					for i := 0; i < pNet.LengthInt(); i++ {
 						isNullPrivIps = append(isNullPrivIps, false)
 						isNullDhcp = append(isNullDhcp, false)
 						pNetItem := pNet.Index(cty.NumberIntVal(int64(i)))
 						spn := pNetItem.GetAttr("server_private_network")
-						if spn.LengthInt() > 0 {
+						if !spn.IsNull() && spn.LengthInt() > 0 {
 							spnItem := spn.Index(cty.NumberIntVal(0))
 							ips := spnItem.GetAttr("ips")
 							if ips.IsNull() {
@@ -2626,12 +2631,15 @@ func markNotSetPublicNetworkComputeSlaacIp(diff *schema.ResourceDiff) []bool {
 			if pNetConf.LengthInt() > 0 {
 				pNetConfItem := pNetConf.Index(cty.NumberIntVal(0))
 				pNet := pNetConfItem.GetAttr("public_networks")
+				if pNet.IsNull() || !pNet.IsKnown() {
+					return nil
+				}
 				if pNet.LengthInt() > 0 {
 					for i := 0; i < pNet.LengthInt(); i++ {
 						isNullComputeSlaacIp = append(isNullComputeSlaacIp, false)
 						pNetItem := pNet.Index(cty.NumberIntVal(int64(i)))
 						spn := pNetItem.GetAttr("server_public_network")
-						if spn.LengthInt() > 0 {
+						if !spn.IsNull() && spn.LengthInt() > 0 {
 							spnItem := spn.Index(cty.NumberIntVal(0))
 							slaac := spnItem.GetAttr("compute_slaac_ip")
 							if slaac.IsNull() {
@@ -2659,12 +2667,15 @@ func markNotSetPrivateNetworkIps(d *schema.ResourceData) []bool {
 			if pNetConf.LengthInt() > 0 {
 				pNetConfItem := pNetConf.Index(cty.NumberIntVal(0))
 				pNet := pNetConfItem.GetAttr("private_networks")
+				if pNet.IsNull() || !pNet.IsKnown() {
+					return nil
+				}
 				if pNet.LengthInt() > 0 {
 					for i := 0; i < pNet.LengthInt(); i++ {
 						isNullPrivIps = append(isNullPrivIps, false)
 						pNetItem := pNet.Index(cty.NumberIntVal(int64(i)))
 						spn := pNetItem.GetAttr("server_private_network")
-						if spn.LengthInt() > 0 {
+						if !spn.IsNull() && spn.LengthInt() > 0 {
 							spnItem := spn.Index(cty.NumberIntVal(0))
 							ips := spnItem.GetAttr("ips")
 							if ips.IsNull() {
