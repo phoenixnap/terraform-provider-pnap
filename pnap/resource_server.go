@@ -578,7 +578,7 @@ func resourceServer() *schema.Resource {
 		},
 		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
 			isNullPrivIps, isNullDhcp := markNotSetPrivateNetworkFields(diff)
-			isNullComputeSlaacIp := markNotSetPublicNetworkComputeSlaacIp(diff)
+			isNullComputeSlaacIp := markNotSetPublicNetworkComputeSlaacIpForCustomize(diff)
 			oldRawNCint, rawNCint := diff.GetChange("network_configuration")
 			var oldIds []string
 			var oldPubIds []string
@@ -1480,7 +1480,7 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		ncOldMap := old[0].(map[string]interface{})
 		ncNewMap := new[0].(map[string]interface{})
 		if d.HasChange("network_configuration.0.gateway_address") {
-			return fmt.Errorf("unsupported action")
+			return fmt.Errorf("unsupported action, gateway_address has changed")
 		} else if d.HasChange("network_configuration.0.ip_blocks_configuration") {
 			return fmt.Errorf("unsupported action, ip_blocks_configuration has changed")
 		}
@@ -1499,7 +1499,10 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 			pncOldMap = pncOld[0].(map[string]interface{})
 		}
 		if pncNewMap["gateway_address"] != pncOldMap["gateway_address"] {
-			return fmt.Errorf("unsupported action")
+			return fmt.Errorf("unsupported action, gateway_address (deprecated) has changed")
+		}
+		if pncNewMap["configuration_type"] != pncOldMap["configuration_type"] {
+			return fmt.Errorf("unsupported action, configuration_type has changed")
 		}
 		if pncNewMap["private_networks"] != nil {
 			pnNew = pncNewMap["private_networks"].([]interface{})
@@ -1555,7 +1558,8 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		for i, j := range newIds {
 			for k := range oldIds {
 				if oldIds[k] == j {
-					checkIps, err := compareInputIps(oldIpss[k], newIpss[i])
+					isNullPrivIps := markNotSetPrivateNetworkIps(d)
+					checkIps, err := compareInputIps(isNullPrivIps[i], oldIpss[k], newIpss[i])
 					if err != nil {
 						return err
 					} else if !checkIps {
@@ -1692,7 +1696,7 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 		for i, j := range newPubIds {
 			for k := range oldPubIds {
 				if oldPubIds[k] == j {
-					checkIps, err := compareInputIps(oldPubIpss[k], newPubIpss[i])
+					checkIps, err := compareInputIps(false, oldPubIpss[k], newPubIpss[i])
 					if err != nil {
 						return err
 					} else if !checkIps {
@@ -1727,8 +1731,19 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 				request := &bmcapiclient.ServerPublicNetwork{}
 				request.Id = p
 				request.Ips = newPubIpss[o]
-				if newSlaacs[o] == true {
-					request.ComputeSlaacIp = &newSlaacs[o]
+				isNullComputeSlaacIp := markNotSetPublicNetworkComputeSlaacIpForUpdate(d)
+				var ipv6 bool
+				for _, l := range newPubIpss[o] {
+					if strings.Contains(l, ":") {
+						ipv6 = true
+					}
+				}
+				if ipv6 && len(isNullComputeSlaacIp) == len(newPubIds) {
+					if isNullComputeSlaacIp[o] {
+						//Do nothing
+					} else {
+						request.ComputeSlaacIp = &newSlaacs[o]
+					}
 				}
 				requestCommand := server.NewAddServer2PublicNetworkCommandWithQuery(client, serverID, *request, query)
 				_, err := requestCommand.Execute()
@@ -2124,11 +2139,12 @@ func flattenServerTags(tagsRead []bmcapiclient.TagAssignment, tagsInput []interf
 }
 
 func supressUserDefinedNetworkType(k, oldValue, newValue string, d *schema.ResourceData) bool {
-	if len(oldValue) > 0 && newValue == "USER_DEFINED" {
-		return true
-	} else {
-		return false
+	if len(oldValue) > 0 {
+		if newValue == "USER_DEFINED" || newValue == "PRIVATE_ONLY" || newValue == "PUBLIC_ONLY" || newValue == "PUBLIC_AND_PRIVATE" || newValue == "NONE" {
+			return true
+		}
 	}
+	return false
 }
 
 // readServerPrivateNetworks reads server private networks from API and sorts them in the same order as in configuration
@@ -2547,7 +2563,7 @@ func removeDuplicateIps(ips []string) []string {
 }
 
 // compareInputIps compares slices of Ips from configuration. If they are the same returns true, if they are different returns false
-func compareInputIps(oldIps []string, newIps []string) (bool, error) {
+func compareInputIps(isNullIps bool, oldIps []string, newIps []string) (bool, error) {
 	if len(oldIps) > 0 && len(newIps) > 0 {
 		oldIpsMono, err := divideIpsRange(oldIps)
 		if err != nil {
@@ -2571,6 +2587,8 @@ func compareInputIps(oldIps []string, newIps []string) (bool, error) {
 		return true, nil
 	} else if len(oldIps) == 0 && len(newIps) == 1 && newIps[0] == "" {
 		return true, nil
+	} else if isNullIps && len(newIps) == 0 {
+		return true, nil
 	} else {
 		return false, nil
 	}
@@ -2584,22 +2602,19 @@ func markNotSetPrivateNetworkFields(diff *schema.ResourceDiff) ([]bool, []bool) 
 	objType := rawConfig.Type()
 	if ok := objType.HasAttribute("network_configuration"); ok {
 		netConf := rawConfig.GetAttr("network_configuration")
-		if netConf.LengthInt() > 0 {
+		if !netConf.IsNull() && netConf.IsKnown() && netConf.LengthInt() > 0 {
 			netConfItem := netConf.Index(cty.NumberIntVal(0))
 			pNetConf := netConfItem.GetAttr("private_network_configuration")
-			if pNetConf.LengthInt() > 0 {
+			if !pNetConf.IsNull() && pNetConf.IsKnown() && pNetConf.LengthInt() > 0 {
 				pNetConfItem := pNetConf.Index(cty.NumberIntVal(0))
 				pNet := pNetConfItem.GetAttr("private_networks")
-				if pNet.IsNull() || !pNet.IsKnown() {
-					return nil, nil
-				}
-				if pNet.LengthInt() > 0 {
+				if !pNet.IsNull() && pNet.IsKnown() && pNet.LengthInt() > 0 {
 					for i := 0; i < pNet.LengthInt(); i++ {
 						isNullPrivIps = append(isNullPrivIps, false)
 						isNullDhcp = append(isNullDhcp, false)
 						pNetItem := pNet.Index(cty.NumberIntVal(int64(i)))
 						spn := pNetItem.GetAttr("server_private_network")
-						if !spn.IsNull() && spn.LengthInt() > 0 {
+						if !spn.IsNull() && spn.IsKnown() && spn.LengthInt() > 0 {
 							spnItem := spn.Index(cty.NumberIntVal(0))
 							ips := spnItem.GetAttr("ips")
 							if ips.IsNull() {
@@ -2619,27 +2634,57 @@ func markNotSetPrivateNetworkFields(diff *schema.ResourceDiff) ([]bool, []bool) 
 }
 
 // markNotSetPublicNetworkComputeSlaacIp returns which of the public network's compute_slaac_ip are not set in configuration
-func markNotSetPublicNetworkComputeSlaacIp(diff *schema.ResourceDiff) []bool {
+func markNotSetPublicNetworkComputeSlaacIpForCustomize(diff *schema.ResourceDiff) []bool {
 	var isNullComputeSlaacIp []bool
 	rawConfig := diff.GetRawConfig()
 	objType := rawConfig.Type()
 	if ok := objType.HasAttribute("network_configuration"); ok {
 		netConf := rawConfig.GetAttr("network_configuration")
-		if netConf.LengthInt() > 0 {
+		if !netConf.IsNull() && netConf.IsKnown() && netConf.LengthInt() > 0 {
 			netConfItem := netConf.Index(cty.NumberIntVal(0))
 			pNetConf := netConfItem.GetAttr("public_network_configuration")
-			if pNetConf.LengthInt() > 0 {
+			if !pNetConf.IsNull() && pNetConf.IsKnown() && pNetConf.LengthInt() > 0 {
 				pNetConfItem := pNetConf.Index(cty.NumberIntVal(0))
 				pNet := pNetConfItem.GetAttr("public_networks")
-				if pNet.IsNull() || !pNet.IsKnown() {
-					return nil
-				}
-				if pNet.LengthInt() > 0 {
+				if !pNet.IsNull() && pNet.IsKnown() && pNet.LengthInt() > 0 {
 					for i := 0; i < pNet.LengthInt(); i++ {
 						isNullComputeSlaacIp = append(isNullComputeSlaacIp, false)
 						pNetItem := pNet.Index(cty.NumberIntVal(int64(i)))
 						spn := pNetItem.GetAttr("server_public_network")
-						if !spn.IsNull() && spn.LengthInt() > 0 {
+						if !spn.IsNull() && spn.IsKnown() && spn.LengthInt() > 0 {
+							spnItem := spn.Index(cty.NumberIntVal(0))
+							slaac := spnItem.GetAttr("compute_slaac_ip")
+							if slaac.IsNull() {
+								isNullComputeSlaacIp[i] = true
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return isNullComputeSlaacIp
+}
+
+// markNotSetPublicNetworkComputeSlaacIp returns which of the public network's compute_slaac_ip are not set in configuration
+func markNotSetPublicNetworkComputeSlaacIpForUpdate(d *schema.ResourceData) []bool {
+	var isNullComputeSlaacIp []bool
+	rawConfig := d.GetRawConfig()
+	objType := rawConfig.Type()
+	if ok := objType.HasAttribute("network_configuration"); ok {
+		netConf := rawConfig.GetAttr("network_configuration")
+		if !netConf.IsNull() && netConf.IsKnown() && netConf.LengthInt() > 0 {
+			netConfItem := netConf.Index(cty.NumberIntVal(0))
+			pNetConf := netConfItem.GetAttr("public_network_configuration")
+			if !pNetConf.IsNull() && pNetConf.IsKnown() && pNetConf.LengthInt() > 0 {
+				pNetConfItem := pNetConf.Index(cty.NumberIntVal(0))
+				pNet := pNetConfItem.GetAttr("public_networks")
+				if !pNet.IsNull() && pNet.IsKnown() && pNet.LengthInt() > 0 {
+					for i := 0; i < pNet.LengthInt(); i++ {
+						isNullComputeSlaacIp = append(isNullComputeSlaacIp, false)
+						pNetItem := pNet.Index(cty.NumberIntVal(int64(i)))
+						spn := pNetItem.GetAttr("server_public_network")
+						if !spn.IsNull() && spn.IsKnown() && spn.LengthInt() > 0 {
 							spnItem := spn.Index(cty.NumberIntVal(0))
 							slaac := spnItem.GetAttr("compute_slaac_ip")
 							if slaac.IsNull() {
@@ -2661,21 +2706,18 @@ func markNotSetPrivateNetworkIps(d *schema.ResourceData) []bool {
 	objType := rawConfig.Type()
 	if ok := objType.HasAttribute("network_configuration"); ok {
 		netConf := rawConfig.GetAttr("network_configuration")
-		if netConf.LengthInt() > 0 {
+		if !netConf.IsNull() && netConf.IsKnown() && netConf.LengthInt() > 0 {
 			netConfItem := netConf.Index(cty.NumberIntVal(0))
 			pNetConf := netConfItem.GetAttr("private_network_configuration")
-			if pNetConf.LengthInt() > 0 {
+			if !pNetConf.IsNull() && pNetConf.IsKnown() && pNetConf.LengthInt() > 0 {
 				pNetConfItem := pNetConf.Index(cty.NumberIntVal(0))
 				pNet := pNetConfItem.GetAttr("private_networks")
-				if pNet.IsNull() || !pNet.IsKnown() {
-					return nil
-				}
-				if pNet.LengthInt() > 0 {
+				if !pNet.IsNull() && pNet.IsKnown() && pNet.LengthInt() > 0 {
 					for i := 0; i < pNet.LengthInt(); i++ {
 						isNullPrivIps = append(isNullPrivIps, false)
 						pNetItem := pNet.Index(cty.NumberIntVal(int64(i)))
 						spn := pNetItem.GetAttr("server_private_network")
-						if !spn.IsNull() && spn.LengthInt() > 0 {
+						if !spn.IsNull() && spn.IsKnown() && spn.LengthInt() > 0 {
 							spnItem := spn.Index(cty.NumberIntVal(0))
 							ips := spnItem.GetAttr("ips")
 							if ips.IsNull() {
