@@ -110,7 +110,7 @@ Become part of the Bare Metal Cloud community to get updates on new features, he
 -	[YouTube tutorials](https://www.youtube.com/watch?v=8TLsqgLDMN4&list=PLWcrQnFWd54WwkHM0oPpR1BrAhxlsy1Rc&ab_channel=PhoenixNAPGlobalITServices)
 -	[Developers Portal](https://developers.phoenixnap.com)
 -	[Knowledge Base](https://phoenixnap.com/kb)
--	[Blog](https:/phoenixnap.com/blog)
+-	[Blog](https://phoenixnap.com/blog)
 
 ### Documentation
 -	[API documentation](https://developers.phoenixnap.com/apis)
