@@ -577,6 +577,10 @@ func resourceServer() *schema.Resource {
 			},
 		},
 		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+			// Skip CustomizeDiff if the server is being created
+			if diff.Id() == "" {
+				return nil
+			}
 			isNullPrivIps, isNullDhcp, isUnknownId := markNotSetPrivateNetworkFields(diff)
 			isNullComputeSlaacIp, isUnknownPubId := markNotSetPublicNetworkFields(diff)
 			oldRawNCint, rawNCint := diff.GetChange("network_configuration")
@@ -612,6 +616,18 @@ func resourceServer() *schema.Resource {
 					}
 				}
 			}
+
+			for i := range isUnknownId {
+				if (isUnknownId[i] && i < len(oldIds) && oldIds[i] != "") || (i > 0 && !isUnknownId[i] && isUnknownId[i-1]) {
+					return fmt.Errorf("A private network ID in server.network_configuration is not known until apply. Create/apply the referenced network first, then apply the server update")
+				}
+			}
+			for i := range isUnknownPubId {
+				if (isUnknownPubId[i] && i < len(oldPubIds) && oldPubIds[i] != "") || (i > 0 && !isUnknownPubId[i] && isUnknownPubId[i-1]) {
+					return fmt.Errorf("A public network ID in server.network_configuration is not known until apply. Create/apply the referenced network first, then apply the server update")
+				}
+			}
+
 			if rawNCint != nil && len(rawNCint.([]interface{})) > 0 {
 				networkConfiguration := rawNCint.([]interface{})[0]
 				networkConfigurationItem := networkConfiguration.(map[string]interface{})
@@ -620,11 +636,6 @@ func resourceServer() *schema.Resource {
 					privateNetworkConfigurationItem := privateNetworkConfiguration.(map[string]interface{})
 					rawPN := privateNetworkConfigurationItem["private_networks"].([]interface{})
 					for i := range rawPN {
-						if diff.Id() != "" && len(isUnknownId) == len(rawPN) && i > 0 {
-							if !isUnknownId[i] && isUnknownId[i-1] {
-								return fmt.Errorf("Create/apply the referenced network first, then apply the server update.")
-							}
-						}
 						if rawPN[i] != nil && len(rawPN[i].(map[string]interface{})["server_private_network"].([]interface{})) > 0 {
 							ispnItem := rawPN[i].(map[string]interface{})["server_private_network"].([]interface{})[0].(map[string]interface{})
 							id := ispnItem["id"].(string)
@@ -651,16 +662,29 @@ func resourceServer() *schema.Resource {
 						}
 					}
 				}
+				if networkConfigurationItem["ip_blocks_configuration"] != nil && len(networkConfigurationItem["ip_blocks_configuration"].([]interface{})) > 0 {
+					ipBlocksConfiguration := networkConfigurationItem["ip_blocks_configuration"].([]interface{})[0]
+					ipBlocksConfigurationItem := ipBlocksConfiguration.(map[string]interface{})
+					ipBlocks := ipBlocksConfigurationItem["ip_blocks"].([]interface{})
+					if len(ipBlocks) > 0 {
+						for _, j := range ipBlocks {
+							ipBlockItem := j.(map[string]interface{})
+							if ipBlockItem["server_ip_block"] != nil && len(ipBlockItem["server_ip_block"].([]interface{})) > 0 {
+								serverIpBlock := ipBlockItem["server_ip_block"].([]interface{})[0]
+								serverIpBlockItem := serverIpBlock.(map[string]interface{})
+								id := serverIpBlockItem["id"].(string)
+								if len(id) == 0 {
+									return fmt.Errorf("An ip block ID in server.network_configuration is not known until apply. Create/apply the referenced ip block first, then apply the server update")
+								}
+							}
+						}
+					}
+				}
 				if networkConfigurationItem["public_network_configuration"] != nil && len(networkConfigurationItem["public_network_configuration"].([]interface{})) > 0 {
 					publicNetworkConfiguration := networkConfigurationItem["public_network_configuration"].([]interface{})[0]
 					publicNetworkConfigurationItem := publicNetworkConfiguration.(map[string]interface{})
 					rawPN := publicNetworkConfigurationItem["public_networks"].([]interface{})
 					for i := range rawPN {
-						if diff.Id() != "" && len(isUnknownPubId) == len(rawPN) && i > 0 {
-							if !isUnknownPubId[i] && isUnknownPubId[i-1] {
-								return fmt.Errorf("Create/apply the referenced network first, then apply the server update.")
-							}
-						}
 						if rawPN[i] != nil && len(rawPN[i].(map[string]interface{})["server_public_network"].([]interface{})) > 0 {
 							ispnItem := rawPN[i].(map[string]interface{})["server_public_network"].([]interface{})[0].(map[string]interface{})
 							id := ispnItem["id"].(string)
