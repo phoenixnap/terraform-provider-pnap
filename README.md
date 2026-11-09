@@ -21,7 +21,7 @@ Terraform is a powerful infrastructure as code tool for provisioning and managin
 ## Requirements
 -	[Bare Metal Cloud](https://bmc.phoenixnap.com) account
 -	[Terraform](https://www.terraform.io/downloads.html) 1.5.7+
--	[Go](https://golang.org/doc/install) 1.26.8+ (to build the provider plugin)
+-	[Go](https://golang.org/doc/install) 1.26.10+ (to build the provider plugin)
 
 ## Creating a Bare Metal Cloud account
 You need to have a Bare Metal Cloud account in order to use the ***pnap*** Terraform provider with Bare Metal Cloud. 
@@ -63,7 +63,7 @@ The *pnap* provider will be installed on `terraform init` as a template of the `
 
 ## Developing the provider
 
-If you want to work on developing the provider, you need to have [Go](http://www.golang.org) installed on your machine. Go version 1.26.8+ is *required*. You will also need to properly set up a [GOPATH](http://golang.org/doc/code.html#GOPATH) and add `$GOPATH/bin` to your `$PATH`.
+If you want to work on developing the provider, you need to have [Go](http://www.golang.org) installed on your machine. Go version 1.26.10+ is *required*. You will also need to properly set up a [GOPATH](http://golang.org/doc/code.html#GOPATH) and add `$GOPATH/bin` to your `$PATH`.
 
 To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
 

@@ -577,10 +577,6 @@ func resourceServer() *schema.Resource {
 			},
 		},
 		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
-			// Skip CustomizeDiff if the server is being created
-			if diff.Id() == "" {
-				return nil
-			}
 			isNullPrivIps, isNullDhcp, isUnknownId := markNotSetPrivateNetworkFields(diff)
 			isNullComputeSlaacIp, isUnknownPubId := markNotSetPublicNetworkFields(diff)
 			oldRawNCint, rawNCint := diff.GetChange("network_configuration")
