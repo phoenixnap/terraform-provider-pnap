@@ -1,9 +1,7 @@
 package pnap
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
@@ -131,9 +129,9 @@ func dataSourceProductAvailabilityRead(d *schema.ResourceData, m interface{}) er
 	if minQua > 0 {
 		query.MinQuantity = float32(minQua)
 	}
-	queryA := &query
-	b, _ := json.MarshalIndent(queryA, "", "  ")
-	log.Printf("request object is" + string(b))
+	// queryA := &query
+	// b, _ := json.MarshalIndent(queryA, "", "  ")
+	// log.Printf("request object is" + string(b))
 
 	requestCommand := product.NewGetProductAvailabilityCommand(client, query)
 	resp, err := requestCommand.Execute()
