@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/PNAP/go-sdk-helper-bmc/command/bmcapi/server"
 	"github.com/PNAP/go-sdk-helper-bmc/command/networkapi/privatenetwork"
 	"github.com/PNAP/go-sdk-helper-bmc/dto"
 	"github.com/PNAP/go-sdk-helper-bmc/receiver"
@@ -291,6 +292,19 @@ func refreshForPrivateNetworkMembershipStatus(client *receiver.BMCSDK, id string
 		if err != nil {
 			return 0, "", err
 		} else if len(resp.Memberships) > 0 {
+			var netMem networkapiclient.NetworkMembership
+			for _, j := range resp.Memberships {
+				netMem = j
+				if netMem.ResourceId != "" && netMem.ResourceType == "server" {
+					requestCommand2 := server.NewGetServerCommand(*client, netMem.ResourceId)
+					resp2, err := requestCommand2.Execute()
+					if err != nil {
+						return 0, "", err
+					} else if resp2.Status != "deleting" {
+						return 0, "", fmt.Errorf("first remove server (%s) from private network (%s), then delete the private network", netMem.ResourceId, id)
+					}
+				}
+			}
 			return 0, "assigned", nil
 		} else {
 			return 0, "unassigned", nil
