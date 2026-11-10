@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	pnapPrivateNetworkRetryDelay   = 10 * time.Second
-	pnapPrivateNetworkRetryTimeout = 7 * time.Minute
+	pnapPrivateNetworkRetryDelay = 10 * time.Second
 )
 
 func resourcePrivateNetwork() *schema.Resource {
@@ -230,7 +229,7 @@ func resourcePrivateNetworkDelete(d *schema.ResourceData, m interface{}) error {
 
 	networkID := d.Id()
 
-	waitResultError := privateNetworkWaitForUnassign(networkID, &client)
+	waitResultError := privateNetworkWaitForUnassign(networkID, &client, d.Timeout(schema.TimeoutDelete))
 	if waitResultError != nil {
 		return waitResultError
 	}
@@ -263,14 +262,14 @@ func flattenServers(servers []networkapiclient.PrivateNetworkServer) []interface
 	return make([]interface{}, 0)
 }
 
-func privateNetworkWaitForUnassign(id string, client *receiver.BMCSDK) error {
+func privateNetworkWaitForUnassign(id string, client *receiver.BMCSDK, timeout time.Duration) error {
 	log.Printf("Waiting for private network %s to be unassigned...", id)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"assigned"},
 		Target:     []string{"unassigned"},
 		Refresh:    refreshForPrivateNetworkMembershipStatus(client, id),
-		Timeout:    pnapPrivateNetworkRetryTimeout,
+		Timeout:    timeout,
 		Delay:      pnapPrivateNetworkRetryDelay,
 		MinTimeout: pnapRetryMinTimeout,
 	}
