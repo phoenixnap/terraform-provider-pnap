@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	pnapPublicNetworkRetryDelay   = 10 * time.Second
-	pnapPublicNetworkRetryTimeout = 7 * time.Minute
+	pnapPublicNetworkRetryDelay = 10 * time.Second
 )
 
 func resourcePublicNetwork() *schema.Resource {
@@ -343,7 +342,7 @@ func resourcePublicNetworkDelete(d *schema.ResourceData, m interface{}) error {
 
 	networkID := d.Id()
 
-	waitResultError := publicNetworkWaitForUnassign(networkID, &client)
+	waitResultError := publicNetworkWaitForUnassign(networkID, &client, d.Timeout(schema.TimeoutDelete))
 	if waitResultError != nil {
 		return waitResultError
 	}
@@ -376,14 +375,14 @@ func flattenMemberships(memberships []networkapiclient.NetworkMembership) []inte
 	return make([]interface{}, 0)
 }
 
-func publicNetworkWaitForUnassign(id string, client *receiver.BMCSDK) error {
+func publicNetworkWaitForUnassign(id string, client *receiver.BMCSDK, timeout time.Duration) error {
 	log.Printf("Waiting for public network %s to be unassigned...", id)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"assigned"},
 		Target:     []string{"unassigned"},
 		Refresh:    refreshForPublicNetworkMembershipStatus(client, id),
-		Timeout:    pnapPublicNetworkRetryTimeout,
+		Timeout:    timeout,
 		Delay:      pnapPublicNetworkRetryDelay,
 		MinTimeout: pnapRetryMinTimeout,
 	}

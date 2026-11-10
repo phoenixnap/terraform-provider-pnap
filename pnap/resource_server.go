@@ -577,6 +577,10 @@ func resourceServer() *schema.Resource {
 			},
 		},
 		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+			// Skip CustomizeDiff if the server is being created
+			if diff.Id() == "" {
+				return nil
+			}
 			isNullPrivIps, isNullDhcp, isUnknownId := markNotSetPrivateNetworkFields(diff)
 			isNullComputeSlaacIp, isUnknownPubId := markNotSetPublicNetworkFields(diff)
 			oldRawNCint, rawNCint := diff.GetChange("network_configuration")
@@ -948,6 +952,10 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 						if len(privateNetworks) == len(isNullPrivIps) && isNullPrivIps[k] {
 							// Do nothing because ips is an empty field
 						} else {
+							if (len(netIps)) == 1 && netIps[0] == "" {
+								// Designate an empty array of IPs
+								netIps = make([]string, 0)
+							}
 							serverPrivateNetworkObject.Ips = netIps
 						}
 
@@ -1027,6 +1035,10 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
 					if (len(id)) > 0 {
 						serverPublicNetworkObject.Id = id
+					}
+					if (len(netIps)) == 1 && netIps[0] == "" {
+						// Designate an empty array of IPs
+						netIps = make([]string, 0)
 					}
 					serverPublicNetworkObject.Ips = netIps
 					serverPublicNetworkObject.ComputeSlaacIp = &computeSlaacIp
